@@ -2,8 +2,8 @@ var hit;
 function preload(){
   //everything that needs to be loaded before the sketch
   //starts needs to be put here
-  soundFormats('wav');
-  hit = loadSound('assets/hit');
+  //soundFormats('wav');
+  hit = loadSound('assets/hit.wav');
 }
 var started;
 function setup(){

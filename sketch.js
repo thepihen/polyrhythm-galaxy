@@ -1,4 +1,5 @@
 var hit;
+var font;
 function preload(){
   //everything that needs to be loaded before the sketch
   //starts needs to be put here
@@ -14,6 +15,7 @@ function setup(){
   yLineH = 3/4 * height;
   exampleCircle = new Circle([xLine1, 0,40,1]);
   started = false;
+  font = textFont('Roboto',30)
 }
 
 var exampleCircle;
@@ -23,10 +25,18 @@ var yLineH;
 var guideRadius = 50;
 function draw(){
   background(12);
-  drawReference();
   if(started){
+    drawReference();
     exampleCircle.update();
     exampleCircle.show();
+  }else{
+    fill(10,240,10)
+    rectMode(CENTER)
+    rect(width/2,height/2,200,200);
+    fill(240)
+    textFont(font)
+    textAlign(CENTER)
+    text("Click\nto start :)", width/2,height/2);
   }
 }
 function drawReference(){

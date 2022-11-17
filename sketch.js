@@ -79,11 +79,6 @@ function keyPressed(){
   }
 }
 
-function windowResized() {
-  removeElements();
-  resizeCanvas(windowWidth, windowHeight);
-}
-
 class Circle{
   /*
   params:

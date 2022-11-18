@@ -1,6 +1,7 @@
 var hit;
 var font;
-
+var met1;
+var met2;
 /* 
 bpm = track bpm
 leftR = left rhythm
@@ -15,6 +16,8 @@ function preload(){
   //starts needs to be put here
   //soundFormats('wav');
   hit = loadSound('assets/hit.wav');
+  met1 = loadSound('assets/met1.wav');
+  met2 = loadSound('assets/met2.wav');
 }
 //started: bool
 //true if we're in the game
@@ -23,40 +26,35 @@ var started;
 var xLine1;
 var xLine2;
 var yLineH;
-
 //arrays containing circles for left and right side
 var leftCircles = [];
 var rightCircles = [];
 
-function setup(){
+function setup() {
   createCanvas(windowWidth, windowHeight);
   getAudioContext().suspend();
   //initialise guide coordinates
-  xLine1 = width/2 - width/12;
-  xLine2 = width/2 + width/12;
-  yLineH = 3/4 * height;
+  xLine1 = width / 2 - width / 12;
+  xLine2 = width / 2 + width / 12;
+  yLineH = 3 / 4 * height;
   started = false;
-  font = textFont('Roboto',30)
+  font = textFont('Roboto', 30)
 
   bpm = 60;
-  leftR= 4;
+  // 4 vs 3
+  leftR = 4;
   rightR = 3;
-  intervalL = (1/4)*leftR* 60 / bpm; 
-  intervalR = (1/4) * rightR * 60 / bpm; 
-  addCircle('l')
-  addCircle('r')
+  interval = 60 / bpm;
+  intervalL = (1 / 4) * leftR * 60 / bpm;
+  intervalR = (1 / 4) * rightR * 60 / bpm;
   startMetronome(bpm)
-  setInterval(addCircle, intervalL * 1000, 'l')
-  setInterval(addCircle, intervalR * 1000, 'r')
 }
 
 var exampleCircle;
 var guideRadius = 30;
 var counter = 0;
 var rhythm_rad = 20;
-
 function draw(){
-  console.log(interval)
   background(12);
   if(started){
     drawReference();
@@ -146,10 +144,21 @@ function keyPressed(){
   }
 }
 
+var metroFlag = 0;
 function startMetronome(){
-  
+  setInterval(metroSound, interval * 1000 )
 }
 
+function metroSound(){
+  if(metroFlag == 4){
+    addCircle('l')
+    addCircle('r')
+    setInterval(addCircle, intervalL * 1000, 'l');
+    setInterval(addCircle, intervalR * 1000, 'r');
+  }
+  met2.play();
+  metroFlag += 1;
+}
 class Circle{
   /*
   params:

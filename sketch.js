@@ -6,10 +6,18 @@ function preload(){
   //soundFormats('wav');
   hit = loadSound('assets/hit.wav');
 }
+//started: bool
+//true if we're in the game
+//false if we're in the menu
 var started;
+var xLine1;
+var xLine2;
+var yLineH;
+
 function setup(){
   createCanvas(windowWidth, windowHeight);
   getAudioContext().suspend();
+  //initialise guide coordinates
   xLine1 = width/2 - width/12;
   xLine2 = width/2 + width/12;
   yLineH = 3/4 * height;
@@ -19,10 +27,8 @@ function setup(){
 }
 
 var exampleCircle;
-var xLine1;
-var xLine2;
-var yLineH;
 var guideRadius = 50;
+
 function draw(){
   background(12);
   if(started){

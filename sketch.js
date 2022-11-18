@@ -9,7 +9,7 @@ rightR = right rhythm
 var bpm;
 var leftR;
 var rightR;
-
+var interval;
 function preload(){
   //everything that needs to be loaded before the sketch
   //starts needs to be put here
@@ -24,6 +24,10 @@ var xLine1;
 var xLine2;
 var yLineH;
 
+//arrays containing circles for left and right side
+var leftCircles = [];
+var rightCircles = [];
+
 function setup(){
   createCanvas(windowWidth, windowHeight);
   getAudioContext().suspend();
@@ -31,20 +35,39 @@ function setup(){
   xLine1 = width/2 - width/12;
   xLine2 = width/2 + width/12;
   yLineH = 3/4 * height;
-  exampleCircle = new Circle([xLine1, 0,40,1]);
   started = false;
   font = textFont('Roboto',30)
+
+  bpm = 60;
+  leftR= 4;
+  rightR = 3;
+  intervalL = (1/4)*leftR* 60 / bpm; 
+  intervalR = (1/4) * rightR * 60 / bpm; 
+  addCircle('l')
+  addCircle('r')
+  startMetronome(bpm)
+  setInterval(addCircle, intervalL * 1000, 'l')
+  setInterval(addCircle, intervalR * 1000, 'r')
 }
 
 var exampleCircle;
-var guideRadius = 50;
+var guideRadius = 30;
+var counter = 0;
+var rhythm_rad = 20;
 
 function draw(){
+  console.log(interval)
   background(12);
   if(started){
     drawReference();
-    exampleCircle.update();
-    exampleCircle.show();
+    leftCircles.forEach((item, i) => {
+      leftCircles[i].update()
+      leftCircles[i].show()
+    });
+    rightCircles.forEach((item, i) => {
+      rightCircles[i].update()
+      rightCircles[i].show()
+    });
   }else{
     fill(10,240,10)
     rectMode(CENTER)
@@ -53,6 +76,18 @@ function draw(){
     textFont(font)
     textAlign(CENTER)
     text("Click\nto start :)", width/2,height/2);
+  }
+}
+/*
+side:
+r adds one circle right side
+l adds one circle left side
+*/
+function addCircle(side){
+  if(side=='r'){
+    rightCircles.push(new Circle([xLine2, 0, rhythm_rad, 1]))
+  }else if(side=='l'){
+    leftCircles.push(new Circle([xLine1, 0, rhythm_rad, 1]))
   }
 }
 function drawReference(){
@@ -84,15 +119,35 @@ function keyPressed(){
   //check if any of the active circles is overlapping with the
   //reference
   if (key=='s' || key=='S'){
-    if(Math.abs(exampleCircle.y - yLineH) <= guideRadius){
-      //play sound
-      hit.play();
-      //calculate the points
-      //delete circle(s)
-      //for now no deletion happens, it just becomes hidden
-      exampleCircle.flag = 0;
-    }
+    leftCircles.forEach((item, i) => {
+      let c = leftCircles[i];
+      if (Math.abs(c.y - yLineH) <= guideRadius) {
+        //play sound
+        hit.play();
+        //calculate the points
+        //delete circle(s)
+        //for now no deletion happens, it just becomes hidden
+        c.flag = 0;
+      }
+    });
   }
+  if (key == 'k' || key == 'K') {
+    rightCircles.forEach((item, i) => {
+      let c = rightCircles[i];
+      if (Math.abs(c.y - yLineH) <= guideRadius) {
+        //play sound
+        hit.play();
+        //calculate the points
+        //delete circle(s)
+        //for now no deletion happens, it just becomes hidden
+        c.flag = 0;
+      }
+    });
+  }
+}
+
+function startMetronome(){
+  
 }
 
 class Circle{

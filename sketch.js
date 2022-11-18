@@ -1,6 +1,11 @@
 var hit;
 var font;
 
+/* 
+bpm = track bpm
+leftR = left rhythm
+rightR = right rhythm
+*/
 var bpm;
 var leftR;
 var rightR;

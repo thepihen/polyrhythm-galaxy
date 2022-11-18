@@ -1,5 +1,10 @@
 var hit;
 var font;
+
+var bpm;
+var leftR;
+var rightR;
+
 function preload(){
   //everything that needs to be loaded before the sketch
   //starts needs to be put here

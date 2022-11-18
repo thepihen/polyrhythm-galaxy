@@ -45,8 +45,8 @@ function setup() {
   leftR = 4;
   rightR = 3;
   interval = 60 / bpm;
-  intervalL = (1 / 4) * leftR * 60 / bpm;
-  intervalR = (1 / 4) * rightR * 60 / bpm;
+  intervalL = 4 * 1/leftR * 60 / bpm;
+  intervalR = 4 * 1/rightR * 60 / bpm;
   startMetronome(bpm)
 }
 
@@ -159,6 +159,7 @@ function metroSound(){
   met2.play();
   metroFlag += 1;
 }
+
 class Circle{
   /*
   params:

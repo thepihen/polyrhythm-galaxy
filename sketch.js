@@ -1,38 +1,66 @@
-var hit;
-var font;
-var met1;
-var met2;
+//p5.js sketch file
+//https://p5js.org/reference/
+//https://p5js.org/reference/#/libraries/p5.sound
+
+/*
+Variables we will use in preload()
+*/
+var hit; //hit.wav (sound played when you successfully hit a note)
+var font; //font used for text
+var met1; //higher pitched hit of metronome
+var met2; //lower pitched hit of metronome
+
 /* 
+Variables related to bpm and polyrhythms
 bpm = track bpm
-leftR = left rhythm
-rightR = right rhythm
+leftR = left side rhythm
+rightR = right side rhythm
+interval = time distance between beats [in seconds]
 */
 var bpm;
 var leftR;
 var rightR;
 var interval;
+/*
+preload: function that gets automatically by p5js before loading the sketch.
+->Everything that needs to be available when the sketch starts needs to be loaded here
+(e.g. fonts, sounds,...)
+*/
 function preload(){
-  //everything that needs to be loaded before the sketch
-  //starts needs to be put here
   //soundFormats('wav');
   hit = loadSound('assets/hit.wav');
   met1 = loadSound('assets/met1.wav');
   met2 = loadSound('assets/met2.wav');
 }
-//started: bool
-//true if we're in the game
-//false if we're in the menu
-var started;
+
+
+var started; //bool: T if we're in the game, F is we're in the menu
+
+/*
+Variables needed to draw the visual guide; might need a better solution for this in
+the future if we want more vertical lines (more rhythms)
+*/
 var xLine1;
 var xLine2;
 var yLineH;
-//arrays containing circles for left and right side
+
+//arrays containing circles ("rhythm hits / beats") for left and right side
+//it would be better to use a queue to manage these
 var leftCircles = [];
 var rightCircles = [];
 
+/*
+setup(): function that gets called by p5.js at startup. Initialise variables 
+needed in the sketch here; load audio files, fonts, etc, in preload() instead
+*/
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  getAudioContext().suspend();
+  /*
+  see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
+  There's no need for the audio context to be running as soon as the page is loaded
+  */
+  getAudioContext().suspend(); 
+
   //initialise guide coordinates
   xLine1 = width / 2 - width / 12;
   xLine2 = width / 2 + width / 12;
@@ -40,23 +68,30 @@ function setup() {
   started = false;
   font = textFont('Roboto', 30)
 
-  bpm = 60;
-  // 4 vs 3
+  bpm = 120;
+  // 4 vs 3 polyrhythm for testing, ideally we will get input from user
   leftR = 4;
   rightR = 3;
+
   interval = 60 / bpm;
+  //time between notes on the L(eft) side and R(ight) side
   intervalL = 4 * 1/leftR * 60 / bpm;
   intervalR = 4 * 1/rightR * 60 / bpm;
-  startMetronome(bpm)
 }
 
-var exampleCircle;
-var guideRadius = 30;
-var counter = 0;
-var rhythm_rad = 20;
+
+var guideRadius = 30; //radius of guide circles
+var counter = 0; //not used now, might be used to count frames IN GAME
+var rhythm_rad = 20; //radius of rhythm circles
+
+/*
+draw(): p5js function that gets automatically called once per frame
+(by default 60 frames per second) 
+*/
 function draw(){
   background(12);
   if(started){
+    //we're in the game, draw the reference and update and show the cirlces
     drawReference();
     leftCircles.forEach((item, i) => {
       leftCircles[i].update()
@@ -67,6 +102,7 @@ function draw(){
       rightCircles[i].show()
     });
   }else{
+    //we're in the menu
     fill(10,240,10)
     rectMode(CENTER)
     rect(width/2,height/2,200,200);
@@ -76,18 +112,25 @@ function draw(){
     text("Click\nto start :)", width/2,height/2);
   }
 }
+
+var v = yLineH * bpm/60^2; //speed of circles in [pixel/frame]
 /*
-side:
-r adds one circle right side
-l adds one circle left side
+addCircle(side): adds one beat circle to the specified side
+$side can have to values:
+r: add one circle right side
+l: add one circle left side
 */
 function addCircle(side){
+  //Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
   if(side=='r'){
-    rightCircles.push(new Circle([xLine2, 0, rhythm_rad, 1]))
+    rightCircles.push(new Circle([xLine2, 0, rhythm_rad, v]))
   }else if(side=='l'){
-    leftCircles.push(new Circle([xLine1, 0, rhythm_rad, 1]))
+    leftCircles.push(new Circle([xLine1, 0, rhythm_rad, v]))
   }
 }
+/* 
+drawReference(): draws the guide
+*/
 function drawReference(){
   stroke(240);
   strokeWeight(1);
@@ -100,6 +143,11 @@ function drawReference(){
   ellipse(xLine1,yLineH,guideRadius,guideRadius);
   ellipse(xLine2,yLineH,guideRadius,guideRadius);
 }
+/* 
+windowResized(): p5js function that gets called every time the window
+gets resized; recalculate here all the variables that contain coordinates 
+in their formulas
+*/
 function windowResized() {
   removeElements();
   resizeCanvas(windowWidth, windowHeight);
@@ -107,12 +155,26 @@ function windowResized() {
   xLine2 = width/2 + width/12;
   yLineH = 3/4 * height;
 }
+/* 
+mousePressed(): p5js function that gets called every time a mouse button
+is pressed / the touchscreen is touched.
+We start the AudioContext here with userStartAudio()
+*/
 function mousePressed(){
   userStartAudio();
   started = true;
+  startMetronome(bpm)
 }
-//points will need to be assigned based on how much the circle
-//was overlapping with the reference
+
+/* 
+keyPressed(): p5js function that gets called every time a key is pressed.
+Use key to get the specific key.
+We see here for now if a beat circle is overlapping with the reference;
+points will later need to be assigned based on how much the circle
+was overlapping with the reference.
+The circle will also need to be deleted
+*/
+
 function keyPressed(){
   //check if any of the active circles is overlapping with the
   //reference
@@ -144,22 +206,36 @@ function keyPressed(){
   }
 }
 
+/*
+startMetronome(): starts a metronome for reference. Calls metroSound()
+to make sound*/
 var metroFlag = 0;
 function startMetronome(){
   setInterval(metroSound, interval * 1000 )
 }
 
+/*
+metroSound(): produces the correct metronome sound based on the beat
+*/
 function metroSound(){
-  if(metroFlag == 4){
+  if(metroFlag == 4) {
     addCircle('l')
     addCircle('r')
     setInterval(addCircle, intervalL * 1000, 'l');
     setInterval(addCircle, intervalR * 1000, 'r');
   }
-  met2.play();
+  if (metroFlag % 4==0) {
+    met1.play()
+  } else {
+    met2.play();
+  }
   metroFlag += 1;
 }
 
+/* 
+Circle(): class representing a beat circle.
+Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
+*/
 class Circle{
   /*
   params:
@@ -173,9 +249,15 @@ class Circle{
     this.speed = params[3]
     this.flag = 1;
   }
+  /*
+  update(): updates circle position
+  */
   update(){
     this.y = this.y + this.speed;
   }
+  /*
+  show(): draws circle on the canvas
+  */
   show(){
     if(this.flag){
       fill(80,200,20);

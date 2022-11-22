@@ -3,6 +3,14 @@
 //https://p5js.org/reference/#/libraries/p5.sound
 
 /*
+TODO:
+are circles deleted when they're no longer in game?
+Should we implement a queue for managing circles?
+
+Stop sketch if window isn't focused (use focused())
+*/
+
+/*
 Variables we will use in preload()
 */
 var hit; //hit.wav (sound played when you successfully hit a note)
@@ -21,6 +29,9 @@ var bpm;
 var leftR;
 var rightR;
 var interval;
+
+//frameRate (need this to use it outside of )
+var frate;
 /*
 preload: function that gets automatically by p5js before loading the sketch.
 ->Everything that needs to be available when the sketch starts needs to be loaded here
@@ -77,6 +88,8 @@ function setup() {
   //time between notes on the L(eft) side and R(ight) side
   intervalL = 4 * 1/leftR * 60 / bpm;
   intervalR = 4 * 1/rightR * 60 / bpm;
+
+  frameRate(60)
 }
 
 
@@ -113,7 +126,7 @@ function draw(){
   }
 }
 
-var v = yLineH * bpm/60^2; //speed of circles in [pixel/frame]
+var v; //speed of circles in [pixel/frame]
 /*
 addCircle(side): adds one beat circle to the specified side
 $side can have to values:
@@ -121,6 +134,7 @@ r: add one circle right side
 l: add one circle left side
 */
 function addCircle(side){
+  v = yLineH / (60 / bpm * 8 * frameRate()); //speed necessary to reach guide after 8 beats
   //Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
   if(side=='r'){
     rightCircles.push(new Circle([xLine2, 0, rhythm_rad, v]))
@@ -154,6 +168,18 @@ function windowResized() {
   xLine1 = width/2 - width/12;
   xLine2 = width/2 + width/12;
   yLineH = 3/4 * height;
+  v = yLineH / (60 / bpm * 8 * frameRate());
+  //recenter circles on the lines
+  leftCircles.forEach((item, i) => {
+    let c = leftCircles[i];
+    c.setNewCoords(xLine1, map(c.y,0,c.windowH,0,windowHeight), windowWidth, windowHeight)
+    c.updateVelocity(v)
+  });
+  rightCircles.forEach((item, i) => {
+    let c = rightCircles[i];
+    c.setNewCoords(xLine2, map(c.y, 0, c.windowH, 0, windowHeight), windowWidth, windowHeight)
+    c.updateVelocity(v)
+  });
 }
 /* 
 mousePressed(): p5js function that gets called every time a mouse button
@@ -161,9 +187,11 @@ is pressed / the touchscreen is touched.
 We start the AudioContext here with userStartAudio()
 */
 function mousePressed(){
+  if(!started){
   userStartAudio();
   started = true;
   startMetronome(bpm)
+  }
 }
 
 /* 
@@ -248,7 +276,30 @@ class Circle{
     //this.color = params[3]
     this.speed = params[3]
     this.flag = 1;
+
+    this.windowW = windowWidth;
+    this.windowH = windowHeight;
   }
+
+  /*
+  setNewCoords(): allows user to set new coordinates for the circle.
+  Useful for recentering circles when the window gets resized
+  
+  newX,newY: new coordinates
+  windowW, windowH: new windowWidth and windowHeight (which may be equal to
+  the old ones if the window didn't get resized when this got called)
+  */
+  setNewCoords(newX,newY,windoW,windowH){
+    this.x = newX
+    this.y = newY
+    this.windowW = windowWidth;
+    this.windowH = windowHeight;
+  }
+  
+  updateVelocity(newV){
+    this.speed = newV;
+  }
+
   /*
   update(): updates circle position
   */

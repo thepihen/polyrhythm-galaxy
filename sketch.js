@@ -3,6 +3,12 @@
 //https://p5js.org/reference/#/libraries/p5.sound
 
 /*
+IMPORTANT:
+this version has a major bug:
+we assume the frameRate is a fixed 60 fps, but it isn't.
+That means the speed of the beats is different one from another.
+DON'T USE THIS FILE UNTIL IT IS FIXED
+
 TODO:
 are circles deleted when they're no longer in game?
 Should we implement a queue for managing circles?

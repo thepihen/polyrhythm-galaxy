@@ -8,6 +8,7 @@ are circles deleted when they're no longer in game?
 Should we implement a queue for managing circles?
 
 Stop sketch if window isn't focused (use focused())
+Add bonuses for streaks
 */
 
 /*
@@ -216,6 +217,7 @@ function keyPressed(){
         //delete circle(s)
         //for now no deletion happens, it just becomes hidden
         c.flag = 0;
+        leftCircles.splice(0, 1)
       }
     });
   }
@@ -228,7 +230,8 @@ function keyPressed(){
         //calculate the points
         //delete circle(s)
         //for now no deletion happens, it just becomes hidden
-        c.flag = 0;
+        c.flag = 0; //this is now useless
+        rightCircles.splice(0, 1)
       }
     });
   }
@@ -279,6 +282,8 @@ class Circle{
 
     this.windowW = windowWidth;
     this.windowH = windowHeight;
+    //side: 0 left,1 right
+    this.side = 0 + (this.x == xLine2);
   }
 
   /*
@@ -305,6 +310,18 @@ class Circle{
   */
   update(){
     this.y = this.y + this.speed;
+    //check here if user missed it
+    if(this.y-this.radius>windowHeight){
+      //delete circles from array
+      //important assumption: 
+      //the circle that reaches the bottom always has position 1
+      //in the array
+      if(this.side == 0){
+        leftCircles.splice(0, 1)
+      }else if(this.side==1){
+        rightCircles.splice(0,1)
+      }
+    }
   }
   /*
   show(): draws circle on the canvas

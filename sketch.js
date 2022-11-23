@@ -110,6 +110,7 @@ draw(): p5js function that gets automatically called once per frame
 */
 function draw(){
   background(12);
+  console.log(frameRate())
   if(started){
     //we're in the game, draw the reference and update and show the cirlces
     drawReference();
@@ -199,6 +200,10 @@ function mousePressed(){
   started = true;
   startMetronome(bpm)
   }
+  addCircle('l')
+  addCircle('r')
+  intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
+  intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
 }
 
 /* 
@@ -256,10 +261,12 @@ metroSound(): produces the correct metronome sound based on the beat
 */
 function metroSound(){
   if(metroFlag == 4) {
+    /*
     addCircle('l')
     addCircle('r')
     setInterval(addCircle, intervalL * 1000, 'l');
     setInterval(addCircle, intervalR * 1000, 'r');
+    */
   }
   if (metroFlag % 4==0) {
     met1.play()
@@ -315,6 +322,7 @@ class Circle{
   update(): updates circle position
   */
   update(){
+    this.speed = yLineH / (60 / bpm * 8 * frameRate());
     this.y = this.y + this.speed;
     //check here if user missed it
     if(this.y-this.radius>windowHeight){

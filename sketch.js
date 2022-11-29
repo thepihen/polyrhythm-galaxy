@@ -1,4 +1,4 @@
-//p5.js sketch file
+//p5.js sketch file (with p5 in instance mode we can rename this file)
 //https://p5js.org/reference/
 //https://p5js.org/reference/#/libraries/p5.sound
 
@@ -16,6 +16,10 @@ Should we implement a queue for managing circles?
 Stop sketch if window isn't focused (use focused())
 Add bonuses for streaks
 */
+//const Synth = new Tone.Synth().toDestination()
+
+//use p5 in instance mode
+p5_instance = function(p5c){
 
 /*
 Variables we will use in preload()
@@ -31,11 +35,15 @@ bpm = track bpm
 leftR = left side rhythm
 rightR = right side rhythm
 interval = time distance between beats [in seconds]
+errorL = error in seconds committed each bar, left side
+errorR = same error but for the right side
 */
 var bpm;
 var leftR;
 var rightR;
 var interval;
+var errorL
+var errorR
 
 //frameRate (need this to use it outside of )
 var frate;
@@ -44,11 +52,12 @@ preload: function that gets automatically by p5js before loading the sketch.
 ->Everything that needs to be available when the sketch starts needs to be loaded here
 (e.g. fonts, sounds,...)
 */
-function preload(){
+p5c.preload = function(){
   //soundFormats('wav');
-  hit = loadSound('assets/hit.wav');
-  met1 = loadSound('assets/met1.wav');
-  met2 = loadSound('assets/met2.wav');
+  hit = p5c.loadSound('assets/hit.wav');
+  met1 = p5c.loadSound('assets/met1.wav');
+  met2 = p5c.loadSound('assets/met2.wav');
+  //font = loadFont("Roboto")
 }
 
 
@@ -71,20 +80,22 @@ var rightCircles = [];
 setup(): function that gets called by p5.js at startup. Initialise variables 
 needed in the sketch here; load audio files, fonts, etc, in preload() instead
 */
-function setup() {
-  createCanvas(windowWidth, windowHeight);
+  p5c.setup = function () {
+  p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
   /*
   see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
   There's no need for the audio context to be running as soon as the page is loaded
   */
-  getAudioContext().suspend(); 
+  p5c.getAudioContext().suspend(); 
+  p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
+  //in a church hoping for a miracle
 
   //initialise guide coordinates
-  xLine1 = width / 2 - width / 12;
-  xLine2 = width / 2 + width / 12;
-  yLineH = 3 / 4 * height;
+  xLine1 = p5c.width / 2 - p5c.width / 12;
+  xLine2 = p5c.width / 2 + p5c.width / 12;
+  yLineH = 3 / 4 * p5c.height;
   started = false;
-  font = textFont('Roboto', 30)
+  font = p5c.textFont('Roboto', 30)
 
   bpm = 120;
   // 4 vs 3 polyrhythm for testing, ideally we will get input from user
@@ -95,8 +106,9 @@ function setup() {
   //time between notes on the L(eft) side and R(ight) side
   intervalL = 4 * 1/leftR * 60 / bpm;
   intervalR = 4 * 1/rightR * 60 / bpm;
-
-  frameRate(60)
+  
+  errorL = 4000-leftR*intervalL*1000
+  errorR = 4000-rightR*intervalR*1000
 }
 
 
@@ -108,9 +120,9 @@ var rhythm_rad = 20; //radius of rhythm circles
 draw(): p5js function that gets automatically called once per frame
 (by default 60 frames per second) 
 */
-function draw(){
-  background(12);
-  console.log(frameRate())
+  p5c.draw = function(){
+  p5c.background(12);
+  //console.log(frameRate())
   if(started){
     //we're in the game, draw the reference and update and show the cirlces
     drawReference();
@@ -124,13 +136,13 @@ function draw(){
     });
   }else{
     //we're in the menu
-    fill(10,240,10)
-    rectMode(CENTER)
-    rect(width/2,height/2,200,200);
-    fill(240)
-    textFont(font)
-    textAlign(CENTER)
-    text("Click\nto start :)", width/2,height/2);
+    p5c.fill(10,240,10)
+    p5c.rectMode(p5c.CENTER)
+    p5c.rect(p5c.width/2,p5c.height/2,200,200);
+    p5c.fill(240)
+    p5c.textFont(font)
+    p5c.textAlign(p5c.CENTER)
+    p5c.text("Click\nto start :)", p5c.width/2,p5c.height/2);
   }
 }
 
@@ -141,8 +153,8 @@ $side can have to values:
 r: add one circle right side
 l: add one circle left side
 */
-function addCircle(side){
-  v = yLineH / (60 / bpm * 8 * frameRate()); //speed necessary to reach guide after 8 beats
+  addCircle = function(side){
+  v = yLineH / (60 / bpm * 8 * p5c.frameRate()); //speed necessary to reach guide after 8 beats
   //Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
   if(side=='r'){
     rightCircles.push(new Circle([xLine2, 0, rhythm_rad, v]))
@@ -153,39 +165,39 @@ function addCircle(side){
 /* 
 drawReference(): draws the guide
 */
-function drawReference(){
-  stroke(240);
-  strokeWeight(1);
-  line(xLine1, 0, xLine1,height);
-  line(xLine2, 0, xLine2,height);
-  line(0,yLineH,width,yLineH)
-  fill(12);
-  strokeWeight(4);
-  stroke(240,240,10)
-  ellipse(xLine1,yLineH,guideRadius,guideRadius);
-  ellipse(xLine2,yLineH,guideRadius,guideRadius);
+drawReference = function(){
+  p5c.stroke(240);
+  p5c.strokeWeight(1);
+  p5c.line(xLine1, 0, xLine1,p5c.height);
+  p5c.line(xLine2, 0, xLine2,p5c.height);
+  p5c.line(0,yLineH,p5c.width,yLineH)
+  p5c.fill(12);
+  p5c.strokeWeight(4);
+  p5c.stroke(240,240,10)
+  p5c.ellipse(xLine1,yLineH,guideRadius,guideRadius);
+  p5c.ellipse(xLine2,yLineH,guideRadius,guideRadius);
 }
 /* 
 windowResized(): p5js function that gets called every time the window
 gets resized; recalculate here all the variables that contain coordinates 
 in their formulas
 */
-function windowResized() {
-  removeElements();
-  resizeCanvas(windowWidth, windowHeight);
-  xLine1 = width/2 - width/12;
-  xLine2 = width/2 + width/12;
-  yLineH = 3/4 * height;
-  v = yLineH / (60 / bpm * 8 * frameRate());
+  p5c.windowResized = function() {
+  p5c.removeElements();
+  p5c.resizeCanvas(p5c.windowWidth, p5c.windowHeight);
+  xLine1 = p5c.width/2 - p5c.width/12;
+  xLine2 = p5c.width/2 + p5c.width/12;
+  yLineH = 3/4 * p5c.height;
+  v = yLineH / (60 / bpm * 8 * p5c.frameRate());
   //recenter circles on the lines
   leftCircles.forEach((item, i) => {
     let c = leftCircles[i];
-    c.setNewCoords(xLine1, map(c.y,0,c.windowH,0,windowHeight), windowWidth, windowHeight)
+    c.setNewCoords(xLine1, p5c.map(c.y,0,c.windowH,0,p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
     c.updateVelocity(v)
   });
   rightCircles.forEach((item, i) => {
     let c = rightCircles[i];
-    c.setNewCoords(xLine2, map(c.y, 0, c.windowH, 0, windowHeight), windowWidth, windowHeight)
+    c.setNewCoords(xLine2, p5c.map(c.y, 0, c.windowH, 0, p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
     c.updateVelocity(v)
   });
 }
@@ -194,9 +206,9 @@ mousePressed(): p5js function that gets called every time a mouse button
 is pressed / the touchscreen is touched.
 We start the AudioContext here with userStartAudio()
 */
-function mousePressed(){
+p5c.mousePressed = function(){
   if(!started){
-  userStartAudio();
+  p5c.userStartAudio();
   started = true;
   startMetronome(bpm)
   }
@@ -215,7 +227,8 @@ was overlapping with the reference.
 The circle will also need to be deleted
 */
 
-function keyPressed(){
+ p5c.keyPressed = function(){
+  let key = p5c.key;
   //check if any of the active circles is overlapping with the
   //reference
   if (key=='s' || key=='S'){
@@ -252,14 +265,14 @@ function keyPressed(){
 startMetronome(): starts a metronome for reference. Calls metroSound()
 to make sound*/
 var metroFlag = 0;
-function startMetronome(){
+startMetronome = function(){
   setInterval(metroSound, interval * 1000 )
 }
 
 /*
 metroSound(): produces the correct metronome sound based on the beat
 */
-function metroSound(){
+metroSound = function(){
   if(metroFlag == 4) {
     /*
     addCircle('l')
@@ -275,77 +288,79 @@ function metroSound(){
   }
   metroFlag += 1;
 }
-
-/* 
-Circle(): class representing a beat circle.
-Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
-*/
-class Circle{
-  /*
-  params:
-  x,y,radius?, color, speed,...
+  /* 
+  Circle(): class representing a beat circle.
+  Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
   */
-  constructor(params){
-    this.x = params[0]
-    this.y = params[1]
-    this.radius = params[2]
-    //this.color = params[3]
-    this.speed = params[3]
-    this.flag = 1;
+  class Circle {
+    /*
+    params:
+    x,y,radius?, color, speed,...
+    */
+    constructor(params) {
+      this.x = params[0]
+      this.y = params[1]
+      this.radius = params[2]
+      //this.color = params[3]
+      this.speed = params[3]
+      this.flag = 1;
 
-    this.windowW = windowWidth;
-    this.windowH = windowHeight;
-    //side: 0 left,1 right
-    this.side = 0 + (this.x == xLine2);
-  }
+      this.windowW = p5c.windowWidth;
+      this.windowH = p5c.windowHeight;
+      //side: 0 left,1 right
+      this.side = 0 + (this.x == xLine2);
+    }
 
-  /*
-  setNewCoords(): allows user to set new coordinates for the circle.
-  Useful for recentering circles when the window gets resized
-  
-  newX,newY: new coordinates
-  windowW, windowH: new windowWidth and windowHeight (which may be equal to
-  the old ones if the window didn't get resized when this got called)
-  */
-  setNewCoords(newX,newY,windoW,windowH){
-    this.x = newX
-    this.y = newY
-    this.windowW = windowWidth;
-    this.windowH = windowHeight;
-  }
-  
-  updateVelocity(newV){
-    this.speed = newV;
-  }
+    /*
+    setNewCoords(): allows user to set new coordinates for the circle.
+    Useful for recentering circles when the window gets resized
+    
+    newX,newY: new coordinates
+    windowW, windowH: new windowWidth and windowHeight (which may be equal to
+    the old ones if the window didn't get resized when this got called)
+    */
+    setNewCoords(newX, newY, windoW, windowH) {
+      this.x = newX
+      this.y = newY
+      this.windowW = p5c.windowWidth;
+      this.windowH = p5c.windowHeight;
+    }
 
-  /*
-  update(): updates circle position
-  */
-  update(){
-    this.speed = yLineH / (60 / bpm * 8 * frameRate());
-    this.y = this.y + this.speed;
-    //check here if user missed it
-    if(this.y-this.radius>windowHeight){
-      //delete circles from array
-      //important assumption: 
-      //the circle that reaches the bottom always has position 1
-      //in the array
-      if(this.side == 0){
-        leftCircles.splice(0, 1)
-      }else if(this.side==1){
-        rightCircles.splice(0,1)
+    updateVelocity(newV) {
+      this.speed = newV;
+    }
+
+    /*
+    update(): updates circle position
+    */
+    update() {
+      this.speed = yLineH / (60 / bpm * 8 * p5c.frameRate());
+      this.y = this.y + this.speed;
+      //check here if user missed it
+      if (this.y - this.radius > p5c.windowHeight) {
+        //delete circles from array
+        //important assumption: 
+        //the circle that reaches the bottom always has position 1
+        //in the array
+        if (this.side == 0) {
+          leftCircles.splice(0, 1)
+        } else if (this.side == 1) {
+          rightCircles.splice(0, 1)
+        }
+      }
+    }
+    /*
+    show(): draws circle on the canvas
+    */
+    show() {
+      if (this.flag) {
+        p5c.fill(80, 200, 20);
+        p5c.strokeWeight(1);
+        p5c.stroke(12)
+        p5c.ellipse(this.x, this.y, this.radius, this.radius);
       }
     }
   }
-  /*
-  show(): draws circle on the canvas
-  */
-  show(){
-    if(this.flag){
-      fill(80,200,20);
-      strokeWeight(1);
-      stroke(12)
-      ellipse(this.x,this.y,this.radius,this.radius);
-    }
-  }
 }
+
+myp5 = new p5(p5_instance)

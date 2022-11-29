@@ -18,6 +18,21 @@ Add bonuses for streaks
 */
 //const Synth = new Tone.Synth().toDestination()
 
+
+/*
+Tone stuff
+*/
+/*
+Tone.Transport.bpm.value = 80;
+// start/stop the oscillator every quarter note
+Tone.Transport.scheduleRepeat(time => {
+  osc.start(time).stop(time + 0.1);
+}, "4n");
+Tone.Transport.start();
+// ramp the bpm to 120 over 10 seconds
+Tone.Transport.bpm.rampTo(120, 10);
+*/
+
 //use p5 in instance mode
 p5_instance = function(p5c){
 
@@ -42,8 +57,6 @@ var bpm;
 var leftR;
 var rightR;
 var interval;
-var errorL
-var errorR
 
 //frameRate (need this to use it outside of )
 var frate;
@@ -102,13 +115,12 @@ needed in the sketch here; load audio files, fonts, etc, in preload() instead
   leftR = 4;
   rightR = 3;
 
+  Tone.Transport.bpm.value = bpm;
+
   interval = 60 / bpm;
   //time between notes on the L(eft) side and R(ight) side
   intervalL = 4 * 1/leftR * 60 / bpm;
   intervalR = 4 * 1/rightR * 60 / bpm;
-  
-  errorL = 4000-leftR*intervalL*1000
-  errorR = 4000-rightR*intervalR*1000
 }
 
 
@@ -209,15 +221,25 @@ We start the AudioContext here with userStartAudio()
 p5c.mousePressed = function(){
   if(!started){
   p5c.userStartAudio();
+  Tone.start();
   started = true;
+  Tone.Transport.start();
+  startToneLoops(leftR,rightR);
   startMetronome(bpm)
   }
-  addCircle('l')
-  addCircle('r')
-  intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
-  intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
+  //addCircle('l')
+  //addCircle('r')
+  //intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
+  //intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
 }
-
+function startToneLoops(intL, intR){
+  Tone.Transport.scheduleRepeat(time => {
+    addCircle('l')
+  }, intL+"n"); 
+  Tone.Transport.scheduleRepeat(time => {
+    addCircle('r')
+  }, intR+"n");
+}
 /* 
 keyPressed(): p5js function that gets called every time a key is pressed.
 Use key to get the specific key.
@@ -266,7 +288,9 @@ startMetronome(): starts a metronome for reference. Calls metroSound()
 to make sound*/
 var metroFlag = 0;
 startMetronome = function(){
-  setInterval(metroSound, interval * 1000 )
+  Tone.Transport.scheduleRepeat(time => {
+    metroSound()
+  }, "4n");
 }
 
 /*

@@ -33,6 +33,12 @@ Tone.Transport.start();
 Tone.Transport.bpm.rampTo(120, 10);
 */
 
+//needed until we find a better way to track document focus changes
+//(see bottom of this file)
+//this just tracks the state
+var pageFoc = true;
+
+
 //use p5 in instance mode
 p5_instance = function(p5c){
 
@@ -138,14 +144,16 @@ draw(): p5js function that gets automatically called once per frame
   if(started){
     //we're in the game, draw the reference and update and show the cirlces
     drawReference();
-    leftCircles.forEach((item, i) => {
-      leftCircles[i].update()
-      leftCircles[i].show()
-    });
-    rightCircles.forEach((item, i) => {
-      rightCircles[i].update()
-      rightCircles[i].show()
-    });
+    if (pageFoc){
+      leftCircles.forEach((item, i) => {
+        leftCircles[i].update()
+        leftCircles[i].show()
+      });
+      rightCircles.forEach((item, i) => {
+        rightCircles[i].update()
+        rightCircles[i].show()
+      });
+    }
   }else{
     //we're in the menu
     p5c.fill(10,240,10)
@@ -261,9 +269,8 @@ The circle will also need to be deleted
         hit.play();
         //calculate the points
         //delete circle(s)
-        //for now no deletion happens, it just becomes hidden
-        c.flag = 0;
-        leftCircles.splice(0, 1)
+
+        leftCircles.splice(i, 1)
       }
     });
   }
@@ -275,9 +282,8 @@ The circle will also need to be deleted
         hit.play();
         //calculate the points
         //delete circle(s)
-        //for now no deletion happens, it just becomes hidden
-        c.flag = 0; //this is now useless
-        rightCircles.splice(0, 1)
+
+        rightCircles.splice(i, 1)
       }
     });
   }
@@ -388,3 +394,15 @@ metroSound = function(){
 }
 
 myp5 = new p5(p5_instance)
+
+document.onblur = function(){
+  //pause audio and do not update circles
+  Tone.Transport.pause();
+  pageFoc = false;
+  //pause the game
+}
+document.onfocus = function () {
+  //resume audio and update circles
+  Tone.Transport.start();
+  pageFoc = true;
+}

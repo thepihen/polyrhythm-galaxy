@@ -339,6 +339,7 @@ metroSound = function(){
       this.windowH = p5c.windowHeight;
       //side: 0 left,1 right
       this.side = 0 + (this.x == xLine2);
+      this.fillColor = p5c.color(50+200*(1-this.side), 10, 50+200*(this.side))
     }
 
     /*
@@ -384,7 +385,7 @@ metroSound = function(){
     */
     show() {
       if (this.flag) {
-        p5c.fill(80, 200, 20);
+        p5c.fill(this.fillColor);
         p5c.strokeWeight(1);
         p5c.stroke(12)
         p5c.ellipse(this.x, this.y, this.radius, this.radius);

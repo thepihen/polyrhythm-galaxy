@@ -10,12 +10,11 @@ That means the speed of the beats is different one from another.
 DON'T USE THIS FILE UNTIL IT IS FIXED
 
 TODO:
-are circles deleted when they're no longer in game?
 Should we implement a queue for managing circles?
-
-Stop sketch if window isn't focused (use focused())
+Use a non-changing array for circles, just reset them
 Add bonuses for streaks
 */
+
 //const Synth = new Tone.Synth().toDestination()
 
 
@@ -46,6 +45,7 @@ p5_instance = function(p5c){
 Variables we will use in preload()
 */
 var hit; //hit.wav (sound played when you successfully hit a note)
+var miss; //miss.wav (sound played when you miss a note)
 var font; //font used for text
 var met1; //higher pitched hit of metronome
 var met2; //lower pitched hit of metronome
@@ -74,6 +74,7 @@ preload: function that gets automatically by p5js before loading the sketch.
 p5c.preload = function(){
   //soundFormats('wav');
   hit = p5c.loadSound('assets/hit.wav');
+  miss = p5c.loadSound('assets/miss.wav')
   met1 = p5c.loadSound('assets/met1.wav');
   met2 = p5c.loadSound('assets/met2.wav');
   //font = loadFont("Roboto")
@@ -240,6 +241,7 @@ p5c.mousePressed = function(){
   //intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
   //intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
 }
+
 function startToneLoops(intL, intR){
   Tone.Transport.scheduleRepeat(time => {
     addCircle('l')
@@ -262,30 +264,41 @@ The circle will also need to be deleted
   //check if any of the active circles is overlapping with the
   //reference
   if (key=='s' || key=='S'){
+    let hitL = false;
     leftCircles.forEach((item, i) => {
       let c = leftCircles[i];
       if (Math.abs(c.y - yLineH) <= guideRadius) {
+        hitL = true;
         //play sound
         hit.play();
-        //calculate the points
         //delete circle(s)
-
         leftCircles.splice(i, 1)
+        //calculate the points
+        
       }
     });
+    if (!hitL) {
+      miss.play();
+      //point penalty / error count
+    }
   }
   if (key == 'k' || key == 'K') {
+    let hitR = false;
     rightCircles.forEach((item, i) => {
       let c = rightCircles[i];
       if (Math.abs(c.y - yLineH) <= guideRadius) {
+        hitR = true;
         //play sound
         hit.play();
-        //calculate the points
         //delete circle(s)
-
         rightCircles.splice(i, 1)
+        //calculate the points
       }
     });
+    if(!hitR){
+      miss.play();
+      //point penalty / error count
+    }
   }
 }
 

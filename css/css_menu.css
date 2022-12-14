@@ -1,0 +1,151 @@
+html {
+    position: relative;
+    min-height: 100%;
+    background-color: black;
+  }
+  
+  body {
+    /* Margin bottom by footer height */
+    margin-bottom: 60px;
+    background-color: black
+  }
+  .container1 {
+    position:absolute;
+    width:100%;
+    
+    height:100%;
+    
+    
+  }
+  
+  .container1 .titolo {
+    top: 10%;
+    left:35%;
+    position:absolute;
+    text-align: center;
+    color:black;
+    font-family: 'Times New Roman', Times, serif;
+    text-shadow: -1px 0 rgb(7, 231, 37), 0 1px rgb(7, 231, 37), 1px 0 rgb(7, 231, 37), 0 -1px rgb(7, 231, 37);
+  }
+  
+  .menu {
+    position: absolute;
+    text-align: center; /*contenuto centrato*/
+    top: 30%;
+    width:100%;
+    height: 40%;
+
+  }
+  .menu .section {
+    width: 21.3%;
+    display: inline-block; /*questi div saranno posti uno a fianco all'altro*/
+    margin: 1.5%; /*un po di spazio tra i div*/
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(7, 231, 37);
+    height:60%
+  }
+  
+  
+  .menu .section .btn1 {
+    position:absolute;
+    text-align: center;
+    font-size: 17px;
+    background-color:rgb(7, 231, 37);
+    border: 3px solid rgb(7, 231, 37);
+    border-radius: 3px;
+    color: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-style: "color:#191919";
+    display: inline-block;
+    top:90%;
+    left:8%;
+    padding: 15px 27px; 
+  }
+  
+  .menu .section .btn1:hover {
+    background-color: rgb(142, 247, 94);
+    color: black;
+  }
+  
+  .menu .section .btn2 {
+    position:absolute;
+    text-align: center;
+    font-size: 17px;
+    background-color:rgb(7, 231, 37);
+    border: 3px solid rgb(7, 231, 37);
+    border-radius: 3px;
+    color: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-style: "color:#191919";
+    display: inline-block;
+    top:90%;
+    margin-left:-5%;
+    padding: 15px 27px;
+  
+   
+  }
+  
+  .menu .section .btn2:hover {
+    background-color: rgb(142, 247, 94);
+    color: black;
+  }
+
+  .menu .section .btn3 {
+    position:absolute;
+    text-align: center;
+    font-size: 17px;
+    background-color:rgb(7, 231, 37);
+    border: 3px solid rgb(7, 231, 37);
+    border-radius: 3px;
+    color: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-style: "color:#191919";
+    display: inline-block;
+    top:90%;
+    right:33.5%;
+    padding: 15px 27px;
+  
+   
+  }
+  
+  .menu .section .btn3:hover {
+    background-color: rgb(142, 247, 94);
+    color: black;
+  }
+
+  .menu .section .btn4 {
+    position:absolute;
+    text-align: center;
+    font-size: 17px;
+    background-color:rgb(7, 231, 37);
+    border: 3px solid rgb(7, 231, 37);
+    border-radius: 3px;
+    color: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-style: "color:#191919";
+    display: inline-block;
+    top:90%;
+    right: 9%;
+    padding: 15px 27px;
+  
+   
+  }
+  
+  .menu .section .btn4:hover {
+    background-color: rgb(142, 247, 94);
+    color: black;
+  }
+  
+  
+  
+  @media only screen and (max-width: 480px){
+    .modal-dialog{ width: 95% !important; }
+    .modal-content .modal-body{
+        padding: 60px 20px 40px !important;
+    }
+    
+  }
+  
+  
+  
+  

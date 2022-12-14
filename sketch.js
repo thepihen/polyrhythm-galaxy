@@ -9,9 +9,6 @@ Use a non-changing array for circles, just reset them
 Add bonuses for streaks
 */
 
-//const Synth = new Tone.Synth().toDestination()
-
-
 /*
 Tone stuff
 */
@@ -72,7 +69,7 @@ p5_instance = function (p5c) {
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
-    //font = loadFont("Roboto")
+    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
   }
 
 
@@ -89,14 +86,20 @@ p5_instance = function (p5c) {
   //arrays containing circles ("rhythm hits / beats") for left and right side
   //it would be better to use a queue to manage these
   //we set their lengt to 200
-  var leftCircles = new Array(200);
-  var rightCircles = new Array(200);
+  var circlesNumber = 50;
+  var leftCircles = new Array(circlesNumber);
+  var rightCircles = new Array(circlesNumber);
   var leftElem = 0;
   var rightElem = 0;
   var firstElemInGameL = 0;
   var firstElemInGameR = 0;
   var lastElemL = 0;
   var lastElemR = 0;
+
+  /*
+  Circle(): class representing a beat circle.
+  Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
+  */
   class Circle {
     /*
     params:
@@ -176,6 +179,7 @@ p5_instance = function (p5c) {
             j = j % leftCircles.length;
           }
           firstElemInGameL = j;
+          leftElem--;
         }
         else if (this.side == 1) {
           let j = firstElemInGameR;
@@ -184,6 +188,7 @@ p5_instance = function (p5c) {
             j = j % rightCircles.length;
           }
           firstElemInGameR = j;
+          rightElem--;
         }
       }
     }
@@ -228,9 +233,9 @@ p5_instance = function (p5c) {
     xLine2 = p5c.width / 2 + p5c.width / 12;
     yLineH = 3 / 4 * p5c.height;
     started = false;
-    font = p5c.textFont('Roboto', 30)
+    //font = p5c.textFont('Montserrat', 30)
 
-    bpm = 120;
+    bpm = 100;
     // 4 vs 3 polyrhythm for testing, ideally we will get input from user
     leftR = 4;
     rightR = 3;
@@ -265,6 +270,9 @@ p5_instance = function (p5c) {
 
     //console.log(frameRate())
     if (started) {
+      p5c.fill(240)
+      p5c.textFont(font)
+      p5c.textSize(30)
       //write a text in p5.js displaying firstElemnInGameL
       p5c.text(firstElemInGameL, 100, 100)
       //write a text in p5.js displaying firstElemInGameR
@@ -277,6 +285,15 @@ p5_instance = function (p5c) {
       //we're in the game, draw the reference and update and show the cirlces
       drawReference();
       if (pageFoc) {
+
+        //TODO: make a falling messages class
+        //The class should contain the message, the x and y coordinates, 
+        //the color, the size, and eventually the time it should be displayed for
+        p5c.fill(12)
+        p5c.stroke(20,100,240)
+        p5c.text(hitMessages[0], xLine1 + 20, yLineH + 50)
+        p5c.text(hitMessages[1], xLine2 - 20, yLineH + 50)
+
         let nL = firstElemInGameL + leftElem
         let nR = firstElemInGameR + rightElem
         let counterL = 0;
@@ -316,6 +333,7 @@ p5_instance = function (p5c) {
       p5c.fill(240)
       p5c.textFont(font)
       p5c.textAlign(p5c.CENTER)
+      p5c.textSize(35)
       p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
     }
   }
@@ -442,8 +460,9 @@ p5_instance = function (p5c) {
             //TODO calculate the points
             //add points to the score of the player proportionally to the
             //inverse of the distance between the circle and the reference yLineH
-            score = score + Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)));
-
+            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+            score = score + points
+            displayHitQuality(points, 0)
             //delete circle(s)
             leftCircles[k].toggle();
 
@@ -499,10 +518,11 @@ p5_instance = function (p5c) {
             //play sound
             hit.play();
             //TODO calculate the poin
-            score = score + Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)));
+            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+            score = score + points
+            displayHitQuality(points, 1)
             //delete circle(s)
             rightCircles[k].toggle();
-            ts
             if (k == firstElemInGameR) {
               //update firstElemInGameL by finding the next element in leftCircles
               //which is active (its flag is 1)
@@ -570,11 +590,45 @@ p5_instance = function (p5c) {
       }
       metroFlag += 1;
     }
-    /* 
-    Circle(): class representing a beat circle.
-    Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
-    */
+    var hitMessages = new Array(2);
+    hitMessages[0] = ""
+    hitMessages[1] = ""
 
+    displayHitQuality = function(points, side){
+      //prints a message on the side (side can be 0 or 1, indicating left or right side) 
+      //of the guide circle 
+      //to indicate how good a hit was ("OK", "GREAT", "AMAZING","PERFECT")
+      //depending on the points scored
+      let x = 0;
+      let y = 0;
+      if(side == 0){
+        x = xLine1;
+        y = yLineH;
+      }else{
+        x = xLine2;
+        y = yLineH;
+      }
+      let msg = "";
+      if(points == 100){
+        msg = "PERFECT";
+      }else if(points >= 75){
+        msg = "AMAZING";
+      }else if(points >= 50){
+        msg = "GREAT";
+      }else if(points >= 25){
+        msg = "GOOD"
+      }
+      else if(points >= 0){
+        msg = "OK";
+      }
+      if(msg != ""){
+        p5c.fill(240);
+        p5c.textFont(font)
+        p5c.textSize(30);
+        p5c.text(msg, x, y);
+      }
+        hitMessages[side] = msg;
+    }
   }
 
 myp5 = new p5(p5_instance)

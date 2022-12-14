@@ -262,29 +262,44 @@ p5_instance = function (p5c) {
   */
   p5c.draw = function () {
     p5c.background(12);
-    //write a text in p5.js displaying firstElemnInGameL
-    p5c.text(firstElemInGameL, 100, 100)
-    //write a text in p5.js displaying firstElemInGameR
-    p5c.text(firstElemInGameR, 100, 200)
-    //write a text in p5.js displaying "Score: " and the score
-    p5c.text("Score: " + score, 100, 300)
-    //write a text in p5.js displaying "Left elements: " and leftElem
-    p5c.text("Left elements: " + leftElem, 100, 400)
 
     //console.log(frameRate())
     if (started) {
+      //write a text in p5.js displaying firstElemnInGameL
+      p5c.text(firstElemInGameL, 100, 100)
+      //write a text in p5.js displaying firstElemInGameR
+      p5c.text(firstElemInGameR, 100, 200)
+      //write a text in p5.js displaying "Score: " and the score
+      p5c.text("Score: " + score, 100, 300)
+      //write a text in p5.js displaying "Left elements: " and leftElem
+      p5c.text("Left elements: " + leftElem, 150, 400)
+
       //we're in the game, draw the reference and update and show the cirlces
       drawReference();
       if (pageFoc) {
         let nL = firstElemInGameL + leftElem
         let nR = firstElemInGameR + rightElem
-        for (let i = firstElemInGameL; i < nL; i++) {
-          //TODO: solve an error: deleting for example element 1 implies
+        let counterL = 0;
+        let counterR = 0;
+        //TODO: solve an error: deleting for example element 1 implies
           //leftElem-- but firstElemInGameL is still 0
           //This means we're counting one less element than we should 
+
+        //TODO write a better fix
+        for (let i = firstElemInGameL; i < nL; i++) {
           if (leftCircles[i % leftCircles.length].flag == 0) {
-            nL++
+            counterL++;
           }
+        } 
+        for (let i = firstElemInGameR; i < nR; i++) {
+          if (rightCircles[i % rightCircles.length].flag == 0) {
+            counterR++;
+          }
+        }
+        nL = nL + counterL
+        nR = nR + counterR
+
+        for (let i = firstElemInGameL; i < nL; i++) {
           leftCircles[i % leftCircles.length].update();
           leftCircles[i % leftCircles.length].show();
         }
@@ -292,17 +307,18 @@ p5_instance = function (p5c) {
           rightCircles[i % rightCircles.length].update();
           rightCircles[i % rightCircles.length].show();
         }
-      } else {
-        //we're in the menu
-        p5c.fill(10, 240, 10)
-        p5c.rectMode(p5c.CENTER)
-        p5c.rect(p5c.width / 2, p5c.height / 2, 200, 200);
-        p5c.fill(240)
-        p5c.textFont(font)
-        p5c.textAlign(p5c.CENTER)
-        p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
-      }
+      } 
+    } else {
+      //we're in the menu
+      p5c.fill(10, 240, 10)
+      p5c.rectMode(p5c.CENTER)
+      p5c.rect(p5c.width / 2, p5c.height / 2, 200, 200);
+      p5c.fill(240)
+      p5c.textFont(font)
+      p5c.textAlign(p5c.CENTER)
+      p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
     }
+  }
 
     var v; //speed of circles in [pixel/frame]
     /*
@@ -560,7 +576,7 @@ p5_instance = function (p5c) {
     */
 
   }
-}
+
 myp5 = new p5(p5_instance)
 
 document.onblur = function () {

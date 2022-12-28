@@ -29,7 +29,7 @@ Tone.Transport.bpm.rampTo(120, 10);
 var pageFoc = true;
 
 var score = 0;
-
+var lifes = 3;
 //use p5 in instance mode
 p5_instance = function (p5c) {
 
@@ -47,15 +47,26 @@ p5_instance = function (p5c) {
   bpm = track bpm
   leftR = left side rhythm
   rightR = right side rhythm
-  interval = time distance between beats [in seconds]
+  nextLeftR = next left side rhythm
+  nextRightR = next right side rhythm
   errorL = error in seconds committed each bar, left side
   errorR = same error but for the right side
+  scheduleL = ID scheduled event creation left circles
+  scheduleR = ID scheduled event creation left circles
+  scheduleMetro = ID scheduled event metronome
   */
   var bpm;
   var leftR;
   var rightR;
-  var interval;
-
+  var nextLeftR;
+  var nextRightR;
+  var visualLeftR;
+  var visualRightR;
+  var visualNextLeftR;
+  var visualNextRightR;
+  var scheduleL;
+  var scheduleR;
+  var scheduleMetro
   //frameRate (need this to use it outside of )
   var frate;
   /*
@@ -66,6 +77,10 @@ p5_instance = function (p5c) {
   p5c.preload = function () {
     //soundFormats('wav');
     hit = p5c.loadSound('assets/hit.wav');
+    hitSoundL = p5c.loadSound('assets/hitSX.wav');
+    hitSoundR = p5c.loadSound('assets/hitDX.wav');
+    beat1 = p5c.loadSound('assets/BEAT1.wav');
+    beat2 = p5c.loadSound('assets/BEAT2.wav');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
@@ -74,6 +89,7 @@ p5_instance = function (p5c) {
 
 
   var started; //bool: T if we're in the game, F is we're in the menu
+  var restarted;
 
   /*
   Variables needed to draw the visual guide; might need a better solution for this in
@@ -85,7 +101,18 @@ p5_instance = function (p5c) {
 
   //arrays containing circles ("rhythm hits / beats") for left and right side
   //it would be better to use a queue to manage these
-  //we set their lengt to 200
+  //we set their length to 200
+  // Possible Rhythms 1 + [2, 4, 8, 16, 32] + [3,6,12,24] + the remainder until 24
+  var basicRhythms = [2, 4, 8, 16, 32];
+  var tripletRhythms = [3,6,12,24];
+  var triplet ; // if include triplet rhythms
+  var mindBlowing ; // if include other complicated rhythms
+  var rhythmLimit; // maximum integer number as rhythm ( we assume as maximum 24 )
+  var metroFlagChange; // how much next metronome beats to change rhythm
+  var metroFlagChangeValues = [16]; // changes in only 4 measures, for now
+  var metroColor; // number used for color of metronome ellipse
+  var noReference; // if true there will not be the guide
+  var rhythmTransition = false; // if true displays next rhythms
   var circlesNumber = 50;
   var leftCircles = new Array(circlesNumber);
   var rightCircles = new Array(circlesNumber);
@@ -115,6 +142,7 @@ p5_instance = function (p5c) {
 
       this.windowW = p5c.windowWidth;
       this.windowH = p5c.windowHeight;
+      this.failFlag = true;
       //side: 0 left,1 right
       //this.side = 0 + (this.x == xLine2);
       //this.fillColor = p5c.color(50+200*(1-this.side), 10, 50+200*(this.side))
@@ -161,6 +189,19 @@ p5_instance = function (p5c) {
       this.speed = yLineH / (60 / bpm * 8 * p5c.frameRate());
       this.y = this.y + this.speed;
       //check here if user missed it
+      if( ( (this.y - this.radius) > (yLineH + guideRadius) ) && ( this.y - this.radius < p5c.windowHeight) ){
+        if (this.failFlag){
+            this.failFlag = false;
+            if(lifes == 0){
+                reSetup()
+            }
+            else{
+                miss.play();
+                lifes -= 1;
+            }
+        }
+
+      }
       if (this.y - this.radius > p5c.windowHeight) {
         //delete circles from array
         //important assumption: 
@@ -171,6 +212,7 @@ p5_instance = function (p5c) {
 
         //update firstElemInGameL by finding the next element in leftCircles
         //which is active (its flag is 1)
+        this.failFlag = true;
         this.flag = 0;
         if (this.side == 0) {
           let j = firstElemInGameL;
@@ -209,8 +251,8 @@ p5_instance = function (p5c) {
         p5c.strokeWeight(1);
         p5c.stroke(12)
         p5c.ellipse(this.x, this.y, this.radius, this.radius);
-        //show a p5.js text beside the circle with its id
-        p5c.text(this.id, this.x + this.radius, this.y + this.radius)
+        //// show a p5.js text beside the circle with its id
+        //p5c.text(this.id, this.x + this.radius, this.y + this.radius)
       }
     }
   }
@@ -218,6 +260,34 @@ p5_instance = function (p5c) {
   setup(): function that gets called by p5.js at startup. Initialise variables 
   needed in the sketch here; load audio files, fonts, etc, in preload() instead
   */
+  function reSetup(){
+    started = false;
+    leftElem = 0;
+    rightElem = 0;
+    firstElemInGameL = 0;
+    firstElemInGameR = 0;
+    lastElemL = 0;
+    lastElemR = 0;
+    /*Tone.Transport.clear(scheduleL);
+    Tone.Transport.clear(scheduleR);
+    Tone.Transport.clear(scheduleMetro);
+    Tone.Transport.clear(scheduleFlag);*/
+    miss.stop();
+    beat1.stop();
+    beat2.stop();
+    metroFlag = 0;
+    Tone.Transport.cancel()
+    stopCircleArrays()
+    p5c.getAudioContext().resume()
+    score = 0;
+    lifes = 3;
+    rhythmLimit = 4;
+    metroFlagChange = 0;
+    triplet = false;
+    mindBlowing = false;
+    noReference = false;
+    startCircleArrays()
+  }
   p5c.setup = function () {
     p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
     /*
@@ -233,19 +303,27 @@ p5_instance = function (p5c) {
     xLine2 = p5c.width / 2 + p5c.width / 12;
     yLineH = 3 / 4 * p5c.height;
     started = false;
+    restarted = false;
     //font = p5c.textFont('Montserrat', 30)
 
-    bpm = 100;
-    // 4 vs 3 polyrhythm for testing, ideally we will get input from user
-    leftR = 4;
-    rightR = 3;
-
+    bpm = 130;
+    score = 0;
+    scheduleL = null;
+    scheduleR = null;
     Tone.Transport.bpm.value = bpm;
 
-    interval = 60 / bpm;
-    //time between notes on the L(eft) side and R(ight) side
-    intervalL = 4 * 1 / leftR * 60 / bpm;
-    intervalR = 4 * 1 / rightR * 60 / bpm;
+    rhythmLimit = 4;
+    metroFlagChange = 0;
+    triplet = false;
+    mindBlowing = false;
+    noReference = false;
+
+    // default starting rhythms
+    leftR = 0; // has to be 0, don't change it
+    rightR = 0; // has to be 0, don't change it
+    nextLeftR = 1;
+    nextRightR = 1;
+
     startCircleArrays();
   }
   startCircleArrays = function () {
@@ -257,6 +335,14 @@ p5_instance = function (p5c) {
     }
   }
 
+  stopCircleArrays = function () {
+    for (let i = 0; i < leftCircles.length; i++) {
+      leftCircles[i] = null
+    }
+    for (let i = 0; i < rightCircles.length; i++) {
+      rightCircles[i] = null
+    }
+  }
   var guideRadius = 30; //radius of guide circles
   var counter = 0; //not used now, might be used to count frames IN GAME
   var rhythm_rad = 20; //radius of rhythm circles
@@ -273,26 +359,49 @@ p5_instance = function (p5c) {
       p5c.fill(240)
       p5c.textFont(font)
       p5c.textSize(30)
-      //write a text in p5.js displaying firstElemnInGameL
-      p5c.text(firstElemInGameL, 100, 100)
-      //write a text in p5.js displaying firstElemInGameR
-      p5c.text(firstElemInGameR, 100, 200)
+      ////write a text in p5.js displaying firstElemnInGameL
+      //p5c.text(firstElemInGameL, 100, 100)
+      ////write a text in p5.js displaying firstElemInGameR
+      //p5c.text(firstElemInGameR, 100, 200)
       //write a text in p5.js displaying "Score: " and the score
-      p5c.text("Score: " + score, 100, 300)
-      //write a text in p5.js displaying "Left elements: " and leftElem
-      p5c.text("Left elements: " + leftElem, 150, 400)
+      p5c.text("Score: " + score, 100, 50)
+      ////write a text in p5.js displaying "Left elements: " and leftElem
+      //p5c.text("Left elements: " + leftElem, 150, 400)
+      p5c.textSize(300)
+      p5c.text(visualLeftR, (p5c.width / 2 - p5c.width / 12)/2, 400)
+      p5c.text(visualRightR,p5c.width - (p5c.width / 2 - p5c.width / 12)/2, 400)
+      ////write a text in p5.js displaying the difficulty settings of the game
+      //p5c.textSize(15)
+      //p5c.text("Triplet : " + triplet, 110, 80)
+      //p5c.text("MindBlowing : " + mindBlowing, 110, 110)
+      //p5c.text("NoReference : " + noReference, 110, 140)
+      //p5c.text("MetroFlag : " + metroFlag, 100, 170)
+      p5c.textSize(30)
+      p5c.text("Lifes : " + lifes, p5c.width - 100, 50)
+
+      if (rhythmTransition){
+            p5c.stroke('red');
+            p5c.strokeWeight(4);
+            p5c.textSize(75);
+            p5c.text(visualNextLeftR, (p5c.width / 2 - p5c.width / 12)/2, 500);
+            p5c.text(visualNextRightR, p5c.width - (p5c.width / 2 - p5c.width / 12)/2 , 500);
+      }
 
       //we're in the game, draw the reference and update and show the cirlces
-      drawReference();
+      if(!noReference){
+        drawReference();
+      }
+
       if (pageFoc) {
 
         //TODO: make a falling messages class
         //The class should contain the message, the x and y coordinates, 
         //the color, the size, and eventually the time it should be displayed for
         p5c.fill(12)
+        p5c.textSize(30)
         p5c.stroke(20,100,240)
-        p5c.text(hitMessages[0], xLine1 + 20, yLineH + 50)
-        p5c.text(hitMessages[1], xLine2 - 20, yLineH + 50)
+        p5c.text(hitMessages[0], xLine1 - 200, yLineH + 50)
+        p5c.text(hitMessages[1], xLine2 + 200, yLineH + 50)
 
         let nL = firstElemInGameL + leftElem
         let nR = firstElemInGameR + rightElem
@@ -313,6 +422,7 @@ p5_instance = function (p5c) {
             counterR++;
           }
         }
+        // Counter  number of circles for each side
         nL = nL + counterL
         nR = nR + counterR
 
@@ -334,7 +444,13 @@ p5_instance = function (p5c) {
       p5c.textFont(font)
       p5c.textAlign(p5c.CENTER)
       p5c.textSize(35)
-      p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
+      if (restarted){
+        p5c.text("Click\nto retry", p5c.width / 2, p5c.height / 2);
+        }
+      else {
+        p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
+        }
+
     }
   }
 
@@ -378,6 +494,24 @@ p5_instance = function (p5c) {
       p5c.stroke(240, 240, 10)
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
       p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
+      p5c.fill(12);
+      p5c.strokeWeight(4);
+      p5c.stroke(240, 240, 10)
+      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
+
+      p5c.fill("black");
+      p5c.strokeWeight(1);
+      p5c.stroke(240, 240, 10)
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)/5 , yLineH + 100, guideRadius, guideRadius);
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
+
+      p5c.fill("yellow");
+      metroColor = ((metroFlag - 1) % 4) + 1
+      p5c.strokeWeight(1);
+      p5c.stroke(240, 240, 10)
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
     }
     /* 
     windowResized(): p5js function that gets called every time the window
@@ -405,30 +539,36 @@ p5_instance = function (p5c) {
       });
     }
     /* 
-    mousePressed(): p5js function that gets called every time a mouse button
+    mouseClicked(): p5js function that gets called every time the sx mouse button
     is pressed / the touchscreen is touched.
     We start the AudioContext here with userStartAudio()
     */
-    p5c.mousePressed = function () {
+    p5c.mouseClicked = function () {
       if (!started) {
+
         p5c.userStartAudio();
         Tone.start();
-        started = true;
         Tone.Transport.start();
-        startToneLoops(leftR, rightR);
-        startMetronome(bpm)
+        toggleRhythms();
+        visualLeftR = leftR;
+        visualRightR = rightR;
+        visualNextLeftR = nextLeftR;
+        visualNextRightR = nextRightR;
+        started = true;
+        restarted = true;
       }
-      //addCircle('l')
-      //addCircle('r')
-      //intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
-      //intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
     }
 
     function startToneLoops(intL, intR) {
-      Tone.Transport.scheduleRepeat(time => {
+      // Eliminate previous scheduled events
+      if (scheduleL != null && scheduleR != null){
+        Tone.Transport.clear(scheduleL);
+        Tone.Transport.clear(scheduleR);
+      }
+      scheduleL = Tone.Transport.scheduleRepeat(time => {
         addCircle('l')
       }, intL + "n");
-      Tone.Transport.scheduleRepeat(time => {
+      scheduleR = Tone.Transport.scheduleRepeat(time => {
         addCircle('r')
       }, intR + "n");
     }
@@ -450,13 +590,13 @@ p5_instance = function (p5c) {
         for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
           let k = i % leftCircles.length;
           let c = leftCircles[k];
-          if (c.flag == 1 && c.y < yLineH - guideRadius) {
+          /*if (c.flag == 1 && (c.y - rhythm_rad) > (yLineH + guideRadius) ){
             return //no point looking for further hits
-          }
+          }*/
           if (Math.abs(c.y - yLineH) <= guideRadius) {
             hitL = true;
             //play sound
-            hit.play();
+            hitSoundL.play();
             //TODO calculate the points
             //add points to the score of the player proportionally to the
             //inverse of the distance between the circle and the reference yLineH
@@ -479,30 +619,20 @@ p5_instance = function (p5c) {
               }
               firstElemInGameL = j;
             }
-            /*
-            if(k == firstElemInGameL){
-            //calculate the points
-            firstElemInGameL++;
-            firstElemInGameL = firstElemInGameL % leftCircles.length;
-            }*/
+
             leftElem--;
           }
         }
-        /*
-        leftCircles.forEach((item, i) => {
-          let c = leftCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            leftCircles.splice(i, 1)
-            //calculate the points
-          }
-        });
-        */
+
         if (!hitL) {
-          miss.play();
+
+          if(lifes <= 0){
+            reSetup()
+          }
+          else{
+            miss.play();
+            lifes -= 1;
+          }
           //point penalty / error count
         }
       }
@@ -511,13 +641,14 @@ p5_instance = function (p5c) {
         for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
           let k = i % rightCircles.length;
           let c = rightCircles[k];
-          if (c.flag == 1 && c.y < yLineH - guideRadius)
+          /*if (c.flag == 1 && (c.y + rhythm_rad) > (yLineH - guideRadius)){
             return //no point looking for further hits
+          }*/
           if (Math.abs(c.y - yLineH) <= guideRadius) {
             hitR = true;
             //play sound
-            hit.play();
-            //TODO calculate the poin
+            hitSoundR.play();
+            //TODO calculate the points
             let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
             score = score + points
             displayHitQuality(points, 1)
@@ -555,7 +686,13 @@ p5_instance = function (p5c) {
           }
         });*/
         if (!hitR) {
-          miss.play();
+          if(lifes <= 0){
+            reSetup()
+          }
+          else{
+            miss.play();
+            lifes -= 1;
+          }
           //point penalty / error count
         }
       }
@@ -566,7 +703,7 @@ p5_instance = function (p5c) {
     to make sound*/
     var metroFlag = 0;
     startMetronome = function () {
-      Tone.Transport.scheduleRepeat(time => {
+      scheduleMetro = Tone.Transport.scheduleRepeat(time => {
         metroSound()
       }, "4n");
     }
@@ -574,19 +711,38 @@ p5_instance = function (p5c) {
     /*
     metroSound(): produces the correct metronome sound based on the beat
     */
+    var metroFlagX;
+    var scheduleFlag;
     metroSound = function () {
-      if (metroFlag == 4) {
-        /*
-        addCircle('l')
-        addCircle('r')
-        setInterval(addCircle, intervalL * 1000, 'l');
-        setInterval(addCircle, intervalR * 1000, 'r');
-        */
+    //To play the beat in background
+      if(metroFlag % 32 == 0){
+        p5c.getAudioContext().resume()
+        beat2.stop();
+        beat1.play()
+      }
+      else if (metroFlag % 32 == 16) {
+        beat1.stop()
+        beat2.play()
       }
       if (metroFlag % 4 == 0) {
-        met1.play()
+        //met1.play()
       } else {
-        met2.play();
+        //met2.play();
+      }
+      if ( (metroFlag == metroFlagChange) && (metroFlag != 1)  && (metroFlag != 0)){
+            toggleRhythms();
+            metroFlagX = metroFlag;
+            scheduleFlag = Tone.Transport.scheduleRepeat(time => {
+            rhythmTransition = true
+            setTimeout( () => { rhythmTransition = false } , 500)
+            }, "2n");
+      }
+      if ( metroFlag == metroFlagX + 8){
+            Tone.Transport.clear(scheduleFlag);
+            visualLeftR = leftR;
+            visualRightR = rightR;
+            visualNextLeftR = nextLeftR;
+            visualNextRightR = nextRightR;
       }
       metroFlag += 1;
     }
@@ -611,14 +767,14 @@ p5_instance = function (p5c) {
       let msg = "";
       if(points == 100){
         msg = "PERFECT";
-      }else if(points >= 75){
+      }else if(points >= 50 && points < 100){
         msg = "AMAZING";
-      }else if(points >= 50){
+      }else if(points >= 30 && points < 50){
         msg = "GREAT";
-      }else if(points >= 25){
+      }else if(points >= 7 && points < 30){
         msg = "GOOD"
       }
-      else if(points >= 0){
+      else if(points >= 0 && points < 7){
         msg = "OK";
       }
       if(msg != ""){
@@ -629,8 +785,112 @@ p5_instance = function (p5c) {
       }
         hitMessages[side] = msg;
     }
-  }
 
+    // STEP
+    // 1) BASIC
+    // 2) TRIPLET
+    // 3) LIMIT ALZATO A 6
+    // 4) MINDBLOWING
+    // 5) LIMIT ALZATO A 7
+    // 6) NO GUIDA
+    // 7) AUMENTA IL BPM
+    // 8) TORNA A 3)
+    function toggleRhythms() {
+        var arrayNewRhythms;
+
+        // TRIPLET
+        if ( score >= 1500 || metroFlag >= 25*4){
+            triplet = true;
+        }
+        // RAISE LIMIT to 6
+        if ( score >= 3000 || metroFlag >= 45*4){
+            rhythmLimit = 6;
+        }
+        // MINDBLOWING
+        if ( score >= 6000 || metroFlag >= 65*4){
+           mindBlowing = true;
+        }
+        // NO REFERENCE
+        if ( score >= 5000 ){
+            noReference = true;
+        }
+        // RAISE LIMIT TO 7
+        if ( metroFlag >= 130*4){
+            rhythmLimit = 7
+        }
+        // RAISE LIMIT TO 9
+        if ( metroFlag >= 160*4){
+            rhythmLimit = 9
+        }
+        // RAISE LIMIT TO 11
+        if ( metroFlag >= 190*4){
+            rhythmLimit = 11
+        }
+        // RAISE LIMIT TO 13
+        if ( metroFlag >= 220*4){
+            rhythmLimit = 13
+        }// RAISE LIMIT TO 15
+        if ( metroFlag >= 250*4){
+            rhythmLimit = 15
+        }
+
+        if(!started){
+            arrayNewRhythms = calculateNewRhythms();
+            leftR = arrayNewRhythms[0];
+            rightR = arrayNewRhythms[1];
+            startToneLoops(leftR,rightR);
+            startMetronome(bpm);
+        }
+        else{
+            leftR = nextLeftR;
+            rightR = nextRightR;
+            startToneLoops(nextLeftR,nextRightR);
+        }
+
+        arrayNewRhythms = calculateNewRhythms();
+        nextLeftR = arrayNewRhythms[0];
+        nextRightR = arrayNewRhythms[1];
+        metroFlagChange += metroFlagChangeValues[Math.floor(Math.random() * metroFlagChangeValues.length)];
+    }
+    // Possible Rhythms 1 + [2, 4, 8, 16, 32] + [3,6,12,24] + the remainder
+    function calculateNewRhythms(){
+        var integersL = new Set();
+        var integersR = new Set();
+        var nextL;
+        var nextR;
+        var addInteger;
+        for (let i = 1; i <= rhythmLimit; i++){
+
+                addInteger = false;
+                if (i == 1){
+                    addInteger = true;
+                }
+                else if (basicRhythms.includes(i)){
+                    addInteger = true;
+                }
+                else if (tripletRhythms.includes(i) && triplet){
+                    addInteger = true;
+                }
+                else if (mindBlowing){
+                    addInteger = true;
+                }
+
+                if(addInteger){
+                    if (i != leftR){
+                            integersL.add(i);
+                        }
+                    if (i != rightR){
+                            integersR.add(i);
+                        }
+                    }
+        }
+        var itemsL = Array.from(integersL);
+        var itemsR = Array.from(integersR);
+        nextL = itemsL[Math.floor(Math.random() * itemsL.length)];
+        nextR = itemsR[Math.floor(Math.random() * itemsR.length)];
+        return [nextL,nextR];
+    }
+ }
 myp5 = new p5(p5_instance)
 
 document.onblur = function () {

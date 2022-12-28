@@ -1,0 +1,17 @@
+[
+    {
+        "msgId": "recordIntro1",
+        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev Gabay and I'll be your guide!",
+        "nextMsgId": "recordIntro2"
+    },
+    {
+        "msgId": "recordIntro2",
+        "msg": "OK. Let's get started!\nRecord something and I'll try to identify what you're doing",
+        "nextMsgId": "recordIntro3"
+    },
+    {
+        "msgId": "recordIntro3",
+        "msg": "(don't forget to authorize access to the microphone\nwhen the browser asks you to do so!!!)",
+        "nextMsgId": "-1"
+    }
+]

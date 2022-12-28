@@ -1,0 +1,17 @@
+TODO:
+RECORDING MODE:
+-Add a button to start/stop recording
+-Add a button to play the recorded audio
+-Add a button to save the recorded audio
+
+UPLOAD MODE:
+
+BOTH:
+-The mode only influences the way the user gets to the first audio; after that, 
+the user can always choose to record or upload a new file
+-Waveform display
+-Peak detection
+-Polyrhythm detection
+
+IF THERE'S TIME:
+-Implement a createGraphics approach to manage helper text

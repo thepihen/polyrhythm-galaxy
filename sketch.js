@@ -4,9 +4,22 @@
 
 /*
 TODO:
-Should we implement a queue for managing circles?
-Use a non-changing array for circles, just reset them
-Add bonuses for streaks
+RECORDING MODE:
+-Add a button to start/stop recording
+-Add a button to play the recorded audio
+-Add a button to save the recorded audio
+
+UPLOAD MODE:
+
+BOTH:
+-The mode only influences the way the user gets to the first audio; after that, 
+the user can always choose to record or upload a new file
+-Waveform display
+-Peak detection
+-Polyrhythm detection
+
+IF THERE'S TIME:
+-Implement a createGraphics approach to manage helper text
 */
 
 /*
@@ -27,37 +40,219 @@ Tone.Transport.bpm.rampTo(120, 10);
 //(see bottom of this file)
 //this just tracks the state
 var pageFoc = true;
+var bpm = 100
 
-var score = 0;
+//recording: booelan indicating if we're recording or not
+var recordedAudio;
+var recording = false;
+
+//MENU BUTTONS
+//used to create an upload button
+var visibleUploadButton;
+//the real upload button, hidden in the back :)
+var realUploadButton;
+var uploadButton;
+
+var recordSideButton;
+
+//various other self-explanatory buttons
+var faqMenuButton; //onclick:show instructions
+
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
+  class Message{
+    //this represent a message that the helper will say
+    constructor(msg, id, nextMsgId){
+      if (msg != null && msg != undefined){
+        this.msg = msg
+      }else{
+        this.msg = ""
+      }
+      if (id != null && id != undefined) {
+        this.id = id
+      } else {
+        this.id= ""
+      }
+      if (nextMsgId != null && nextMsgId != undefined) {
+        this.nextMsgId = nextMsgId
+      } else {
+        this.nextMsgId = -1
+      }
+      //this.prevMsgId = -1
+    }
+    makeEmpty(){
+      this.msg = ""
+    }
+    setId(id){
+      this.id = id
+    }
+    getId(){
+      return this.id
+    }
+    getMsg(){
+      return this.msg
+    }
+    setMsg(msg){
+      this.msg = msg
+    }
+    setNextMsgId(nextMsgId){
+      this.nextMsgId = nextMsgId
+    }
+    //this is useless, could be used to check for errors
+    setPrevMsgId(prevMsgId){
+      this.prevMsgId = prevMsgId
+    }
+  }
 
-  /*
-  Variables we will use in preload()
-  */
-  var hit; //hit.wav (sound played when you successfully hit a note)
-  var miss; //miss.wav (sound played when you miss a note)
-  var font; //font used for text
-  var met1; //higher pitched hit of metronome
-  var met2; //lower pitched hit of metronome
 
-  /* 
-  Variables related to bpm and polyrhythms
-  bpm = track bpm
-  leftR = left side rhythm
-  rightR = right side rhythm
-  interval = time distance between beats [in seconds]
-  errorL = error in seconds committed each bar, left side
-  errorR = same error but for the right side
-  */
-  var bpm;
-  var leftR;
-  var rightR;
-  var interval;
+  class Helper{
+    constructor(faces,name){
+      this.name = name
+      //the parameters are the faces of the helper
+      this.faces = faces
+      //for now we'll not distinguish by emotion
+      this.currFace = 0
+      //count the frames you showed the last function for
+      this.showedFor = 0
+      this.lastMsg = " "
+      this.counter = 0
+      this.time = 20
+      //we have reached the end of the phrase
+      this.wait = false
+      this.interval = null
+      this.cursorBlink = false
+      this.isIdle = false
+      this.state = "working"
+    }
+    showFace(){
+      //show the face
+      if(!started)
+        p5c.image(this.faces[this.currFace], p5c.width-400, p5c.height-400)
+      else{
+        p5c.image(this.faces[this.currFace], p5c.width/14, 2*p5c.height/4)
+      }
+      this.showedFor++
+      if(this.showedFor == 5){
+        this.currFace++
+        this.currFace = this.currFace%this.faces.length
+        this.showedFor = 0
+      }
+    }
 
+    createTextBox(){
+      //create a text box
+      //use rectMode(CENTER) and draw the rect in the middle of the screen, on the bottom
+      //the rect should be about width/2 long
+      //the text should be in the middle of the rect
+      p5c.rectMode(p5c.CENTER)
+      p5c.fill(0, 0, 0, 150)
+      p5c.rect(p5c.width / 2, p5c.height - 150, p5c.width / 2, 200)
+      //print message using speech_font
+      p5c.stroke(255)
+      p5c.fill(255)
+      p5c.textFont(speech_font)
+      p5c.textSize(30)
+      p5c.rectMode(p5c.CORNER)
+      p5c.textWrap(p5c.WORD) //alternative is CHAR 
+      //if the helper is waiting for the user to click, show a blinking cursor
+      if(this.wait && !this.isIdle){
+        if(p5c.frameCount%30 == 0){
+          this.cursorBlink = !this.cursorBlink
+        }
+        if(!this.cursorBlink){
+         //draw a small white square on the bottom right of the text box
+          p5c.rect(3/4 * p5c.width - 25, p5c.height-75, 15, 15) 
+        }
+      }
+    }
+    addAuthor(){
+      //add the speaker's name on the top left corner of the text box.
+      //The name is inside a rectangle with a white background
+
+      //TODO: this part is a meme, you decide if we keep it or not
+      p5c.push()
+      p5c.fill(255)
+      p5c.rect(p5c.width/4, p5c.height-300, p5c.width/6, 50)
+      p5c.fill(0)
+      p5c.textSize(32)
+      p5c.textAlign(p5c.LEFT)
+      p5c.text(this.name, p5c.width/4+10, p5c.height-300+20)
+      p5c.pop()
+      
+    }
+    say(message){
+      //need to get the message from the message object
+      let msg = message.getMsg()
+      let time = this.time
+      this.createTextBox()
+      this.addAuthor()
+
+      if(this.lastMsg != msg){
+        this.lastMsg  = msg
+        this.counter = 1
+        //setTimeout(this.printMsg, this.counter*time, this.lastMsg, this.counter);
+        this.printMsg(msg, this.counter)
+        this.wait=false
+        this.interval = setInterval( ()=>{
+          this.counter++
+          //play the sound corresponding to dialogue
+          //(every once in a while)
+          if(this.counter%5 == 0){
+            speech.play()
+          }
+          if(this.counter > msg.length){
+            this.wait = true
+          }
+        },time);
+      }else{
+        if(this.counter >= msg.length){
+          clearInterval(this.interval)
+          this.printMsg(msg, msg.length)
+          this.wait = true
+          return
+        }
+        //setTimeout(this.printMsg, this.counter * time, this.lastMsg, this.counter);
+        this.printMsg(msg, this.counter)
+      }
+      //write the message inside the box (rect)
+      //p5c.text(msg, 1*p5c.width/4 + 10, p5c.height-250, p5c.width/2-20, 200)
+      //write the message inside the box one letter at a time
+      //this is to simulate a typing effect
+      //we'll use a counter to keep track of how many letters we've written
+      //we'll use a timer to keep track of how much time has passed
+    }
+    /*
+    updateCounter(time,msg, intervalHandle,cnt){
+      cnt++
+      if(cnt) > msg.length){
+        clearInterval(this.interval)
+        this.wait = false
+        return
+      }
+    }
+    */
+    printMsg(msg,to){
+      p5c.stroke(255)
+      p5c.text(msg.substring(0, to), 
+      1 * p5c.width / 4 + 10, p5c.height - 250, p5c.width / 2 - 20, 200)
+    }
+    isWaiting(){
+      return this.wait && !this.isIdle
+    }
+    setIdle(){
+      this.isIdle = true
+      this.state = "idle"
+    }
+    getState(){
+      return this.state
+    }
+  }
   //frameRate (need this to use it outside of )
   var frate;
+  let loading = true
+  var started = false;
+  var userGaveMicPerm = false;
   /*
   preload: function that gets automatically by p5js before loading the sketch.
   ->Everything that needs to be available when the sketch starts needs to be loaded here
@@ -68,152 +263,28 @@ p5_instance = function (p5c) {
     hit = p5c.loadSound('assets/hit.wav');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
-    met2 = p5c.loadSound('assets/met2.wav');
-    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
+    met2 = p5c.loadSound('assets/met2.wav'); 
+    font = p5c.loadFont('assets/Gruppo-Regular.ttf');
+    speech_font = p5c.loadFont('assets/Montserrat-Light.ttf')
+    face = p5c.loadImage('assets/face.png')
+    face_talking1 = p5c.loadImage('assets/face_talking1.png');
+    face_talking2 = p5c.loadImage('assets/face_talking2.png');
+    speech = p5c.loadSound('assets/dialogue.wav')
+    speech_end = p5c.loadSound('assets/dialogue_end.wav')
+    messages_json = p5c.loadJSON('assets/messages.json',messagesLoaded)
   }
-
-
-  var started; //bool: T if we're in the game, F is we're in the menu
-
-  /*
-  Variables needed to draw the visual guide; might need a better solution for this in
-  the future if we want more vertical lines (more rhythms)
-  */
-  var xLine1;
-  var xLine2;
-  var yLineH;
-
-  //arrays containing circles ("rhythm hits / beats") for left and right side
-  //it would be better to use a queue to manage these
-  //we set their lengt to 200
-  var circlesNumber = 50;
-  var leftCircles = new Array(circlesNumber);
-  var rightCircles = new Array(circlesNumber);
-  var leftElem = 0;
-  var rightElem = 0;
-  var firstElemInGameL = 0;
-  var firstElemInGameR = 0;
-  var lastElemL = 0;
-  var lastElemR = 0;
-
-  /*
-  Circle(): class representing a beat circle.
-  Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
-  */
-  class Circle {
-    /*
-    params:
-    x,y,radius?, color, speed,...
-    */
-    constructor(params) {
-      this.x = params[0]
-      this.y = params[1]
-      this.radius = params[2]
-      //this.color = params[3]
-      this.speed = params[3]
-      this.flag = 0;
-
-      this.windowW = p5c.windowWidth;
-      this.windowH = p5c.windowHeight;
-      //side: 0 left,1 right
-      //this.side = 0 + (this.x == xLine2);
-      //this.fillColor = p5c.color(50+200*(1-this.side), 10, 50+200*(this.side))
+  messagesLoaded = function(){
+    let n = Object.keys(messages_json).length
+    messages = new Array(n)
+    for(let i = 0; i < n; i++){
+      let msg = messages_json[i]
+      messages[i] = new Message(msg.msg,msg.msgId,msg.nextMsgId)
     }
-    //TODO: delete id field
-    initialise(x, y, v, id) {
-      this.x = x
-      this.y = y
-      this.flag = 1;
-      this.speed = v
-      this.side = 0 + (this.x == xLine2);
-      this.fillColor = p5c.color(50 + 200 * (1 - this.side), 10, 50 + 200 * (this.side))
-      this.id = id;
-    }
-    toggle() {
-      this.flag = 0;
-      this.x = 0;
-      this.y = 0;
-      this.speed = 0;
-    }
-    /*
-    setNewCoords(): allows user to set new coordinates for the circle.
-    Useful for recentering circles when the window gets resized
-    
-    newX,newY: new coordinates
-    windowW, windowH: new windowWidth and windowHeight (which may be equal to
-      the old ones if the window didn't get resized when this got called)
-      */
-    setNewCoords(newX, newY, windoW, windowH) {
-      this.x = newX
-      this.y = newY
-      this.windowW = p5c.windowWidth;
-      this.windowH = p5c.windowHeight;
-    }
-
-    updateVelocity(newV) {
-      this.speed = newV;
-    }
-
-    /*
-    update(): updates circle position
-    */
-    update() {
-      this.speed = yLineH / (60 / bpm * 8 * p5c.frameRate());
-      this.y = this.y + this.speed;
-      //check here if user missed it
-      if (this.y - this.radius > p5c.windowHeight) {
-        //delete circles from array
-        //important assumption: 
-        //the circle that reaches the bottom always has position 1
-        //in the array
-
-        //TODO: move this check to the main function
-
-        //update firstElemInGameL by finding the next element in leftCircles
-        //which is active (its flag is 1)
-        this.flag = 0;
-        if (this.side == 0) {
-          let j = firstElemInGameL;
-          while (leftCircles[j].flag == 0) {
-            j++;
-            j = j % leftCircles.length;
-          }
-          firstElemInGameL = j;
-          leftElem--;
-        }
-        else if (this.side == 1) {
-          let j = firstElemInGameR;
-          while (rightCircles[j].flag == 0) {
-            j++;
-            j = j % rightCircles.length;
-          }
-          firstElemInGameR = j;
-          rightElem--;
-        }
-      }
-    }
-    /*
-    if (this.side == 0) {
-      leftCircles.splice(0, 1)
-    } else if (this.side == 1) {
-      rightCircles.splice(0, 1)
-    }
-    */
-    /*
-    show(): draws circle on the canvas
-    */
-    //TODO delete id part
-    show() {
-      if (this.flag) {
-        p5c.fill(this.fillColor);
-        p5c.strokeWeight(1);
-        p5c.stroke(12)
-        p5c.ellipse(this.x, this.y, this.radius, this.radius);
-        //show a p5.js text beside the circle with its id
-        p5c.text(this.id, this.x + this.radius, this.y + this.radius)
-      }
-    }
+    loading = false
   }
+  //we need these to record using p5.js
+  var mic, recorder, soundFile; //mic = our microphone, recorder is p5.soundRecorder, soundFile is the file we'll load
+  var mode; //0 = record from mic, 1 = load from file
   /*
   setup(): function that gets called by p5.js at startup. Initialise variables 
   needed in the sketch here; load audio files, fonts, etc, in preload() instead
@@ -225,41 +296,121 @@ p5_instance = function (p5c) {
     There's no need for the audio context to be running as soon as the page is loaded
     */
     p5c.getAudioContext().suspend();
-    p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
+    p5c.frameRate(60) //this doesn't work but it's like lighting a candle 
     //in a church hoping for a miracle
 
-    //initialise guide coordinates
-    xLine1 = p5c.width / 2 - p5c.width / 12;
-    xLine2 = p5c.width / 2 + p5c.width / 12;
-    yLineH = 3 / 4 * p5c.height;
-    started = false;
-    //font = p5c.textFont('Montserrat', 30)
+    //we need to initialise the microphone and the recorder
+    mic = new p5.AudioIn();
+    recorder = new p5.SoundRecorder();
+    //we set the input of the recorder to be the microphone
+    recorder.setInput(mic);
+    //here we would start the microphone, but we don't want to do that yet
+    //We'll start only when if the user selects to record
+    //This is handled in the handleMessage() function
 
-    bpm = 100;
-    // 4 vs 3 polyrhythm for testing, ideally we will get input from user
-    leftR = 4;
-    rightR = 3;
+    //we create a soundFile that will contain a pre-recorded audio
+    soundFile = new p5.SoundFile();
 
-    Tone.Transport.bpm.value = bpm;
+    faces = [face]//, face2]
+    helper = new Helper(faces, "Polyev")
+    msg = messages[0]
 
-    interval = 60 / bpm;
-    //time between notes on the L(eft) side and R(ight) side
-    intervalL = 4 * 1 / leftR * 60 / bpm;
-    intervalR = 4 * 1 / rightR * 60 / bpm;
-    startCircleArrays();
+    //setup everything regarding buttons
+    setupButtons()
   }
-  startCircleArrays = function () {
-    for (let i = 0; i < leftCircles.length; i++) {
-      leftCircles[i] = new Circle([0, 0, rhythm_rad, 0])
-    }
-    for (let i = 0; i < rightCircles.length; i++) {
-      rightCircles[i] = new Circle([0, 0, rhythm_rad, 0])
-    }
-  }
+  setupButtons = function(){
+    realUploadButton = p5c.createFileInput(handleFile)
+    //hide realUploadButton and give it the realUpload ID
+    realUploadButton.hide()
+    realUploadButton.id('realUpload')
+    uploadButton = document.getElementById('realUpload')
+    visibleUploadButton = p5c.createButton('');
+    visibleUploadButton.addClass('upload_button')
+    visibleUploadButton.id('menuUploadButton')
+    //make visibleUploadButton hidden and a file input
+    visibleUploadButton.attribute('type', 'file')
+    visibleUploadButton.attribute('accept', 'audio/*')
 
-  var guideRadius = 30; //radius of guide circles
+    recordSideButton = p5c.createDiv('')
+    recordSideButton.addClass('record_side')
+
+    faqMenuButton = p5c.createDiv('?')
+    faqMenuButton.addClass('faq_button')
+
+    //two cases:
+    //if the user clicked on the left half of the window:
+    //ask for the BPM the user wants, ask for permission to use the microphone
+    //and start recording
+    //if the user clicked on the right half of the window:
+    //open a file selector and ask the user to select a file
+    recordSideButton.mousePressed(function(){
+      bpm = p5c.createInput("What BPM do you want to use?");
+      mode = 0 //user chose to record
+      //started = true
+      if (!started) {
+        p5c.userStartAudio();
+        Tone.start();
+        //Tone.Transport.start();
+        //startMetronome(bpm)
+        //Tone.Transport.bpm.value = bpm;
+        started = true
+      }
+      removeUselessButtons()
+    })
+
+    
+
+    faqMenuButton.mousePressed(function(){
+      //window.open("https://soundcloud.com/pihen")
+
+      //TODO: type all FAQs, everything the user needs to know, inside a black box
+      //Make it look nice and make it close when user clicks on it
+      faqMenuButton.hide()
+      //make a black box in the middle of the screen and type "aaa" inside of it
+      let box = p5c.createDiv(`<h2>HOW THIS WORKS</h2>
+      Welcome to the didactic mode of Polyrhythm Hero!<br>
+      In this mode, you will learn how to play basic polyrhythms.<br>
+      You can choose to record yourself playing some kind of rhythm (tapping your fingers on the table is also OK) 
+      or upload an audio file from your pc.<br>
+      The website will then analyze your audio and find the polyrhythm that's closest to what you played.<br>
+      You can then choose to train on the polyrhythm you found, play with it on a rhythmic wheel to obtain shifted versions 
+      or record/upload a new audio.<br>
+      We hope you enjoy your stay!<br>
+      <br>
+      Alice, Cecilia, Francesco, Matteo`)
+      box.addClass('faq_box')
+      //box.position(p5c.width/2, p5c.height/2 - 100)
+      box.size(600,600)
+      box.mousePressed(function(){
+        box.remove()
+        faqMenuButton.show()
+      }
+      )
+
+    })
+    visibleUploadButton.mousePressed(function(){
+      //p5c.userStartAudio()
+      mode = 1
+      //started = true
+      if (!started) {
+        p5c.userStartAudio();
+        Tone.start();
+        //Tone.Transport.start();
+        //startMetronome(bpm)
+        //Tone.Transport.bpm.value = bpm;
+        //started = true
+      }
+      //click the "real" button, thus prompting file load
+      uploadButton.click()
+      /*
+      //now remove all useless buttons
+      realUploadButton.remove()
+      //visibleUploadButton.hide()
+      visibleUploadButton.remove()
+      */
+    })
+  }
   var counter = 0; //not used now, might be used to count frames IN GAME
-  var rhythm_rad = 20; //radius of rhythm circles
 
   /*
   draw(): p5js function that gets automatically called once per frame
@@ -267,369 +418,227 @@ p5_instance = function (p5c) {
   */
   p5c.draw = function () {
     p5c.background(12);
+    if (loading)
+    //we're still loading the messages (JSON loading is async)
+      return
 
-    //console.log(frameRate())
     if (started) {
-      p5c.fill(240)
-      p5c.textFont(font)
-      p5c.textSize(30)
-      //write a text in p5.js displaying firstElemnInGameL
-      p5c.text(firstElemInGameL, 100, 100)
-      //write a text in p5.js displaying firstElemInGameR
-      p5c.text(firstElemInGameR, 100, 200)
-      //write a text in p5.js displaying "Score: " and the score
-      p5c.text("Score: " + score, 100, 300)
-      //write a text in p5.js displaying "Left elements: " and leftElem
-      p5c.text("Left elements: " + leftElem, 150, 400)
+      drawCurrentMode()
+    }
+    else {
+      drawMenu()
+    }
+  }
+  drawCurrentMode = function(){
+    switch (mode) {
+      case 0:
+        //we're in record mode
+        helper.showFace()
+        helper.say(msg)
+        break;
+      case 1:
+        //we're in upload mode
+        console.log("A")
+        break;
+    }
+  }
+  drawMenu = function () {
+    //we're in the menu
+    p5c.textFont(font);
+    //divide the screen in half;
 
-      //we're in the game, draw the reference and update and show the cirlces
-      drawReference();
-      if (pageFoc) {
+    //fill the left side with a gradient from blu to purple
+    //using lerpColor() by subdividing it into 50 parts
+    p5c.noStroke()
+    for (var i = 0; i < 100; i++) {
+      p5c.fill(p5c.lerpColor(p5c.color(0, 0, 255), p5c.color(255, 0, 255), i / 100));
+      p5c.rect(0, p5c.height / 100 * i, p5c.width / 2, p5c.height / 100);
+    }
+    //fill the right side with a gradient from red to purple
+    //using lerpColor() by subdividing it into 50 parts
+    for (var i = 0; i < 100; i++) {
+      p5c.fill(p5c.lerpColor(p5c.color(255, 0, 0), p5c.color(255, 0, 255), i / 100));
+      p5c.rect(p5c.width / 2, p5c.height / 100 * i, p5c.width / 2, p5c.height / 100);
+    }
 
-        //TODO: make a falling messages class
-        //The class should contain the message, the x and y coordinates, 
-        //the color, the size, and eventually the time it should be displayed for
-        p5c.fill(12)
-        p5c.stroke(20,100,240)
-        p5c.text(hitMessages[0], xLine1 + 20, yLineH + 50)
-        p5c.text(hitMessages[1], xLine2 - 20, yLineH + 50)
+    p5c.stroke(255)
+    p5c.line(p5c.width / 2, 0, p5c.width / 2, p5c.height)
+    helper.showFace()
+    //left side: write "Record some sounds" on the center of this side
+    //right side: write "Upload a file" on the center of this side
+    //write "OR" in the middle of the screen
+    p5c.textSize(50);
+    p5c.textAlign(p5c.CENTER, p5c.CENTER);
+    p5c.fill(255);
+    p5c.text("Record some sounds", p5c.width / 4, p5c.height / 2);
+    p5c.text("Upload a file", p5c.width * 3 / 4, p5c.height / 2);
+    p5c.textSize(30);
+    p5c.text("(OR)", p5c.width / 2, p5c.height / 2 - 50);
+    //create an arrow pointing to (width-400,height-200) with the text
+    //"your helper" below it
+    p5c.textSize(20);
+    p5c.text("your helper", p5c.width - 450, p5c.height - 200 + 50);
+    p5c.stroke(255)
+    p5c.noFill()
+    p5c.bezier(
+      p5c.width - 550, p5c.height - 70,
+      p5c.width - 550, p5c.height - 200,
+      p5c.width - 450, p5c.height - 250,
+      p5c.width - 400, p5c.height - 250
+    )
+    p5c.line(p5c.width - 400, p5c.height - 250, p5c.width - 425, p5c.height - 200)
+    p5c.line(p5c.width - 400, p5c.height - 250, p5c.width - 425, p5c.height - 275)
 
-        let nL = firstElemInGameL + leftElem
-        let nR = firstElemInGameR + rightElem
-        let counterL = 0;
-        let counterR = 0;
-        //TODO: solve an error: deleting for example element 1 implies
-          //leftElem-- but firstElemInGameL is still 0
-          //This means we're counting one less element than we should 
+      //write "POLYRHYTHM HERO" in the upper middle part of the screen.
+      //Write it using p5.js functions in a geometric pattern, making it stick out
+      //from the background
 
-        //TODO write a better fix
-        for (let i = firstElemInGameL; i < nL; i++) {
-          if (leftCircles[i % leftCircles.length].flag == 0) {
-            counterL++;
-          }
-        } 
-        for (let i = firstElemInGameR; i < nR; i++) {
-          if (rightCircles[i % rightCircles.length].flag == 0) {
-            counterR++;
-          }
+      p5c.textSize(150);
+      p5c.textAlign(p5c.CENTER, p5c.CENTER);
+      p5c.fill(255);
+      p5c.text("POLYRHYTHM HERO", p5c.width / 2, p5c.height / 6);
+
+      //write the authors right below the title
+      p5c.textSize(32);
+      p5c.textAlign(p5c.CENTER, p5c.CENTER);
+      p5c.fill(255);
+      p5c.text("by Francesco Colotti, Matteo Gionfriddo, Cecilia Raho and Alice Sironi", p5c.width / 2, p5c.height / 6 + 100);
+  }
+
+  /* 
+  windowResized(): p5js function that gets called every time the window
+  gets resized; recalculate here all the variables that contain coordinates 
+  in their formulas
+  */
+  p5c.windowResized = function () {
+    p5c.removeElements();
+    p5c.resizeCanvas(p5c.windowWidth, p5c.windowHeight);
+  }
+  /* 
+  mousePressed(): p5js function that gets called every time a mouse button
+  is pressed / the touchscreen is touched.
+  We start the AudioContext here with userStartAudio()
+  */
+  p5c.mousePressed = function () {
+  
+  }
+  handleFile = function (file) {
+    let sf = new p5.File(file)
+    soundFile = p5c.loadSound(file, function(){
+      soundFile.play()
+    })
+    //now remove all useless buttons
+    removeUselessButtons()
+    mode = 1 //user chose their file
+    console.log("FILE MODE")
+    started = true;
+  }
+
+  removeUselessButtons = function(){
+    //removes the useless buttons after the user made their choice in the menu
+    realUploadButton.remove()
+    //visibleUploadButton.hide()
+    visibleUploadButton.remove()
+    faqMenuButton.remove()
+    recordSideButton.remove()
+  }
+  /* 
+  keyPressed(): p5js function that gets called every time a key is pressed.
+  Use key to get the specific key.
+  We see here for now if a beat circle is overlapping with the reference;
+  points will later need to be assigned based on how much the circle
+  was overlapping with the reference.
+  The circle will also need to be deleted
+  */
+
+  var currMessage = 0
+  p5c.keyPressed = function () {
+    let key = p5c.key;
+    //if the key is z (ignore case) and the game is not paused, 
+    //check if the helper is waiting (isWaiting == true); if so,
+    //play the 'speech_end' sound and set isWaiting to false
+    if (key == 'z' || key == 'Z') {
+      //if (!paused) {
+      if (helper.isWaiting()) {
+        speech_end.play();
+        handleMessage(msg.getId())
+        //switch msg to the next message to display
+        currMessage++
+        msg.makeEmpty()
+        if(msg.nextMsgId != -1){
+          setTimeout(() => { msg = messages[currMessage] }, 150)
+        }else{
+          helper.setIdle()
         }
-        nL = nL + counterL
-        nR = nR + counterR
+      }
+      //}
+      
+      //TODO: handle this in a better way.
+      //There is no way for now to insert a non skippable pause between messages
+    }
+  }
+  var micCheck; //needed to check if the user gave us permission to access the microphone
+  //for special messages, we need to handle them differently
+  handleMessage = function(id){
+    switch (id){
+      //recordIntro3: last message before asking the user for permission to access the microphone
+      case "recordIntro3":
+        //ask user permission to access the microphone
+        mic.start(obtainedMicPerm, err => {
+          console.log("You need to give us permission to access the microphone")
+          setTimeout( ()=>{
+            msg.setMsg(`You haven't given us permission to access the microphone.
+                      Don't worry this can be fixed :)`)
+          },200) //needed in order not to bug the system out if the mic is already blocked
+          
+          setTimeout( ()=>{
+            if(!userGaveMicPerm)
+              msg.setMsg(`Refresh the page or click on the microphone icon in the address bar.
+                          You should then get a new prompt!`)
+          }, 6000)
+        })
+        //check periodically if the user gave us permission to access the microphone
+        micCheck = setInterval(() => {
+          mic.start(obtainedMicPerm)
+        }, 1000)
+        break;
 
-        for (let i = firstElemInGameL; i < nL; i++) {
-          leftCircles[i % leftCircles.length].update();
-          leftCircles[i % leftCircles.length].show();
-        }
-        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
-          rightCircles[i % rightCircles.length].update();
-          rightCircles[i % rightCircles.length].show();
-        }
-      } 
+    }
+  }
+  obtainedMicPerm = function(){
+    //if micCheck is not null, it means that we were checking for permission
+    //Clear micCheck
+    if(micCheck != null){
+      clearInterval(micCheck)
+    }
+    msg.setMsg("Great, get ready to record some sound!")
+    userGaveMicPerm = true
+  }
+
+  /*
+  startMetronome(): starts a metronome for reference. Calls metroSound()
+  to make sound*/
+  var metroFlag = 0;
+  startMetronome = function () {
+    Tone.Transport.scheduleRepeat(time => {
+      metroSound()
+    }, "4n");
+  }
+
+  /*
+  metroSound(): produces the correct metronome sound based on the beat
+  */
+  metroSound = function () {
+    if (metroFlag == 4) {
+    }
+    if (metroFlag % 4 == 0) {
+      met1.play()
     } else {
-      //we're in the menu
-      p5c.fill(10, 240, 10)
-      p5c.rectMode(p5c.CENTER)
-      p5c.rect(p5c.width / 2, p5c.height / 2, 200, 200);
-      p5c.fill(240)
-      p5c.textFont(font)
-      p5c.textAlign(p5c.CENTER)
-      p5c.textSize(35)
-      p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
+      met2.play();
     }
+    metroFlag += 1;
   }
-
-    var v; //speed of circles in [pixel/frame]
-    /*
-    addCircle(side): adds one beat circle to the specified side
-    $side can have to values:
-    r: add one circle right side
-    l: add one circle left side
-    */
-    addCircle = function (side) {
-      v = yLineH / (60 / bpm * 8 * p5c.frameRate()); //speed necessary to reach guide after 8 beats
-      //Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
-      if (side == 'r') {
-
-        //TODO: DELETE ID
-        rightCircles[lastElemR].initialise(xLine2, 0, v, lastElemR);
-        lastElemR++;
-        if (lastElemR == rightCircles.length)
-          lastElemR = 0;
-        rightElem++;
-      } else if (side == 'l') {
-        leftCircles[lastElemL].initialise(xLine1, 0, v, lastElemL);
-        lastElemL++;
-        if (lastElemL == leftCircles.length)
-          lastElemL = 0;
-        leftElem++;
-      }
-    }
-    /* 
-    drawReference(): draws the guide
-    */
-    drawReference = function () {
-      p5c.stroke(240);
-      p5c.strokeWeight(1);
-      p5c.line(xLine1, 0, xLine1, p5c.height);
-      p5c.line(xLine2, 0, xLine2, p5c.height);
-      p5c.line(0, yLineH, p5c.width, yLineH)
-      p5c.fill(12);
-      p5c.strokeWeight(4);
-      p5c.stroke(240, 240, 10)
-      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
-      p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
-    }
-    /* 
-    windowResized(): p5js function that gets called every time the window
-    gets resized; recalculate here all the variables that contain coordinates 
-    in their formulas
-    */
-    p5c.windowResized = function () {
-      p5c.removeElements();
-      p5c.resizeCanvas(p5c.windowWidth, p5c.windowHeight);
-      xLine1 = p5c.width / 2 - p5c.width / 12;
-      xLine2 = p5c.width / 2 + p5c.width / 12;
-      yLineH = 3 / 4 * p5c.height;
-      v = yLineH / (60 / bpm * 8 * p5c.frameRate());
-      //recenter circles on the lines
-      //TODO: make this so it works only with active circles
-      leftCircles.forEach((item, i) => {
-        let c = leftCircles[i];
-        c.setNewCoords(xLine1, p5c.map(c.y, 0, c.windowH, 0, p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
-        c.updateVelocity(v)
-      });
-      rightCircles.forEach((item, i) => {
-        let c = rightCircles[i];
-        c.setNewCoords(xLine2, p5c.map(c.y, 0, c.windowH, 0, p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
-        c.updateVelocity(v)
-      });
-    }
-    /* 
-    mousePressed(): p5js function that gets called every time a mouse button
-    is pressed / the touchscreen is touched.
-    We start the AudioContext here with userStartAudio()
-    */
-    p5c.mousePressed = function () {
-      if (!started) {
-        p5c.userStartAudio();
-        Tone.start();
-        started = true;
-        Tone.Transport.start();
-        startToneLoops(leftR, rightR);
-        startMetronome(bpm)
-      }
-      //addCircle('l')
-      //addCircle('r')
-      //intervalLflag = setInterval(addCircle, intervalL * 1000, 'l');
-      //intervalRflag = setInterval(addCircle, intervalR * 1000, 'r');
-    }
-
-    function startToneLoops(intL, intR) {
-      Tone.Transport.scheduleRepeat(time => {
-        addCircle('l')
-      }, intL + "n");
-      Tone.Transport.scheduleRepeat(time => {
-        addCircle('r')
-      }, intR + "n");
-    }
-    /* 
-    keyPressed(): p5js function that gets called every time a key is pressed.
-    Use key to get the specific key.
-    We see here for now if a beat circle is overlapping with the reference;
-    points will later need to be assigned based on how much the circle
-    was overlapping with the reference.
-    The circle will also need to be deleted
-    */
-
-    p5c.keyPressed = function () {
-      let key = p5c.key;
-      //check if any of the active circles is overlapping with the
-      //reference
-      if (key == 's' || key == 'S') {
-        let hitL = false;
-        for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
-          let k = i % leftCircles.length;
-          let c = leftCircles[k];
-          if (c.flag == 1 && c.y < yLineH - guideRadius) {
-            return //no point looking for further hits
-          }
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hit.play();
-            //TODO calculate the points
-            //add points to the score of the player proportionally to the
-            //inverse of the distance between the circle and the reference yLineH
-            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-            score = score + points
-            displayHitQuality(points, 0)
-            //delete circle(s)
-            leftCircles[k].toggle();
-
-            //check if the element is the first one in the game; if so,
-            //update firstElemInGameL to the next element which is active
-            //(its flag is 1)
-            if (k == firstElemInGameL) {
-              //update firstElemInGameL by finding the next element in leftCircles
-              //which is active (its flag is 1)
-              let j = firstElemInGameL;
-              while (leftCircles[j].flag == 0) {
-                j++;
-                j = j % leftCircles.length;
-              }
-              firstElemInGameL = j;
-            }
-            /*
-            if(k == firstElemInGameL){
-            //calculate the points
-            firstElemInGameL++;
-            firstElemInGameL = firstElemInGameL % leftCircles.length;
-            }*/
-            leftElem--;
-          }
-        }
-        /*
-        leftCircles.forEach((item, i) => {
-          let c = leftCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            leftCircles.splice(i, 1)
-            //calculate the points
-          }
-        });
-        */
-        if (!hitL) {
-          miss.play();
-          //point penalty / error count
-        }
-      }
-      if (key == 'k' || key == 'K') {
-        let hitR = false;
-        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
-          let k = i % rightCircles.length;
-          let c = rightCircles[k];
-          if (c.flag == 1 && c.y < yLineH - guideRadius)
-            return //no point looking for further hits
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hit.play();
-            //TODO calculate the poin
-            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-            score = score + points
-            displayHitQuality(points, 1)
-            //delete circle(s)
-            rightCircles[k].toggle();
-            if (k == firstElemInGameR) {
-              //update firstElemInGameL by finding the next element in leftCircles
-              //which is active (its flag is 1)
-              let j = firstElemInGameR;
-              while (rightCircles[j].flag == 0) {
-                j++;
-                j = j % rightCircles.length;
-              }
-              firstElemInGameR = j;
-            }
-            /*
-            if(k == firstElemInGameL){
-            //calculate the points
-            firstElemInGameL++;
-            firstElemInGameL = firstElemInGameL % leftCircles.length;
-            }*/
-            rightElem--;
-          }
-        }
-        /*
-        rightCircles.forEach((item, i) => {
-          let c = rightCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            rightCircles.splice(i, 1)
-            //calculate the points
-          }
-        });*/
-        if (!hitR) {
-          miss.play();
-          //point penalty / error count
-        }
-      }
-    }
-
-    /*
-    startMetronome(): starts a metronome for reference. Calls metroSound()
-    to make sound*/
-    var metroFlag = 0;
-    startMetronome = function () {
-      Tone.Transport.scheduleRepeat(time => {
-        metroSound()
-      }, "4n");
-    }
-
-    /*
-    metroSound(): produces the correct metronome sound based on the beat
-    */
-    metroSound = function () {
-      if (metroFlag == 4) {
-        /*
-        addCircle('l')
-        addCircle('r')
-        setInterval(addCircle, intervalL * 1000, 'l');
-        setInterval(addCircle, intervalR * 1000, 'r');
-        */
-      }
-      if (metroFlag % 4 == 0) {
-        met1.play()
-      } else {
-        met2.play();
-      }
-      metroFlag += 1;
-    }
-    var hitMessages = new Array(2);
-    hitMessages[0] = ""
-    hitMessages[1] = ""
-
-    displayHitQuality = function(points, side){
-      //prints a message on the side (side can be 0 or 1, indicating left or right side) 
-      //of the guide circle 
-      //to indicate how good a hit was ("OK", "GREAT", "AMAZING","PERFECT")
-      //depending on the points scored
-      let x = 0;
-      let y = 0;
-      if(side == 0){
-        x = xLine1;
-        y = yLineH;
-      }else{
-        x = xLine2;
-        y = yLineH;
-      }
-      let msg = "";
-      if(points == 100){
-        msg = "PERFECT";
-      }else if(points >= 75){
-        msg = "AMAZING";
-      }else if(points >= 50){
-        msg = "GREAT";
-      }else if(points >= 25){
-        msg = "GOOD"
-      }
-      else if(points >= 0){
-        msg = "OK";
-      }
-      if(msg != ""){
-        p5c.fill(240);
-        p5c.textFont(font)
-        p5c.textSize(30);
-        p5c.text(msg, x, y);
-      }
-        hitMessages[side] = msg;
-    }
-  }
+}
 
 myp5 = new p5(p5_instance)
 
@@ -644,3 +653,7 @@ document.onfocus = function () {
   Tone.Transport.start();
   pageFoc = true;
 }
+
+
+
+var messages;

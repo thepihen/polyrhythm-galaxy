@@ -27,9 +27,9 @@ Tone.Transport.bpm.rampTo(120, 10);
 //(see bottom of this file)
 //this just tracks the state
 var pageFoc = true;
-
-var score = 0;
+var gameScore = 50;
 var lifes = 3;
+
 //use p5 in instance mode
 p5_instance = function (p5c) {
 
@@ -41,7 +41,6 @@ p5_instance = function (p5c) {
   var font; //font used for text
   var met1; //higher pitched hit of metronome
   var met2; //lower pitched hit of metronome
-
   /* 
   Variables related to bpm and polyrhythms
   bpm = track bpm
@@ -88,8 +87,11 @@ p5_instance = function (p5c) {
   }
 
 
-  var started; //bool: T if we're in the game, F is we're in the menu
-  var restarted;
+  var started; //bool: T if we're in the game, F is we're in the menù
+  var restart;
+  var died;
+  var colorMenu;
+  var textMenu;
 
   /*
   Variables needed to draw the visual guide; might need a better solution for this in
@@ -192,7 +194,7 @@ p5_instance = function (p5c) {
       if( ( (this.y - this.radius) > (yLineH + guideRadius) ) && ( this.y - this.radius < p5c.windowHeight) ){
         if (this.failFlag){
             this.failFlag = false;
-            if(lifes == 0){
+            if(lifes == 0 && died == false){
                 reSetup()
             }
             else{
@@ -261,17 +263,17 @@ p5_instance = function (p5c) {
   needed in the sketch here; load audio files, fonts, etc, in preload() instead
   */
   function reSetup(){
+    dieMenuTransition()
     started = false;
+    died = true
+    hitMessages[0] = ''
+    hitMessages[1] = ''
     leftElem = 0;
     rightElem = 0;
     firstElemInGameL = 0;
     firstElemInGameR = 0;
     lastElemL = 0;
     lastElemR = 0;
-    /*Tone.Transport.clear(scheduleL);
-    Tone.Transport.clear(scheduleR);
-    Tone.Transport.clear(scheduleMetro);
-    Tone.Transport.clear(scheduleFlag);*/
     miss.stop();
     beat1.stop();
     beat2.stop();
@@ -279,7 +281,7 @@ p5_instance = function (p5c) {
     Tone.Transport.cancel()
     stopCircleArrays()
     p5c.getAudioContext().resume()
-    score = 0;
+    //newPodium();
     lifes = 3;
     rhythmLimit = 4;
     metroFlagChange = 0;
@@ -303,11 +305,15 @@ p5_instance = function (p5c) {
     xLine2 = p5c.width / 2 + p5c.width / 12;
     yLineH = 3 / 4 * p5c.height;
     started = false;
-    restarted = false;
+    died = false;
+    restart = true;
+    colorMenu = 10;
+    textMenu = 'Press the spacebar\n to start'
+
     //font = p5c.textFont('Montserrat', 30)
 
     bpm = 130;
-    score = 0;
+    gameScore = 50;
     scheduleL = null;
     scheduleR = null;
     Tone.Transport.bpm.value = bpm;
@@ -325,6 +331,7 @@ p5_instance = function (p5c) {
     nextRightR = 1;
 
     startCircleArrays();
+    textUpTransition('Press the spacebar\nto start')
   }
   startCircleArrays = function () {
     for (let i = 0; i < leftCircles.length; i++) {
@@ -352,10 +359,22 @@ p5_instance = function (p5c) {
   (by default 60 frames per second) 
   */
   p5c.draw = function () {
-    p5c.background(12);
 
+     p5c.background(10);
+     //drawPodium()
+     p5c.textFont(font)
+     p5c.noStroke()
+     p5c.fill(colorMenu)
+     p5c.textAlign(p5c.CENTER)
+     p5c.textSize(23)
+     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
+
+    if(!noReference){
+        drawReference();
+      }
     //console.log(frameRate())
     if (started) {
+
       p5c.fill(240)
       p5c.textFont(font)
       p5c.textSize(30)
@@ -364,7 +383,7 @@ p5_instance = function (p5c) {
       ////write a text in p5.js displaying firstElemInGameR
       //p5c.text(firstElemInGameR, 100, 200)
       //write a text in p5.js displaying "Score: " and the score
-      p5c.text("Score: " + score, 100, 50)
+      p5c.text("Score: " + gameScore, 100, 50)
       ////write a text in p5.js displaying "Left elements: " and leftElem
       //p5c.text("Left elements: " + leftElem, 150, 400)
       p5c.textSize(300)
@@ -388,9 +407,7 @@ p5_instance = function (p5c) {
       }
 
       //we're in the game, draw the reference and update and show the cirlces
-      if(!noReference){
-        drawReference();
-      }
+
 
       if (pageFoc) {
 
@@ -400,6 +417,7 @@ p5_instance = function (p5c) {
         p5c.fill(12)
         p5c.textSize(30)
         p5c.stroke(20,100,240)
+        p5c.strokeWeight(4);
         p5c.text(hitMessages[0], xLine1 - 200, yLineH + 50)
         p5c.text(hitMessages[1], xLine2 + 200, yLineH + 50)
 
@@ -435,22 +453,6 @@ p5_instance = function (p5c) {
           rightCircles[i % rightCircles.length].show();
         }
       } 
-    } else {
-      //we're in the menu
-      p5c.fill(10, 240, 10)
-      p5c.rectMode(p5c.CENTER)
-      p5c.rect(p5c.width / 2, p5c.height / 2, 200, 200);
-      p5c.fill(240)
-      p5c.textFont(font)
-      p5c.textAlign(p5c.CENTER)
-      p5c.textSize(35)
-      if (restarted){
-        p5c.text("Click\nto retry", p5c.width / 2, p5c.height / 2);
-        }
-      else {
-        p5c.text("Click\nto start :)", p5c.width / 2, p5c.height / 2);
-        }
-
     }
   }
 
@@ -507,12 +509,29 @@ p5_instance = function (p5c) {
       p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
       p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
 
-      p5c.fill("yellow");
-      metroColor = ((metroFlag - 1) % 4) + 1
-      p5c.strokeWeight(1);
-      p5c.stroke(240, 240, 10)
-      p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
+      if (started){
+        p5c.fill("yellow");
+        if (metroFlag > 0){
+            metroColor = ((metroFlag - 1) % 4) + 1
+        }
+        p5c.strokeWeight(1);
+        p5c.stroke(240, 240, 10)
+        p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
+      }
+
     }
+    /*drawPodium = function () {
+        p5c.fill(30,144,255)
+        p5c.noStroke()
+        p5c.rect(40,p5c.height - 230,220,200)
+        p5c.fill(500)
+        p5c.textSize(25)
+        p5c.stroke(20,100,240)
+        p5c.text('Ranking', 150,p5c.height - 200)
+        p5c.text('1°   ' + podiumStrings[0] + ' ' + podiumStrings[1], 150, p5c.height - 150)
+        p5c.text('2°   ' + podiumStrings[2] + ' ' + podiumStrings[3], 150, p5c.height - 100)
+        p5c.text('3°   ' + podiumStrings[4] + ' ' + podiumStrings[5], 150, p5c.height - 50)
+    }*/
     /* 
     windowResized(): p5js function that gets called every time the window
     gets resized; recalculate here all the variables that contain coordinates 
@@ -544,19 +563,7 @@ p5_instance = function (p5c) {
     We start the AudioContext here with userStartAudio()
     */
     p5c.mouseClicked = function () {
-      if (!started) {
 
-        p5c.userStartAudio();
-        Tone.start();
-        Tone.Transport.start();
-        toggleRhythms();
-        visualLeftR = leftR;
-        visualRightR = rightR;
-        visualNextLeftR = nextLeftR;
-        visualNextRightR = nextRightR;
-        started = true;
-        restarted = true;
-      }
     }
 
     function startToneLoops(intL, intR) {
@@ -580,121 +587,189 @@ p5_instance = function (p5c) {
     was overlapping with the reference.
     The circle will also need to be deleted
     */
+    var menuTransitionInterval;
+
+    function dieMenuTransition(){
+        textUpDownTransition('You Died',10)
+        setTimeout(() => {
+            textUpTransition('Press the spacebar\nto retry')
+            restart = true
+            }, 2000)
+    }
+
+
+    function textUpDownTransition(text,ms){
+        menuTransitionInterval = setInterval( () => {
+                textMenu = text;
+                if(colorMenu < 500){
+                    colorMenu += 5;
+                    }
+                else{
+                    clearInterval(menuTransitionInterval);
+                    textDownTransition(ms)
+                    }
+            },ms)
+    }
+
+    function textUpTransition(text){
+        menuTransitionInterval = setInterval( () => {
+                textMenu = text;
+                if(colorMenu < 500){
+                    colorMenu += 5;
+                    }
+                else{
+                    clearInterval(menuTransitionInterval);
+                    }
+            },10)
+    }
+
+    function textDownTransition(ms){
+        menuTransitionInterval = setInterval( () => {
+                if(colorMenu > 11){
+                    colorMenu -= 5;
+                    }
+                else{
+                    clearInterval(menuTransitionInterval);
+
+                    }
+            },ms)
+    }
+
 
     p5c.keyPressed = function () {
       let key = p5c.key;
       //check if any of the active circles is overlapping with the
       //reference
-      if (key == 's' || key == 'S') {
-        let hitL = false;
-        for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
-          let k = i % leftCircles.length;
-          let c = leftCircles[k];
-          /*if (c.flag == 1 && (c.y - rhythm_rad) > (yLineH + guideRadius) ){
-            return //no point looking for further hits
-          }*/
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hitSoundL.play();
-            //TODO calculate the points
-            //add points to the score of the player proportionally to the
-            //inverse of the distance between the circle and the reference yLineH
-            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-            score = score + points
-            displayHitQuality(points, 0)
-            //delete circle(s)
-            leftCircles[k].toggle();
+      if (key == ' '){
+          if (!started && restart) {
+            clearInterval(menuTransitionInterval)
+            textDownTransition(5)
+            p5c.userStartAudio();
+            Tone.start();
+            Tone.Transport.start();
+            toggleRhythms();
+            visualLeftR = leftR;
+            visualRightR = rightR;
+            visualNextLeftR = nextLeftR;
+            visualNextRightR = nextRightR;
+            started = true;
+            restart = false;
+            died = false;
+          }
+         else{}
+      }
+      if(started){
+          if (key == 's' || key == 'S') {
+            let hitL = false;
+            for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
+              let k = i % leftCircles.length;
+              let c = leftCircles[k];
+              /*if (c.flag == 1 && (c.y - rhythm_rad) > (yLineH + guideRadius) ){
+                return //no point looking for further hits
+              }*/
+              if (Math.abs(c.y - yLineH) <= guideRadius) {
+                hitL = true;
+                //play sound
+                hitSoundL.play();
+                //TODO calculate the points
+                //add points to the score of the player proportionally to the
+                //inverse of the distance between the circle and the reference yLineH
+                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+                gameScore = gameScore + points
+                displayHitQuality(points, 0)
+                //delete circle(s)
+                leftCircles[k].toggle();
 
-            //check if the element is the first one in the game; if so,
-            //update firstElemInGameL to the next element which is active
-            //(its flag is 1)
-            if (k == firstElemInGameL) {
-              //update firstElemInGameL by finding the next element in leftCircles
-              //which is active (its flag is 1)
-              let j = firstElemInGameL;
-              while (leftCircles[j].flag == 0) {
-                j++;
-                j = j % leftCircles.length;
+                //check if the element is the first one in the game; if so,
+                //update firstElemInGameL to the next element which is active
+                //(its flag is 1)
+                if (k == firstElemInGameL) {
+                  //update firstElemInGameL by finding the next element in leftCircles
+                  //which is active (its flag is 1)
+                  let j = firstElemInGameL;
+                  while (leftCircles[j].flag == 0) {
+                    j++;
+                    j = j % leftCircles.length;
+                  }
+                  firstElemInGameL = j;
+                }
+
+                leftElem--;
               }
-              firstElemInGameL = j;
             }
 
-            leftElem--;
-          }
-        }
+            if (!hitL) {
 
-        if (!hitL) {
-
-          if(lifes <= 0){
-            reSetup()
-          }
-          else{
-            miss.play();
-            lifes -= 1;
-          }
-          //point penalty / error count
-        }
-      }
-      if (key == 'k' || key == 'K') {
-        let hitR = false;
-        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
-          let k = i % rightCircles.length;
-          let c = rightCircles[k];
-          /*if (c.flag == 1 && (c.y + rhythm_rad) > (yLineH - guideRadius)){
-            return //no point looking for further hits
-          }*/
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hitSoundR.play();
-            //TODO calculate the points
-            let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-            score = score + points
-            displayHitQuality(points, 1)
-            //delete circle(s)
-            rightCircles[k].toggle();
-            if (k == firstElemInGameR) {
-              //update firstElemInGameL by finding the next element in leftCircles
-              //which is active (its flag is 1)
-              let j = firstElemInGameR;
-              while (rightCircles[j].flag == 0) {
-                j++;
-                j = j % rightCircles.length;
+              if(lifes <= 0 && died == false){
+                reSetup()
               }
-              firstElemInGameR = j;
+              else{
+                miss.play();
+                lifes -= 1;
+              }
+              //point penalty / error count
+            }
+          }
+          if (key == 'k' || key == 'K') {
+            let hitR = false;
+            for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
+              let k = i % rightCircles.length;
+              let c = rightCircles[k];
+              /*if (c.flag == 1 && (c.y + rhythm_rad) > (yLineH - guideRadius)){
+                return //no point looking for further hits
+              }*/
+              if (Math.abs(c.y - yLineH) <= guideRadius) {
+                hitR = true;
+                //play sound
+                hitSoundR.play();
+                //TODO calculate the points
+                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+                gameScore = gameScore + points
+                displayHitQuality(points, 1)
+                //delete circle(s)
+                rightCircles[k].toggle();
+                if (k == firstElemInGameR) {
+                  //update firstElemInGameL by finding the next element in leftCircles
+                  //which is active (its flag is 1)
+                  let j = firstElemInGameR;
+                  while (rightCircles[j].flag == 0) {
+                    j++;
+                    j = j % rightCircles.length;
+                  }
+                  firstElemInGameR = j;
+                }
+                /*
+                if(k == firstElemInGameL){
+                //calculate the points
+                firstElemInGameL++;
+                firstElemInGameL = firstElemInGameL % leftCircles.length;
+                }*/
+                rightElem--;
+              }
             }
             /*
-            if(k == firstElemInGameL){
-            //calculate the points
-            firstElemInGameL++;
-            firstElemInGameL = firstElemInGameL % leftCircles.length;
-            }*/
-            rightElem--;
+            rightCircles.forEach((item, i) => {
+              let c = rightCircles[i];
+              if (Math.abs(c.y - yLineH) <= guideRadius) {
+                hitR = true;
+                //play sound
+                hit.play();
+                //delete circle(s)
+                rightCircles.splice(i, 1)
+                //calculate the points
+              }
+            });*/
+            if (!hitR) {
+              if(lifes <= 0 && died == false){
+                reSetup()
+              }
+              else{
+                miss.play();
+                lifes -= 1;
+              }
+              //point penalty / error count
+            }
           }
-        }
-        /*
-        rightCircles.forEach((item, i) => {
-          let c = rightCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            rightCircles.splice(i, 1)
-            //calculate the points
-          }
-        });*/
-        if (!hitR) {
-          if(lifes <= 0){
-            reSetup()
-          }
-          else{
-            miss.play();
-            lifes -= 1;
-          }
-          //point penalty / error count
-        }
       }
     }
 
@@ -799,19 +874,19 @@ p5_instance = function (p5c) {
         var arrayNewRhythms;
 
         // TRIPLET
-        if ( score >= 1500 || metroFlag >= 25*4){
+        if ( gameScore >= 1500 || metroFlag >= 25*4){
             triplet = true;
         }
         // RAISE LIMIT to 6
-        if ( score >= 3000 || metroFlag >= 45*4){
+        if ( gameScore >= 3000 || metroFlag >= 45*4){
             rhythmLimit = 6;
         }
         // MINDBLOWING
-        if ( score >= 6000 || metroFlag >= 65*4){
+        if ( gameScore >= 6000 || metroFlag >= 65*4){
            mindBlowing = true;
         }
         // NO REFERENCE
-        if ( score >= 5000 ){
+        if ( gameScore >= 5000 ){
             noReference = true;
         }
         // RAISE LIMIT TO 7
@@ -890,6 +965,31 @@ p5_instance = function (p5c) {
         nextR = itemsR[Math.floor(Math.random() * itemsR.length)];
         return [nextL,nextR];
     }
+    /*function newPodium(){
+        var changed = true;
+        var string;
+        if (gameScore > podiumStrings[1]){
+            podiumStrings[5] = podiumStrings[3]
+            podiumStrings[3] = podiumStrings[1]
+            podiumStrings[1] = gameScore
+        }
+        else if (gameScore > podiumStrings[3]){
+            podiumStrings[5] = podiumStrings[3]
+            podiumStrings[3] = gameScore
+        }
+        else if (gameScore > podiumStrings[5]){
+            podiumStrings[5] = gameScore
+        }
+        else{
+            changed = false;
+        }
+        gameScore = 0;
+        if (changed){
+
+        }
+    }*/
+
+
  }
 myp5 = new p5(p5_instance)
 

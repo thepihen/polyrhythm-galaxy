@@ -5,15 +5,14 @@
 /*
 TODO:
 RECORDING MODE:
--Add a button to start/stop recording
--Add a button to play the recorded audio
--Add a button to save the recorded audio
+-Implement recording
 
 UPLOAD MODE:
+-Bring debug fixes (disappearing waveform,etc)
 
-BOTH:
--The mode only influences the way the user gets to the first audio; after that, 
-the user can always choose to record or upload a new file
+(note: both modes bring to common mode)
+
+COMMON MODE:
 -Peak detection
 -Polyrhythm detection
 -Cut audio if longer than 30 seconds

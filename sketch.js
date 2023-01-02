@@ -14,9 +14,9 @@ UPLOAD MODE:
 BOTH:
 -The mode only influences the way the user gets to the first audio; after that, 
 the user can always choose to record or upload a new file
--Waveform display
 -Peak detection
 -Polyrhythm detection
+-Cut audio if longer than 30 seconds
 
 IF THERE'S TIME:
 -Implement a createGraphics approach to manage helper text
@@ -58,7 +58,15 @@ var recordSideButton;
 //various other self-explanatory buttons
 var faqMenuButton; //onclick:show instructions
 
+//buttons to control the audio playback
+var playButton;
+var stopButton;
+var stopButton;
+var recordButton;
 
+
+var soundFile; //the file we'll load
+var leftChannel,rightChannel;
 //use p5 in instance mode
 p5_instance = function (p5c) {
   class Message{
@@ -146,7 +154,7 @@ p5_instance = function (p5c) {
       //the rect should be about width/2 long
       //the text should be in the middle of the rect
       p5c.rectMode(p5c.CENTER)
-      p5c.fill(0, 0, 0, 150)
+      p5c.fill(12, 12, 12, 150)
       p5c.rect(p5c.width / 2, p5c.height - 150, p5c.width / 2, 200)
       //print message using speech_font
       p5c.stroke(255)
@@ -244,6 +252,10 @@ p5_instance = function (p5c) {
       this.isIdle = true
       this.state = "idle"
     }
+    setWorking(){
+      this.isIdle = false
+      this.state = "working"
+    }
     getState(){
       return this.state
     }
@@ -271,20 +283,26 @@ p5_instance = function (p5c) {
     face_talking2 = p5c.loadImage('assets/face_talking2.png');
     speech = p5c.loadSound('assets/dialogue.wav')
     speech_end = p5c.loadSound('assets/dialogue_end.wav')
-    messages_json = p5c.loadJSON('assets/messages.json',messagesLoaded)
+    messages_json = p5c.loadJSON('assets/messages.json',jsonLoaded)
+
+    debug_soundfile = p5c.loadSound('assets/song2.mp3')
   }
-  messagesLoaded = function(){
-    let n = Object.keys(messages_json).length
+  jsonLoaded = function(){
+    let n = Object.keys(messages_json["record"]).length
     messages = new Array(n)
     for(let i = 0; i < n; i++){
-      let msg = messages_json[i]
+      let msg = messages_json["record"][i]
       messages[i] = new Message(msg.msg,msg.msgId,msg.nextMsgId)
     }
     loading = false
   }
   //we need these to record using p5.js
-  var mic, recorder, soundFile; //mic = our microphone, recorder is p5.soundRecorder, soundFile is the file we'll load
-  var mode; //0 = record from mic, 1 = load from file
+  var mic, recorder; //mic = our microphone, recorder is p5.soundRecorder
+  //var soundFile; //the file we'll load
+  //var leftChannel, rightChannel;
+  var fft; //needed to analyse the sound
+
+  var mode; //0 = record from mic, 1 = load from file, 2 = common (after the first set of dialogues everything is common)
   /*
   setup(): function that gets called by p5.js at startup. Initialise variables 
   needed in the sketch here; load audio files, fonts, etc, in preload() instead
@@ -299,6 +317,16 @@ p5_instance = function (p5c) {
     p5c.frameRate(60) //this doesn't work but it's like lighting a candle 
     //in a church hoping for a miracle
 
+    setupAudioStuff()
+    
+    faces = [face]//, face2]
+    helper = new Helper(faces, "Polyev")
+    msg = messages[0]
+
+    //setup everything regarding buttons
+    setupButtons()
+  }
+  setupAudioStuff = function(){
     //we need to initialise the microphone and the recorder
     mic = new p5.AudioIn();
     recorder = new p5.SoundRecorder();
@@ -307,16 +335,15 @@ p5_instance = function (p5c) {
     //here we would start the microphone, but we don't want to do that yet
     //We'll start only when if the user selects to record
     //This is handled in the handleMessage() function
-
     //we create a soundFile that will contain a pre-recorded audio
     soundFile = new p5.SoundFile();
-
-    faces = [face]//, face2]
-    helper = new Helper(faces, "Polyev")
-    msg = messages[0]
-
-    //setup everything regarding buttons
-    setupButtons()
+    fft = new p5.FFT();
+    //we set the input of the fft to be the microphone
+    
+    //fft.setInput(mic);
+    //TODO after recording we need to call mic.disconnect()
+    
+    fft.setInput();
   }
   setupButtons = function(){
     realUploadButton = p5c.createFileInput(handleFile)
@@ -361,8 +388,6 @@ p5_instance = function (p5c) {
     
 
     faqMenuButton.mousePressed(function(){
-      //window.open("https://soundcloud.com/pihen")
-
       //TODO: type all FAQs, everything the user needs to know, inside a black box
       //Make it look nice and make it close when user clicks on it
       faqMenuButton.hide()
@@ -372,12 +397,18 @@ p5_instance = function (p5c) {
       In this mode, you will learn how to play basic polyrhythms.<br>
       You can choose to record yourself playing some kind of rhythm (tapping your fingers on the table is also OK) 
       or upload an audio file from your pc.<br>
+      For simplicity, all recordings will be cut to 30 seconds<br>
       The website will then analyze your audio and find the polyrhythm that's closest to what you played.<br>
       You can then choose to train on the polyrhythm you found, play with it on a rhythmic wheel to obtain shifted versions 
       or record/upload a new audio.<br>
+      <br>
+      COMMANDS:<br>
+      z: pass to the helper's next message<br>
+      m: skip all useless dialogue and get into the action right away<br>
+      <br>
       We hope you enjoy your stay!<br>
       <br>
-      Alice, Cecilia, Francesco, Matteo`)
+      <b>Alice, Cecilia, Francesco, Matteo</b>`)
       box.addClass('faq_box')
       //box.position(p5c.width/2, p5c.height/2 - 100)
       box.size(600,600)
@@ -438,10 +469,100 @@ p5_instance = function (p5c) {
         break;
       case 1:
         //we're in upload mode
-        console.log("A")
+        helper.showFace()
+        helper.say(msg)
+        break;
+      case 2:
+        //COMMON MODE
+        drawInterface()
+        helper.showFace()
+        helper.say(msg)
         break;
     }
   }
+  
+  drawInterface = function(){
+    //draw audio controls
+    drawAudioControls()
+
+    //draw a basic rectangle that will contain the waveform of the recorded/uploaded audio
+    //the rectangle needs to be 3/4 of the screen in width and 1/3 of the screen in height
+    //the rectangle needs to be centered horizontally, and 1/4 of the screen from the top
+    p5c.push()
+    p5c.stroke(255)
+    p5c.strokeWeight(2)
+    p5c.noFill()
+    p5c.rectMode(p5c.CENTER)
+    p5c.rect(p5c.width/2, p5c.height/4, 3*p5c.width/4, p5c.height/3)
+    //draw the waveform
+    p5c.stroke(255)
+    p5c.strokeWeight(2)
+    p5c.noFill()
+    let resolution = p5c.int(p5c.max(1, p5c.round(leftChannel.length / (3*p5c.width/4) )));
+    let x = p5c.width/2 - 3*p5c.width/8;
+    let sum = 0;
+    let maxAmp; //maximum amplitude
+    for (let i = 0; i < leftChannel.length; i++) {
+      if (maxAmp === undefined || p5c.abs(leftChannel[i]) > maxAmp) {
+        maxAmp = leftChannel[i];
+      }
+    }
+    maxAmp = maxAmp/2;
+    p5c.beginShape()
+    
+    for (let i = 0; i < leftChannel.length; i++) {
+      // Compute an average for each set of values
+      sum += p5c.abs(leftChannel[i]);
+      if (i % resolution == 0) {
+        p5c.vertex(
+          x++,
+          // map the average amplitude to range from the center of the canvas to
+          // either the top or bottom depending on the channel
+          p5c.map(sum / resolution, 0, maxAmp, p5c.height / 4 + p5c.height / 6, p5c.height / 4 - p5c.height / 6)
+          );
+        sum = 0;
+      }
+    }
+    p5c.endShape()
+    p5c.pop()
+
+
+    p5c.push()
+    //draw a light blue line that will represent the current position in soundFile playback
+    p5c.stroke(0, 255, 255)
+    p5c.strokeWeight(2)
+    p5c.noFill()
+    //save the player current X position
+    let playerCurrX = p5c.map(soundFile.currentTime(),0, soundFile.duration(), p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8)
+    p5c.line(playerCurrX, p5c.height/4 - p5c.height/6+1, playerCurrX, p5c.height/4 + p5c.height/6-1) //+1,-1 to avoid overlapping with the window
+
+    p5c.pop()
+
+    //This is very nice to see but quite useless since we're reading only a small sample in real time
+    /*
+    //draw the waveform
+    let waveform = fft.waveform()
+    p5c.stroke(255)
+    p5c.strokeWeight(2)
+    p5c.noFill()
+    p5c.beginShape()
+    for (var i = 0; i < waveform.length; i++){
+      var x = p5c.map(i, 0, waveform.length, p5c.width/4, p5c.width/4 + p5c.width/2);
+      var y = p5c.map( waveform[i], -1, 1, p5c.height/3 + p5c.height/3, p5c.height/3);
+      p5c.vertex(x,y);
+    }
+    p5c.endShape()
+    p5c.pop()
+    */
+  }
+
+  drawAudioControls = function(){
+    //draw the audio controls
+    p5c.push()
+
+    p5c.pop()
+  }
+
   drawMenu = function () {
     //we're in the menu
     p5c.textFont(font);
@@ -511,7 +632,7 @@ p5_instance = function (p5c) {
   in their formulas
   */
   p5c.windowResized = function () {
-    p5c.removeElements();
+    //p5c.removeElements();
     p5c.resizeCanvas(p5c.windowWidth, p5c.windowHeight);
   }
   /* 
@@ -522,16 +643,41 @@ p5_instance = function (p5c) {
   p5c.mousePressed = function () {
   
   }
+
   handleFile = function (file) {
     let sf = new p5.File(file)
-    soundFile = p5c.loadSound(file, function(){
-      soundFile.play()
+    //TODO: implement proper audio file loading
+    soundFile = p5c.loadSound(file, ()=>{
+      //if you need to test the file is loaded, uncomment this line
+      //soundFile.play()
+      setTimeout(() => {
+        leftChannel = soundFile.buffer.getChannelData(0)
+      }, 3000);
     })
     //now remove all useless buttons
     removeUselessButtons()
+    setTimeout( ()=> { 
     mode = 1 //user chose their file
+    //show some intro messages and then move to mode 2
     console.log("FILE MODE")
+    loadMessages("upload")
     started = true;
+    },5000);
+  }
+  
+  //this function loads the messages from the json file
+  //messages_key is the key of the message array to load (see json file)
+  loadMessages = function(messages_key){
+    let n = Object.keys(messages_json[messages_key]).length
+    messages = new Array(n)
+    for (let i = 0; i < n; i++) {
+      let msg = messages_json[messages_key][i]
+      messages[i] = new Message(msg.msg, msg.msgId, msg.nextMsgId)
+    }
+    msg = messages[0]
+    //reset message counter
+    currMessage = 0;
+    loading = false
   }
 
   removeUselessButtons = function(){
@@ -554,6 +700,7 @@ p5_instance = function (p5c) {
   var currMessage = 0
   p5c.keyPressed = function () {
     let key = p5c.key;
+    let keyCode = p5c.keyCode;
     //if the key is z (ignore case) and the game is not paused, 
     //check if the helper is waiting (isWaiting == true); if so,
     //play the 'speech_end' sound and set isWaiting to false
@@ -576,6 +723,45 @@ p5_instance = function (p5c) {
       //TODO: handle this in a better way.
       //There is no way for now to insert a non skippable pause between messages
     }
+
+    //DEBUG: skip directly to mode 2
+    if (key == 'm' || key == 'M') {
+      //skip directly to mode 2
+      removeUselessButtons()
+      
+      if (!started) {
+        //mode = 2;
+        p5c.userStartAudio();
+        Tone.start();
+        loadMessages("common")
+        //started = true;
+        soundFile = debug_soundfile
+        //TODO: find a better implementation of this; unfortunately we can't do better for now
+        //Making this actually load is a pain in the ass, so I'll take this for now.
+        //If we try to load the right channel for some unexplained reason this breaks and doesn't load anything
+        //I think it's because the data isn't available yet when we look for it
+        setTimeout(() => {
+          //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
+          //We add slice() to effectively clone the array
+          leftChannel = debug_soundfile.buffer.getChannelData(0).slice()
+        }, 100);
+        setTimeout(()=>{
+        mode = 2;
+        createAudioControls();
+        started = true
+        }, 200); 
+      }
+    }
+
+    //spacebar
+    if(keyCode==32){
+      if(mode==2)
+        if(!soundFile.isPlaying()){
+          soundFile.play()
+        }else{
+            soundFile.pause()
+        }
+    }
   }
   var micCheck; //needed to check if the user gave us permission to access the microphone
   //for special messages, we need to handle them differently
@@ -584,35 +770,75 @@ p5_instance = function (p5c) {
       //recordIntro3: last message before asking the user for permission to access the microphone
       case "recordIntro3":
         //ask user permission to access the microphone
-        mic.start(obtainedMicPerm, err => {
-          console.log("You need to give us permission to access the microphone")
-          setTimeout( ()=>{
-            msg.setMsg(`You haven't given us permission to access the microphone.
-                      Don't worry this can be fixed :)`)
-          },200) //needed in order not to bug the system out if the mic is already blocked
-          
-          setTimeout( ()=>{
-            if(!userGaveMicPerm)
-              msg.setMsg(`Refresh the page or click on the microphone icon in the address bar.
-                          You should then get a new prompt!`)
-          }, 6000)
-        })
+        mic.start(obtainedMicPerm, errorMicPerm)
         //check periodically if the user gave us permission to access the microphone
         micCheck = setInterval(() => {
           mic.start(obtainedMicPerm)
         }, 1000)
         break;
-
+      case "record2":
+        //can begin common mode
+        mode = 2;
+        loadMessages("common")
+        break;
+      case "upload3":
+        //can begin common mode
+        mode = 2;
+        createAudioControls();
+        loadMessages("common")
+        break;
     }
   }
+  //used to create the audio controls when passing to common mode
+  createAudioControls = function(){
+    recordButton = p5c.createDiv('')
+    recordButton.addClass('record_button')
+    recordButton.mousePressed(function(){
+      console.log("record button pressed")
+    })
+    playButton = p5c.createDiv('')
+    playButton.addClass('play_button')
+    playButton.mousePressed(function () {
+      console.log("play button pressed")
+      if(!soundFile.isPlaying()){
+        soundFile.play()
+      }else{
+        soundFile.pause()
+      }
+    })
+    stopButton = p5c.createDiv("")
+    stopButton.addClass('stop_button')
+    stopButton.mousePressed(function () {
+      console.log("stop button pressed")
+      soundFile.stop()
+    })
+  }
+  errorMicPerm = function(){
+      setTimeout(() => {
+        if (!userGaveMicPerm)
+          msg.setMsg(`You haven't given us permission to access the microphone.
+                        Don't worry this can be fixed :)`)
+      }, 200) //needed in order not to bug the system out if the mic is already blocked
+
+      setTimeout(() => {
+        if (!userGaveMicPerm)
+          msg.setMsg(`Refresh the page or click on the microphone icon in the address bar.
+                          You should then get a new prompt!`)
+      }, 6000)
+    
+  
+  }
+
   obtainedMicPerm = function(){
     //if micCheck is not null, it means that we were checking for permission
     //Clear micCheck
+
     if(micCheck != null){
       clearInterval(micCheck)
     }
-    msg.setMsg("Great, get ready to record some sound!")
     userGaveMicPerm = true
+    msg = messages[currMessage]
+    helper.setWorking()
   }
 
   /*

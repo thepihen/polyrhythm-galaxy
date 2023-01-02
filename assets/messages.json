@@ -1,7 +1,8 @@
-[
+{
+"record":[
     {
         "msgId": "recordIntro1",
-        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev Gabay and I'll be your guide!",
+        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev and I'll be your guide!",
         "nextMsgId": "recordIntro2"
     },
     {
@@ -13,5 +14,40 @@
         "msgId": "recordIntro3",
         "msg": "(don't forget to authorize access to the microphone\nwhen the browser asks you to do so!!!)",
         "nextMsgId": "-1"
+    },
+    {
+        "msgId": "record1",
+        "msg": "Great, everything seems to be ok. Now you can start recording. Press the RECORD button when you're ready",
+        "nextMsgId": "record2"
+    },
+    {
+        "msgId": "record2",
+        "msg": "When you're satisfied with your recording press the stop button and then the 'DONE' button. The full interface will now appear",
+        "nextMsgId": "-1"
+    }
+],
+"upload":[
+    {
+        "msgId": "upload1",
+        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev and I'll be your guide!",
+        "nextMsgId": "upload2"
+    },
+    {
+        "msgId": "upload2",
+        "msg": "It seems you already have a recording. I will now try to identify what you're doing",
+        "nextMsgId": "upload3"
+    },
+    {
+        "msgId": "upload3",
+        "msg": "If you want to upload or record a new audio, you can do so at any time by interacting with the UI!",
+        "nextMsgId": "-1"
+    }
+],
+"common":[
+    {
+        "msgId": "common1",
+        "msg": ":) :( :) :( :) :( :DDDD",
+        "nextMsgId": "-1"
     }
 ]
+}

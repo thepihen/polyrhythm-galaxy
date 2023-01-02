@@ -63,3 +63,68 @@ body {
     transform: translate(-50%, -50%);
     z-index: 2
 }
+
+.record_button{
+    background-color: crimson;
+    border: none;
+    color: transparent;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    position: absolute;
+    cursor: pointer;
+    width: 30px;
+    height:30px;
+    left:10%;
+    top:30%;
+    z-index: 1;
+}
+
+
+.play_button {
+    margin: 0 auto;
+    left: 10%;
+    top: 22%;
+    background-color: transparent;
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    border-style: solid;
+    border-width: 15px 0 15px 25px;
+    border-color: transparent transparent transparent rgb(0, 255, 76);
+    opacity: 1;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.stop_button {
+    background-color: whitesmoke;
+    color:black;
+    border: none;
+    color: transparent;
+    left: 10%;
+    top: 26%;
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    cursor: pointer;
+    z-index: 1;
+}
+
+
+.play_button_mine{
+    background-color: seagreen;
+    overflow:hidden;
+    border: none;
+    color: transparent;
+    left: 10%;
+    top: 27%;
+    position: absolute;
+    width:30px;
+    height:30px;
+    transform:rotate(45deg);
+    cursor: pointer;
+    z-index: 1;
+}
+

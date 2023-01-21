@@ -72,13 +72,13 @@ var recordButton;
 
 
 var soundFile; //the file we'll load
-var leftChannel,rightChannel; //we'll save the audio values in here
+var leftChannel, rightChannel; //we'll save the audio values in here
 
 var messages; //to save the messages we'll display
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
-  class Message{
+  class Message {
     /*
     Message: class that represents a message that the helper will say
     Important fields of a Message:
@@ -86,16 +86,16 @@ p5_instance = function (p5c) {
     id: the id of the message
     nextMsgId: the id of the next message the helper will say
     */
-    constructor(msg, id, nextMsgId){
-      if (msg != null && msg != undefined){
+    constructor(msg, id, nextMsgId) {
+      if (msg != null && msg != undefined) {
         this.msg = msg
-      }else{
+      } else {
         this.msg = ""
       }
       if (id != null && id != undefined) {
         this.id = id
       } else {
-        this.id= ""
+        this.id = ""
       }
       if (nextMsgId != null && nextMsgId != undefined) {
         this.nextMsgId = nextMsgId
@@ -106,33 +106,33 @@ p5_instance = function (p5c) {
     }
     //used for emptying the dialogue box without switching to another message
     //Especially useful for when we don't want to display a new message immediately
-    makeEmpty(){
+    makeEmpty() {
       this.msg = ""
     }
-    setId(id){
+    setId(id) {
       this.id = id
     }
-    getId(){
+    getId() {
       return this.id
     }
-    getMsg(){
+    getMsg() {
       return this.msg
     }
-    setMsg(msg){
+    setMsg(msg) {
       this.msg = msg
     }
-    setNextMsgId(nextMsgId){
+    setNextMsgId(nextMsgId) {
       this.nextMsgId = nextMsgId
     }
     //this is useless, could be used to check for errors
-    setPrevMsgId(prevMsgId){
+    setPrevMsgId(prevMsgId) {
       this.prevMsgId = prevMsgId
     }
   }
 
   //-----------------------end of Message-------------------------
 
-  class Helper{
+  class Helper {
     /*
     Helper: the helper is the character that is displayed on the screen
     and says stuff to help the user
@@ -140,7 +140,7 @@ p5_instance = function (p5c) {
     faces: array of faces (images of a face) of the helper
     name: the name of the helper
     */
-    constructor(faces,name){
+    constructor(faces, name) {
       this.name = name //displayed name (e.g. "Polyev")
       //the parameters are the faces of the helper
       this.faces = faces //this could be an array of images or a single image
@@ -165,11 +165,11 @@ p5_instance = function (p5c) {
     /*
     showFace: displays the face of the helper
     */
-    showFace(){
-      if(!started)
-        p5c.image(this.faces[this.currFace], p5c.width-400, p5c.height-400)
-      else{
-        p5c.image(this.faces[this.currFace], p5c.width/14, 2*p5c.height/4)
+    showFace() {
+      if (!started)
+        p5c.image(this.faces[this.currFace], p5c.width - 400, p5c.height - 400)
+      else {
+        p5c.image(this.faces[this.currFace], p5c.width / 14, 2 * p5c.height / 4)
       }
       /*
       //this made more sense when there were multiple faces
@@ -186,7 +186,7 @@ p5_instance = function (p5c) {
     createTextBox: creates the text box where the helper will say stuff
     Also manages the blinking cursor on the bottom right of the text box
     */
-    createTextBox(){
+    createTextBox() {
       //create a text box
       //the text is in the middle of the rect
       p5c.rectMode(p5c.CENTER)
@@ -200,29 +200,29 @@ p5_instance = function (p5c) {
       p5c.rectMode(p5c.CORNER)
       p5c.textWrap(p5c.WORD) //alternative is CHAR 
       //if the helper is waiting for the user to click, show a blinking cursor
-      if(this.wait && !this.isIdle){
-        if(p5c.frameCount%30 == 0){
+      if (this.wait && !this.isIdle) {
+        if (p5c.frameCount % 30 == 0) {
           this.cursorBlink = !this.cursorBlink
         }
-        if(!this.cursorBlink){
-         //draw a small white square on the bottom right of the text box (the cursor)
-          p5c.rect(3/4 * p5c.width - 25, p5c.height-75, 15, 15) 
+        if (!this.cursorBlink) {
+          //draw a small white square on the bottom right of the text box (the cursor)
+          p5c.rect(3 / 4 * p5c.width - 25, p5c.height - 75, 15, 15)
         }
       }
     }
     /*
     addAuthor: adds the name of the helper on the top left corner of the text box
     */
-    addAuthor(){
+    addAuthor() {
       //The name is inside a rectangle with a white background
       //TODO: this part is more of a meme, you decide if we keep it or not
       p5c.push()
       p5c.fill(255)
-      p5c.rect(p5c.width/4, p5c.height-300, p5c.width/6, 50)
+      p5c.rect(p5c.width / 4, p5c.height - 300, p5c.width / 6, 50)
       p5c.fill(0)
       p5c.textSize(32)
       p5c.textAlign(p5c.LEFT)
-      p5c.text(this.name, p5c.width/4+10, p5c.height-300+20)
+      p5c.text(this.name, p5c.width / 4 + 10, p5c.height - 300 + 20)
       p5c.pop()
     }
     /*
@@ -230,7 +230,7 @@ p5_instance = function (p5c) {
     --Inputs--
     message: Message object containing the string to print
     */
-    say(message){
+    say(message) {
       //need to get the message from the message object
       let msg = message.getMsg()
       let time = this.time
@@ -238,27 +238,27 @@ p5_instance = function (p5c) {
       this.createTextBox()
       this.addAuthor()
 
-      if(this.lastMsg != msg){
+      if (this.lastMsg != msg) {
         //if the message is different from the last one in memory update it
-        this.lastMsg  = msg
+        this.lastMsg = msg
         this.counter = 1
         //setTimeout(this.printMsg, this.counter*time, this.lastMsg, this.counter);
         this.printMsg(msg, this.counter)
-        this.wait=false
+        this.wait = false
         //upgrade counter by one and play the sound corresponding to dialogue
-        this.interval = setInterval( ()=>{
+        this.interval = setInterval(() => {
           this.counter++
           //play the sound corresponding to dialogue
           //(every once in a while)
-          if(this.counter%5 == 0){
+          if (this.counter % 5 == 0) {
             speech.play()
           }
-          if(this.counter > msg.length){
+          if (this.counter > msg.length) {
             this.wait = true
           }
-        },time);
-      }else{ //if the message is the same as the last one in memory
-        if(this.counter >= msg.length){
+        }, time);
+      } else { //if the message is the same as the last one in memory
+        if (this.counter >= msg.length) {
           //if we've reached the end of the message stop increasing the counter
           //and making sounds
           clearInterval(this.interval)
@@ -285,37 +285,37 @@ p5_instance = function (p5c) {
     }
     */
 
-   /*
-    printMsg: actually prints the message on the screen
-    --Inputs--
-    msg: the message to print
-    to: the number of characters to print
-   */
-    printMsg(msg,to){
+    /*
+     printMsg: actually prints the message on the screen
+     --Inputs--
+     msg: the message to print
+     to: the number of characters to print
+    */
+    printMsg(msg, to) {
       p5c.stroke(255)
-      p5c.text(msg.substring(0, to), 
-      1 * p5c.width / 4 + 10, p5c.height - 250, p5c.width / 2 - 20, 200)
+      p5c.text(msg.substring(0, to),
+        1 * p5c.width / 4 + 10, p5c.height - 250, p5c.width / 2 - 20, 200)
     }
 
     //------------------------------------------------
     //functions to manage the state of the helper
 
-    isWaiting(){
+    isWaiting() {
       //is waiting for user input
       return this.wait && !this.isIdle
     }
-    setIdle(){
+    setIdle() {
       //is idle means that it's NOT expecting any user input
       //and it's not displaying anything on the screen
       this.isIdle = true
       this.state = "idle"
     }
-    setWorking(){
+    setWorking() {
       //opposite of setIdle()
       this.isIdle = false
       this.state = "working"
     }
-    getState(){
+    getState() {
       return this.state
     }
     //------------------------------------------------
@@ -345,21 +345,23 @@ p5_instance = function (p5c) {
     face_talking2 = p5c.loadImage('assets/face_talking2.png'); //helper's face while talking
     speech = p5c.loadSound('assets/dialogue.wav') //sound for the dialogue
     speech_end = p5c.loadSound('assets/dialogue_end.wav') //sound that plays when user clicks to pass to next message
-    messages_json = p5c.loadJSON('assets/messages.json',jsonLoaded) //json file containing the Messages
+    messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages
 
     debug_soundfile = p5c.loadSound('assets/song2.mp3') //debug soundfile
+
+    bg = p5c.loadImage('assets/bg.jpg') //background image
   }
 
   /*
   jsonLoaded: function that gets called when messages_json is loaded
   Creates an array for the messages
   */
-  jsonLoaded = function(){
+  jsonLoaded = function () {
     let n = Object.keys(messages_json["record"]).length
     messages = new Array(n)
-    for(let i = 0; i < n; i++){
+    for (let i = 0; i < n; i++) {
       let msg = messages_json["record"][i]
-      messages[i] = new Message(msg.msg,msg.msgId,msg.nextMsgId)
+      messages[i] = new Message(msg.msg, msg.msgId, msg.nextMsgId)
     }
     loading = false
   }
@@ -386,7 +388,7 @@ p5_instance = function (p5c) {
     //in a church praying for a miracle
 
     setupAudioStuff()
-    
+
     faces = [face]//, face2]
     helper = new Helper(faces, "Polyev")
     msg = messages[0]
@@ -397,7 +399,7 @@ p5_instance = function (p5c) {
   /* 
   setupAudioStuff: sets up, you guessed it, the audio stuff related to p5js
   */
-  setupAudioStuff = function(){
+  setupAudioStuff = function () {
     //we need to initialise the microphone and the recorder
     mic = new p5.AudioIn();
     recorder = new p5.SoundRecorder();
@@ -410,7 +412,7 @@ p5_instance = function (p5c) {
     soundFile = new p5.SoundFile();
     fft = new p5.FFT();
     //we set the input of the fft to be the microphone
-    
+
     //fft.setInput(mic);
     //TODO after recording we need to call mic.disconnect()
 
@@ -422,7 +424,7 @@ p5_instance = function (p5c) {
   Contains a mousePressed function for every button to handle what 
   to do when the user clicks on it
   */
-  setupMenuButtons = function(){
+  setupMenuButtons = function () {
     //we have the real upload button hidden behind a the visible one
     realUploadButton = p5c.createFileInput(handleFile)
     //hide realUploadButton and give it the realUpload ID
@@ -448,7 +450,7 @@ p5_instance = function (p5c) {
     //and start recording
     //if the user clicked on the right half of the window:
     //open a file selector and ask the user to select a file
-    recordSideButton.mousePressed(function(){
+    recordSideButton.mousePressed(function () {
       bpm = p5c.createInput("What BPM do you want to use?");
       mode = 0 //user chose to record
       //started = true
@@ -463,9 +465,9 @@ p5_instance = function (p5c) {
       removeUselessButtons()
     })
 
-    
 
-    faqMenuButton.mousePressed(function(){
+
+    faqMenuButton.mousePressed(function () {
       //TODO: type all FAQs, everything the user needs to know, inside a black box
       //Make it look nice and make it close when user clicks on it
       faqMenuButton.hide()
@@ -489,15 +491,15 @@ p5_instance = function (p5c) {
       <b>Alice, Cecilia, Francesco, Matteo</b>`)
       box.addClass('faq_box')
       //box.position(p5c.width/2, p5c.height/2 - 100)
-      box.size(600,600)
-      box.mousePressed(function(){
+      box.size(600, 600)
+      box.mousePressed(function () {
         box.remove()
         faqMenuButton.show()
       }
       )
     })
-    
-    visibleUploadButton.mousePressed(function(){
+
+    visibleUploadButton.mousePressed(function () {
       //p5c.userStartAudio()
       mode = 1
       //started = true
@@ -528,7 +530,7 @@ p5_instance = function (p5c) {
   p5c.draw = function () {
     p5c.background(12);
     if (loading)
-    //we're still loading the messages (JSON loading is async)
+      //we're still loading the messages (JSON loading is async)
       return
 
     if (started) {
@@ -542,7 +544,9 @@ p5_instance = function (p5c) {
   /*
   drawCurrentMode: draw but for the current mode (record, upload, common)
   */
-  drawCurrentMode = function(){
+  drawCurrentMode = function () {
+    //show bg image in the background
+    p5c.image(bg, 0, 0, p5c.width, p5c.height)
     switch (mode) {
       case 0:
         //we're in record mode
@@ -562,11 +566,11 @@ p5_instance = function (p5c) {
         break;
     }
   }
-  
+
   /*
   drawInterface: draw the interface of the common mode (buttons, waveform display, etc)
   */
-  drawInterface = function(){
+  drawInterface = function () {
     //draw audio controls
     drawAudioControls()
 
@@ -574,39 +578,43 @@ p5_instance = function (p5c) {
     p5c.push()
     p5c.stroke(255)
     p5c.strokeWeight(2)
-    p5c.noFill()
+    p5c.fill(12, 12, 12, 150)
     p5c.rectMode(p5c.CENTER)
-    p5c.rect(p5c.width/2, p5c.height/4, 3*p5c.width/4, p5c.height/3)
-    //draw the waveform
-    p5c.stroke(255)
-    p5c.strokeWeight(2)
-    p5c.noFill()
-    let resolution = p5c.int(p5c.max(1, p5c.round(leftChannel.length / (3*p5c.width/4) )));
-    let x = p5c.width/2 - 3*p5c.width/8;
-    let sum = 0;
-    let maxAmp; //maximum amplitude
-    for (let i = 0; i < leftChannel.length; i++) {
-      if (maxAmp === undefined || p5c.abs(leftChannel[i]) > maxAmp) {
-        maxAmp = leftChannel[i];
-      }
-    }
-    maxAmp = maxAmp/2;
+    p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
 
-    p5c.beginShape()
-    for (let i = 0; i < leftChannel.length; i++) {
-      // Compute an average for each set of values
-      sum += p5c.abs(leftChannel[i]);
-      if (i % resolution == 0) {
-        p5c.vertex(
-          x++,
-          // map the average amplitude to range from the center of the canvas to
-          // either the top or bottom depending on the channel
-          p5c.map(sum / resolution, 0, maxAmp, p5c.height / 4 + p5c.height / 6, p5c.height / 4 - p5c.height / 6)
-          );
-        sum = 0;
+    if (leftChannel != null) {
+      //draw the waveform
+      p5c.stroke(255)
+      p5c.strokeWeight(2)
+      p5c.noFill()
+      let resolution = p5c.int(p5c.max(1, p5c.round(leftChannel.length / (3 * p5c.width / 4))));
+      let x = p5c.width / 2 - 3 * p5c.width / 8;
+      let sum = 0;
+      let maxAmp; //maximum amplitude
+      for (let i = 0; i < leftChannel.length; i++) {
+        if (maxAmp === undefined || p5c.abs(leftChannel[i]) > maxAmp) {
+          maxAmp = leftChannel[i];
+        }
       }
+      maxAmp = maxAmp / 2;
+
+      p5c.beginShape()
+      for (let i = 0; i < leftChannel.length; i++) {
+        // Compute an average for each set of values
+        sum += p5c.abs(leftChannel[i]);
+        if (i % resolution == 0) {
+          p5c.vertex(
+            x++,
+            // map the average amplitude to range from the center of the canvas to
+            // either the top or bottom depending on the channel
+            p5c.map(sum / resolution, 0, maxAmp, p5c.height / 4 + p5c.height / 6, p5c.height / 4 - p5c.height / 6)
+          );
+          sum = 0;
+        }
+      }
+      p5c.endShape()
     }
-    p5c.endShape()
+
     p5c.pop()
 
 
@@ -616,12 +624,12 @@ p5_instance = function (p5c) {
     p5c.strokeWeight(2)
     p5c.noFill()
     //player current X position
-    let playerCurrX = p5c.map(soundFile.currentTime(),0, soundFile.duration(), p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8)
-    p5c.line(playerCurrX, p5c.height/4 - p5c.height/6+1, playerCurrX, p5c.height/4 + p5c.height/6-1) //+1,-1 to avoid overlapping with the window
+    let playerCurrX = p5c.map(soundFile.currentTime(), 0, soundFile.duration(), p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8)
+    p5c.line(playerCurrX, p5c.height / 4 - p5c.height / 6 + 1, playerCurrX, p5c.height / 4 + p5c.height / 6 - 1) //+1,-1 to avoid overlapping with the window
 
     p5c.pop()
 
-    
+
     /*
     //This is very nice to see but quite useless since we're reading only a small sample in real time
     //draw the waveform
@@ -645,7 +653,7 @@ p5_instance = function (p5c) {
   TODO: chose a different implementation for now (once created they stay
   see createAudioControls())
   */
-  drawAudioControls = function(){
+  drawAudioControls = function () {
     p5c.push()
 
     p5c.pop()
@@ -732,7 +740,7 @@ p5_instance = function (p5c) {
   We start the AudioContext here with userStartAudio()
   */
   p5c.mousePressed = function () {
-  
+
   }
 
   /*
@@ -742,24 +750,24 @@ p5_instance = function (p5c) {
   handleFile = function (file) {
     let sf = new p5.File(file)
     //TODO: implement proper audio file loading
-    soundFile = p5c.loadSound(file, ()=>{
+    soundFile = p5c.loadSound(file, () => {
       //if you need to test the file is loaded, uncomment this line
       //soundFile.play()
-      setTimeout(() => {
-        leftChannel = soundFile.buffer.getChannelData(0)
-      }, 3000);
+      //setTimeout(() => {
+      leftChannel = soundFile.buffer.getChannelData(0).slice()
+      //}, 3000);
     })
     //now remove all useless buttons
     removeUselessButtons()
-    setTimeout( ()=> { 
-    mode = 1 //user chose their file
-    //show some intro messages and then move to mode 2
-    console.log("FILE MODE")
-    loadMessages("upload")
-    started = true;
-    },5000);
+    setTimeout(() => {
+      mode = 1 //user chose their file
+      //show some intro messages and then move to mode 2
+      console.log("FILE MODE")
+      loadMessages("upload")
+      started = true;
+    }, 1000);
   }
-  
+
   /*
   loadMessages: loads the messages from the json file
   --Inputs--
@@ -768,7 +776,7 @@ p5_instance = function (p5c) {
                 in a particular mode/moment
   */
 
-  loadMessages = function(messages_key){
+  loadMessages = function (messages_key) {
     let n = Object.keys(messages_json[messages_key]).length
     messages = new Array(n)
     for (let i = 0; i < n; i++) {
@@ -785,7 +793,7 @@ p5_instance = function (p5c) {
   removeUselessButtons: removes the buttons after the user made their choice in the menu
   TODO: could be used for more buttons
   */
-  removeUselessButtons = function(){
+  removeUselessButtons = function () {
     realUploadButton.remove()
     //visibleUploadButton.hide()
     visibleUploadButton.remove()
@@ -806,23 +814,23 @@ p5_instance = function (p5c) {
     //then he wants to skip to the next message
     if (key == 'z' || key == 'Z') {
       //if (!paused) {
-    //if the game is not paused, 
-    //check if the helper is waiting (isWaiting == true); if so,
-    //play the 'speech_end' sound and set isWaiting to false
+      //if the game is not paused, 
+      //check if the helper is waiting (isWaiting == true); if so,
+      //play the 'speech_end' sound and set isWaiting to false
       if (helper.isWaiting()) {
         speech_end.play();
         handleMessage(msg.getId())
         //switch msg to the next message to display
         currMessage++
         msg.makeEmpty()
-        if(msg.nextMsgId != -1){
+        if (msg.nextMsgId != -1) {
           setTimeout(() => { msg = messages[currMessage] }, 150)
-        }else{
+        } else {
           helper.setIdle()
         }
       }
       //}
-      
+
       //TODO: handle this in a better way.
       //There is no way for now to insert a non skippable pause between messages
     }
@@ -831,7 +839,7 @@ p5_instance = function (p5c) {
     if (key == 'm' || key == 'M') {
       //skip directly to mode 2
       removeUselessButtons()
-      
+
       if (!started) {
         //mode = 2;
         p5c.userStartAudio();
@@ -846,23 +854,25 @@ p5_instance = function (p5c) {
         setTimeout(() => {
           //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
           //We add slice() to effectively clone the array
-          leftChannel = debug_soundfile.buffer.getChannelData(0).slice()
+          leftChannel = soundFile.buffer.getChannelData(0).slice()
         }, 100);
-        setTimeout(()=>{
-        mode = 2;
-        createAudioControls();
-        started = true
-        }, 200); 
+        setTimeout(() => {
+          mode = 2;
+          requestMicrophoneAccess();
+
+          createAudioControls();
+          started = true
+        }, 200);
       }
     }
 
     //spacebar: let user control the audio playback in a more convenient way
-    if(keyCode==32){
-      if(mode==2)
-        if(!soundFile.isPlaying()){
+    if (keyCode == 32) {
+      if (mode == 2)
+        if (!soundFile.isPlaying()) {
           soundFile.play()
-        }else{
-            soundFile.pause()
+        } else {
+          soundFile.pause()
         }
     }
   }
@@ -871,20 +881,17 @@ p5_instance = function (p5c) {
   /*
   handleMessage: for special messages, we need to handle them differently. This is the function we use
   */
-  handleMessage = function(id){
-    switch (id){
+  handleMessage = function (id) {
+    switch (id) {
       //recordIntro3: last message before asking the user for permission to access the microphone
       case "recordIntro3":
-        //ask user permission to access the microphone
-        mic.start(obtainedMicPerm, errorMicPerm)
-        //check periodically if the user gave us permission to access the microphone
-        micCheck = setInterval(() => {
-          mic.start(obtainedMicPerm)
-        }, 1000)
+        requestMicrophoneAccess();
         break;
       case "record2":
         //can begin common mode
         mode = 2;
+        leftChannel = null;
+        createAudioControls();
         loadMessages("common")
         break;
       case "upload3":
@@ -896,62 +903,108 @@ p5_instance = function (p5c) {
     }
   }
 
+  requestMicrophoneAccess = function () {
+    //ask user permission to access the microphone
+    mic.start(obtainedMicPerm, errorMicPerm)
+    //check periodically if the user gave us permission to access the microphone
+    micCheck = setInterval(() => {
+      mic.start(obtainedMicPerm)
+    }, 1000)
+  }
+
   /*
   createAudioControls: used to create the audio controls when passing to common mode
   TODO: add an upload button
   TODO: add a volume slider
   */
-  createAudioControls = function(){
+  var waveRefreshInterval;
+
+  createAudioControls = function () {
     recordButton = p5c.createDiv('')
     recordButton.addClass('record_button')
-    recordButton.mousePressed(function(){
-      console.log("record button pressed")
+    recordButton.mousePressed(function () {
+      if(!recording){
+        soundFile = new p5.SoundFile();
+        //soundFile.buffer = 0;
+        recorder.record(soundFile);
+        recording = true;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }else{
+        recorder.stop();
+        recording = false;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }
     })
     playButton = p5c.createDiv('')
     playButton.addClass('play_button')
     playButton.mousePressed(function () {
-      console.log("play button pressed")
-      if(!soundFile.isPlaying()){
-        soundFile.play()
-      }else{
-        soundFile.pause()
+      if(recording){
+        recorder.stop();
+        recording = false;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }
+      if(!soundFile!=null){
+        if (!soundFile.isPlaying()) {
+          soundFile.play()
+        } else {
+          soundFile.pause()
+        }
       }
     })
     stopButton = p5c.createDiv("")
     stopButton.addClass('stop_button')
     stopButton.mousePressed(function () {
-      console.log("stop button pressed")
-      soundFile.stop()
+      if (recording) {
+        recorder.stop();
+        recording = false;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }
+      if(soundFile!=null){
+        soundFile.stop()
+      }
     })
   }
+
+  recordingWaveDrawer = function (waveRefreshInterval, recording){
+    //for some reason the whole thing doesn't work at the end unless we do this bad shit
+    if(recording){
+      waveRefreshInterval = setInterval(() => {
+        leftChannel = soundFile.buffer.getChannelData(0).slice();
+      }, 300)
+      
+    }else{
+      clearInterval(waveRefreshInterval);
+      leftChannel = soundFile.buffer.getChannelData(0).slice();
+    }
+  };
 
   //--------------------MICROPHONE PERMISSIONS--------------------
 
   /*
   errorMicPerm: if the user doesn't give us permission to access the microphone, we need to tell them how to fix it
   */
-  errorMicPerm = function(){
-      setTimeout(() => {
-        if (!userGaveMicPerm)
-          msg.setMsg(`You haven't given us permission to access the microphone.
+  errorMicPerm = function () {
+    setTimeout(() => {
+      if (!userGaveMicPerm)
+        msg.setMsg(`You haven't given us permission to access the microphone.
                         Don't worry this can be fixed :)`)
-      }, 200) //needed in order not to bug the system out if the mic is already blocked
+    }, 200) //needed in order not to bug the system out if the mic is already blocked
 
-      setTimeout(() => {
-        if (!userGaveMicPerm)
-          msg.setMsg(`Refresh the page or click on the microphone icon in the address bar.
+    setTimeout(() => {
+      if (!userGaveMicPerm)
+        msg.setMsg(`Refresh the page or click on the microphone icon in the address bar.
                           You should then get a new prompt!`)
-      }, 6000)
+    }, 6000)
   }
 
   /*
   obtainedMicPerm: if the user gives us permission to access the microphone, confirm everything's ok
   */
-  obtainedMicPerm = function(){
+  obtainedMicPerm = function () {
     //if micCheck is not null, it means that we were checking for permission
     //Clear micCheck
 
-    if(micCheck != null){
+    if (micCheck != null) {
       clearInterval(micCheck)
     }
     userGaveMicPerm = true

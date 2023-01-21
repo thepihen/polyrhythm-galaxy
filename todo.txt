@@ -1,15 +1,16 @@
 TODO:
 RECORDING MODE:
--Add a button to start/stop recording
--Add a button to play the recorded audio
+-The user is asked a bpm value, the program will start a metronome at that bpm
 -Add a button to save the recorded audio
 
 UPLOAD MODE:
+-The BPM can't be known in advance
+-Ask the user to either set the bpm of their file or upload a file with a given
+ bpm value
 
 BOTH:
 -The mode only influences the way the user gets to the first audio; after that, 
 the user can always choose to record or upload a new file
--Waveform display
 -Peak detection
 -Polyrhythm detection
 

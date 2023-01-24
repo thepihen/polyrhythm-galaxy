@@ -347,7 +347,7 @@ p5_instance = function (p5c) {
     speech_end = p5c.loadSound('assets/dialogue_end.wav') //sound that plays when user clicks to pass to next message
     messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages
 
-    debug_soundfile = p5c.loadSound('assets/song2.mp3') //debug soundfile
+    debug_soundfile = p5c.loadSound('assets/song2_lq.mp3') //debug soundfile
 
     bg = p5c.loadImage('assets/bg.jpg') //background image
   }

@@ -84,6 +84,15 @@ var third_bpm_estimated
 var first_polyrhythm
 var second_polyrhythm
 
+
+
+//answer buttons
+var answer1
+var answer2
+var answer3
+var hovered = [0, 0, 0]
+var selectedAnswer = -1 
+
 //use p5 in instance mode
 p5_instance = function (p5c) {
   class Message {
@@ -160,7 +169,7 @@ p5_instance = function (p5c) {
 
       this.lastMsg = " "
       this.counter = 0  //counts how many characters of the message have been displayed
-      this.time = 20 //time between each character
+      this.time = 30 //time between each character
 
       //we have reached the end of the phrase
       this.wait = false  //true if we're waiting for the user to press a key
@@ -168,6 +177,10 @@ p5_instance = function (p5c) {
       this.cursorBlink = false //used to manage the blinking cursor
       this.isIdle = false //is the helper idle? (not saying anything - no new messages)
       this.state = "working" //the state of the helper (working, idle, etc)
+
+      //if the message requires an answer, we'll save the choices here
+      this.answers = new Array()
+      this.hasAnswers = false
     }
 
     /*
@@ -217,6 +230,11 @@ p5_instance = function (p5c) {
           p5c.rect(3 / 4 * p5c.width - 25, p5c.height - 75, 15, 15)
         }
       }
+
+      //if there are answers, display them
+      if (this.hasAnswers) {
+        this.createAnswersBox()
+      }
     }
     /*
     addAuthor: adds the name of the helper on the top left corner of the text box
@@ -261,7 +279,7 @@ p5_instance = function (p5c) {
           if (this.counter % 5 == 0) {
             speech.play()
           }
-          if (this.counter > msg.length) {
+          if (this.counter >= msg.length) {
             this.wait = true
           }
         }, time);
@@ -304,6 +322,98 @@ p5_instance = function (p5c) {
       p5c.text(msg.substring(0, to),
         1 * p5c.width / 4 + 10, p5c.height - 250, p5c.width / 2 - 20, 200)
     }
+
+    addAnswers(choices) {
+      for (let i = 0; i < choices.length; i++) {
+        this.answers.push(choices[i])
+      }
+
+
+      this.hasAnswers = true
+    }
+
+    removeAnswers(){
+      this.hasAnswers = false
+      answer1.remove()
+      answer2.remove()
+      answer3.remove()
+      this.answers = []
+    }
+    /*
+    createChoicesBox: creates the choices that the user can select
+    */
+    
+    createAnswersBox(){
+      selectedAnswer = -1
+      p5c.push()
+      //create a rectangle OVER the text box to contain the possible choices
+      //The choices are displayed vertically, one on top of the others
+      //The rectangle has a black background with a 50% opacity
+      //It should be evident that the choices are clickable
+      //The rectangle should be distinguishable from the normal text box
+      p5c.rectMode(p5c.CENTER)
+      p5c.fill(12, 12, 12)
+      p5c.rect(3*p5c.width / 4 - p5c.width/16, p5c.height /2 + 100, p5c.width / 8, 150)
+
+      //make three sub-rectangles to make the choices more visible
+      
+      p5c.strokeWeight(2)
+      p5c.fill(200, 200, 200, 10 + hovered[0]*200)
+      p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 50, p5c.width / 8, 50)
+      p5c.fill(200, 200, 200, 10 + hovered[1] * 200)
+      p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 100, p5c.width / 8, 50)
+      p5c.fill(200, 200, 200, 10 + hovered[2] * 200)
+      p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 150, p5c.width / 8, 50)
+      
+      p5c.pop()
+      p5c.push()
+      //print the choices
+      p5c.stroke(255)
+      p5c.textFont(speech_font)
+      p5c.textSize(30)
+      p5c.rectMode(p5c.CORNER)
+      p5c.textWrap(p5c.WORD) //alternative is CHAR
+
+      //now print the text in the choices box
+      p5c.text(this.answers[0], 3 * p5c.width / 4 - p5c.width / 8, p5c.height / 2 + 20, p5c.width / 8, 50)
+      p5c.text(this.answers[1], 3 * p5c.width / 4 - p5c.width / 8, p5c.height / 2 + 70, p5c.width / 8, 50)
+      p5c.text(this.answers[2], 3 * p5c.width / 4 - p5c.width / 8, p5c.height / 2 + 120, p5c.width / 8, 50)
+      p5c.pop()
+      
+
+
+      
+      /*
+      //create a rectangle to contain the choices
+      p5c.rectMode(p5c.CENTER)
+      p5c.fill(12, 12, 12, 150)
+      p5c.rect(p5c.width / 2, p5c.height - 150, p5c.width / 2, 200)
+      //print the choices
+      p5c.stroke(255)
+      p5c.fill(255)
+      p5c.textFont(speech_font)
+      p5c.textSize(30)
+      p5c.rectMode(p5c.CORNER)
+      p5c.textWrap(p5c.WORD) //alternative is CHAR 
+      
+      //if the helper is waiting for the user to click, show a blinking cursor
+      if (this.wait && !this.isIdle) {
+        if (p5c.frameCount % 30 == 0) {
+          this.cursorBlink = !this.cursorBlink
+        }
+        if (!this.cursorBlink) {
+          //draw a small white square on the bottom right of the text box (the cursor)
+          p5c.rect(3 / 4 * p5c.width - 25, p5c.height - 75, 15, 15)
+        }
+      }
+      //print the choices
+      for(let i = 0; i < this.answers.length; i++){
+        p5c.text(this.answers[i], 1 * p5c.width / 4 + 10, p5c.height - 250 + 50*i, p5c.width / 2 - 20, 200)
+      }
+      */
+     
+   }
+
 
     //------------------------------------------------
     //functions to manage the state of the helper
@@ -851,6 +961,23 @@ p5_instance = function (p5c) {
   }
 
   /*
+  getMessageById: returns the index of the message with the given id in the loaded messages array
+  --Inputs--
+  id: the id of the message to find
+  --Outputs--
+  i: index of the message with the given id in the loaded messages array
+  */
+  getMessageById = function (id) {
+    for (let i = 0; i < messages.length; i++) {
+      if (messages[i].id == id) {
+        return i
+      }
+    }
+    //if no matching message was found
+    return -1
+  }
+
+  /*
   removeUselessButtons: removes the buttons after the user made their choice in the menu
   TODO: could be used for more buttons
   */
@@ -961,6 +1088,64 @@ p5_instance = function (p5c) {
         createAudioControls();
         loadMessages("common")
         break;
+      case "commonFound":
+        //show the multiple-choice dialogue box
+        let answ1 = first_polyrhythm[0] +" vs " + first_polyrhythm[1]
+        let answ2 = second_polyrhythm[0] +" vs " + second_polyrhythm[1]
+        let answ3 = "Neither..."
+        helper.addAnswers([answ1,answ2,answ3])
+        //TODO: these don't get deleted when the window is resized, the should be created and deleted only once
+        //when needed. Fix this ASAP
+        //TODO: these don't get deleted when the window is resized, the should be created and deleted only once
+        //when needed. Fix this ASAP
+        answer1 = p5c.createDiv("")
+        answer1.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 50)
+        answer1.addClass('answer')
+        answer1.mousePressed(function () {
+          selectedAnswer = 0
+          helper.removeAnswers()
+          userAnswered(selectedAnswer, "poly")
+        })
+        answer1.mouseOver(function () {
+          hovered[0] = 1
+        })
+        answer1.mouseOut(function () {
+          hovered[0] = 0
+        })
+        answer2 = p5c.createDiv("")
+        answer2.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 100)
+        answer2.addClass('answer')
+        answer2.mousePressed(function () {
+          selectedAnswer = 1
+          helper.removeAnswers()
+          userAnswered(selectedAnswer, "poly")
+        })
+        answer2.mouseOver(function () {
+          hovered[1] = 1
+        })
+        answer2.mouseOut(function () {
+          hovered[1] = 0
+        })
+        answer3 = p5c.createDiv("")
+        answer3.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 150)
+        answer3.addClass('answer')
+        answer3.mousePressed(function () {
+          selectedAnswer = 2
+          helper.removeAnswers()
+          userAnswered(selectedAnswer, "poly")
+        })
+        answer3.mouseOver(function () {
+          hovered[2] = 1
+        })
+        answer3.mouseOut(function () {
+          hovered[2] = 0
+        })
+        break;
+
+      case "commonPolyChose":
+        //RTMWHEEL
+        //TODO: YOU CAN NOW CREATE AND START SHOWING THE RHYTHM WHEEL EACH TIME YOU CALL DRAW
+        break;
     }
   }
 
@@ -1045,7 +1230,8 @@ p5_instance = function (p5c) {
       }
       uploadButton.click()
     })
-
+    //check if the web worker is supported by the browser
+    if(workerSupported == true){
     analyseButton = p5c.createDiv("OK")
     //TODO: when this is clicked the user should be blocked from uploading / recording a new sound
     analyseButton.addClass('analyse_button')
@@ -1058,11 +1244,12 @@ p5_instance = function (p5c) {
       if (soundFile != null) {
         soundFile.stop()
       }
-      if (leftChannel != null) {
+      if (leftChannel != null && isAnalysing == false) {
         //if we have a soundFile, we can analyse it
         analyseSoundFile()
       }
     })
+    }
   }
 
   recordingWaveDrawer = function (waveRefreshInterval, recording){
@@ -1135,12 +1322,13 @@ p5_instance = function (p5c) {
 
 
   //--------------------WORKER STUFF--------------------
+  var isAnalysing = false
   analyseSoundFile = function () {
     //worker stuff
     //INPUT: x - audio buffer (passed using postMessage)
     //RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], 
     //                 polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
-
+    isAnalysing = true
     let audioToWorker;
     setTimeout(() => {
       audioToWorker = soundFile.buffer.getChannelData(0).slice();
@@ -1159,10 +1347,80 @@ p5_instance = function (p5c) {
       third_bpm_estimated = event.data[2]
       first_polyrhythm = new Array(event.data[3], event.data[4])
       second_polyrhythm = new Array(event.data[5], event.data[6])
+
+      let ind;
+      if (first_polyrhythm != null && first_polyrhythm != NaN) {
+        ind = getMessageById("commonFound")
+        if (ind == -1) {
+          loadMessages("common")
+          ind = getMessageById("commonFound")
+        }
+      } else {
+        ind = getMessageById("commonNotFound")
+        if (ind == -1) {
+          loadMessages("common")
+          ind = getMessageById("commonNotFound")
+        }
+      }
+      helper.setWorking()
+      currMessage = ind
+      msg = messages[currMessage]
     }
   }
 
   //--------------------END OF WORKER STUFF--------------------
+
+
+  //--------------------RHYTHM WHEEL STUFF--------------------
+  var rhythmWheelExists = false
+  var showRhythmWheel = false
+  /*
+  createRhythmWheel: creates the rhythm wheel or updates it if it already exists
+  Inputs:
+  -rhy_1: the first rhythm (on the outer circle)
+  -rhy_2: the second rhythm (on the inner circle)
+  */
+  createRhythmWheel = function (rhy_1, rhy_2) {
+    if (rhythmWheelExists) {
+      //update the rhythm wheel
+      //rhythmWheel.updateRhythms(rhy_1, rhy_2)
+    } else {
+      //create the rhythm wheel
+      //rhythmWheel = new RhythmWheel(rhy_1, rhy_2)
+      rhythmWheelExists = true
+    }
+  }
+
+  var selectedPolyrhythm = -1; 
+  userAnswered = function(answer, question){
+    if(question=="poly"){
+      let ind
+      if(answer == 0){
+        selectedPolyrhythm = first_polyrhythm
+        ind = getMessageById("commonPolyChose")
+        if (ind == -1) {
+          loadMessages("common")
+          ind = getMessageById("commonPolyChose")
+        }
+      }else if (answer == 1){
+        selectedPolyrhythm = second_polyrhythm
+        ind = getMessageById("commonPolyChose")
+        if (ind == -1) {
+          loadMessages("common")
+          ind = getMessageById("commonPolyChose")
+        }
+      }else{
+        ind = getMessageById("commonPolyChoseNeither")
+        if (ind == -1) {
+          loadMessages("common")
+          ind = getMessageById("commonPolyChoseNeither")
+        }
+      }
+      helper.setWorking()
+      currMessage = ind
+      msg = messages[currMessage]
+    }
+  }
 
 
 }//end of sketch

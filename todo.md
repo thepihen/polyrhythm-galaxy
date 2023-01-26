@@ -11,7 +11,7 @@
 * The mode only influences the way the user gets to the first audio; after that, the user can always choose to record or upload a new file
 * Peak detection
 * Polyrhythm detection
-* Rhythm wheel
+* Rhythm wheel (needs to be created after the user has selected the correct polyrhythm)
 * Transition to training
 * Euclidean wheel
 

@@ -15,3 +15,8 @@
 * polyrhythm detection is available only if web workers are available in the user's browser. For this reason a _workerSupported_ flag has been created
 * added an upload button to upload a new audio on the go
 * fixed waveform display
+
+## 2023-01-26
+* the algorithm for polyrhythm detection now "talks" with the sketch
+* added some new functions to manage user "answers" to the helper's questions (e.g. "which polyrhythm sounds closer?")
+* KNOWN ISSUE: the page lags after audio analysis

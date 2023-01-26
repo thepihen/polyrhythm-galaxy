@@ -46,7 +46,7 @@
 "common":[
     {
         "msgId": "common1",
-        "msg": ":) :( :) :( :) :( :DDDD",
+        "msg": "Click the OK button when you want me to start analyzing your audio",
         "nextMsgId": "-1"
     }
 ]

@@ -34,8 +34,6 @@ Tone.Transport.scheduleRepeat(time => {
   osc.start(time).stop(time + 0.1);
 }, "4n");
 Tone.Transport.start();
-// ramp the bpm to 120 over 10 seconds
-Tone.Transport.bpm.rampTo(120, 10);
 */
 
 //needed until we find a better way to track document focus changes
@@ -69,12 +67,22 @@ var playButton;
 var stopButton;
 var stopButton;
 var recordButton;
-
+var analyseButton; //analyse the audio file for matching polyrhythms
+var uploadButton_ingame;
 
 var soundFile; //the file we'll load
+var maxDuration = 15; //maximum duration of the audio file in seconds
 var leftChannel, rightChannel; //we'll save the audio values in here
 
 var messages; //to save the messages we'll display
+
+//bpm / polyrhythm detection stuff
+var worker;
+var BPM_estimated
+var second_bpm_estimated
+var third_bpm_estimated
+var first_polyrhythm
+var second_polyrhythm
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
@@ -388,7 +396,7 @@ p5_instance = function (p5c) {
     //in a church praying for a miracle
 
     setupAudioStuff()
-
+    setupWorker()
     faces = [face]//, face2]
     helper = new Helper(faces, "Polyev")
     msg = messages[0]
@@ -396,6 +404,47 @@ p5_instance = function (p5c) {
     //setup everything regarding buttons
     setupMenuButtons()
   }
+
+  /*
+  setupWorker: sets up the web-worker that will handle the audio analysis
+  */
+  var workerSupported;
+  setupWorker = function () {
+    //check if this is supported by the browser
+    if (window.Worker) {
+      workerSupported = true
+      const myWorker = new Worker("worker-methods.js");
+      worker = myWorker
+      /*//TODO: move this to the part when it's actually called
+      //load the audio file
+      sound = p5c.loadSound("test_3v2_158.mp3");
+      let x;
+      setTimeout(() => {
+        x = sound.buffer.getChannelData(0).slice();
+        console.log("AUDIO LOADED")
+        console.log("Passing the audio data to the worker!")
+      }, 1000)
+
+      setTimeout(() => {
+        worker.postMessage(x)
+      }, 2000);
+      worker.onmessage = (event) => {
+        console.log("Main: received the result!")
+        //print the estimated BPM
+        BPM = event.data[0]
+        tempogram = event.data[1]
+      }
+      */
+    } else {
+      workerSupported = false
+      console.log('Your browser doesn\'t support web workers.');
+      console.log("Audio analysis will be unavailable.")
+      console.log("See https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers for more informations")
+      console.log("We will not perform audio analysis.")
+    }
+
+  }
+
   /* 
   setupAudioStuff: sets up, you guessed it, the audio stuff related to p5js
   */
@@ -477,8 +526,8 @@ p5_instance = function (p5c) {
       In this mode, you will learn how to play basic polyrhythms.<br>
       You can choose to record yourself playing some kind of rhythm (tapping your fingers on the table is also OK) 
       or upload an audio file from your pc.<br>
-      For simplicity, all recordings will be cut to 30 seconds<br>
-      The website will then analyze your audio and find the polyrhythm that's closest to what you played.<br>
+      For simplicity, all recordings will be cut to 15 seconds<br>
+      The website will then analyze your audio and find the polyrhythm that's closest to what you played (2 options will be proposed and you can choose the closest!).<br>
       You can then choose to train on the polyrhythm you found, play with it on a rhythmic wheel to obtain shifted versions 
       or record/upload a new audio.<br>
       <br>
@@ -581,7 +630,12 @@ p5_instance = function (p5c) {
     p5c.fill(12, 12, 12, 150)
     p5c.rectMode(p5c.CENTER)
     p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
-
+    //if the user is recording (recording = true) draw a small red circle top right of the rectangle
+    if (recording) {
+      p5c.fill(255, 0, 0)
+      p5c.noStroke()
+      p5c.ellipse(p5c.width / 2 + 3 * p5c.width / 8 - 15, p5c.height / 4 - p5c.height / 6 + 15, 20, 20)
+    }
     if (leftChannel != null) {
       //draw the waveform
       p5c.stroke(255)
@@ -596,7 +650,7 @@ p5_instance = function (p5c) {
           maxAmp = leftChannel[i];
         }
       }
-      maxAmp = maxAmp / 2;
+      //maxAmp = maxAmp / 2;
 
       p5c.beginShape()
       for (let i = 0; i < leftChannel.length; i++) {
@@ -671,14 +725,15 @@ p5_instance = function (p5c) {
     //using lerpColor() by subdividing it into 50 parts
     p5c.noStroke()
     for (var i = 0; i < 100; i++) {
-      p5c.fill(p5c.lerpColor(p5c.color(0, 0, 255), p5c.color(255, 0, 255), i / 100));
-      p5c.rect(0, p5c.height / 100 * i, p5c.width / 2, p5c.height / 100);
+      //p5c.color(255, 0, 255)  p5c.color(255, 0, 255)
+      p5c.fill(p5c.lerpColor(p5c.color(0, 0, 255), p5c.color(120, 0, 255), i / 100));
+      p5c.rect(0, p5c.ceil(p5c.height / 100) * i, p5c.width / 2, p5c.ceil(p5c.height / 100));
     }
     //fill the right side with a gradient from red to purple
     //using lerpColor() by subdividing it into 50 parts
     for (var i = 0; i < 100; i++) {
-      p5c.fill(p5c.lerpColor(p5c.color(255, 0, 0), p5c.color(255, 0, 255), i / 100));
-      p5c.rect(p5c.width / 2, p5c.height / 100 * i, p5c.width / 2, p5c.height / 100);
+      p5c.fill(p5c.lerpColor(p5c.color(255, 0, 0), p5c.color(120, 0, 255), i / 100));
+      p5c.rect(p5c.width / 2, p5c.ceil(p5c.height / 100) * i, p5c.width / 2, p5c.ceil(p5c.height / 100));
     }
 
     p5c.stroke(255)
@@ -691,6 +746,9 @@ p5_instance = function (p5c) {
     p5c.fill(255);
     p5c.text("Record some sounds", p5c.width / 4, p5c.height / 2);
     p5c.text("Upload a file", p5c.width * 3 / 4, p5c.height / 2);
+    //write "(note - audio longer than "+maxDuration+" seconds will be cut to "+maxDuration+" seconds)" below Upload in a smaller font
+    p5c.textSize(20);
+    p5c.text("(audio longer than " + maxDuration + " seconds will be cut to " + maxDuration + " seconds)", p5c.width * 3 / 4, p5c.height / 2 + 50);
     p5c.textSize(30);
     p5c.text("(OR)", p5c.width / 2, p5c.height / 2 - 50);
     //create an arrow pointing to (width-400,height-200) with the text
@@ -757,6 +815,7 @@ p5_instance = function (p5c) {
       leftChannel = soundFile.buffer.getChannelData(0).slice()
       //}, 3000);
     })
+    if(mode != 2){
     //now remove all useless buttons
     removeUselessButtons()
     setTimeout(() => {
@@ -766,6 +825,8 @@ p5_instance = function (p5c) {
       loadMessages("upload")
       started = true;
     }, 1000);
+  }
+
   }
 
   /*
@@ -963,6 +1024,45 @@ p5_instance = function (p5c) {
         soundFile.stop()
       }
     })
+
+    realUploadButton = p5c.createFileInput(handleFile)
+    //hide realUploadButton and give it the realUpload ID
+    realUploadButton.hide()
+    realUploadButton.id('realUpload')
+
+    uploadButton = document.getElementById('realUpload')
+    uploadButton_ingame = p5c.createDiv("")
+    uploadButton_ingame.addClass('upload_button_ingame')
+    uploadButton_ingame.mousePressed(function () {
+      console.log("uploaddd")
+      if (recording) {
+        recorder.stop();
+        recording = false;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }
+      if (soundFile != null) {
+        soundFile.stop()
+      }
+      uploadButton.click()
+    })
+
+    analyseButton = p5c.createDiv("OK")
+    //TODO: when this is clicked the user should be blocked from uploading / recording a new sound
+    analyseButton.addClass('analyse_button')
+    analyseButton.mousePressed(function () {
+      if (recording) {
+        recorder.stop();
+        recording = false;
+        recordingWaveDrawer(waveRefreshInterval, recording);
+      }
+      if (soundFile != null) {
+        soundFile.stop()
+      }
+      if (leftChannel != null) {
+        //if we have a soundFile, we can analyse it
+        analyseSoundFile()
+      }
+    })
   }
 
   recordingWaveDrawer = function (waveRefreshInterval, recording){
@@ -1030,6 +1130,40 @@ p5_instance = function (p5c) {
     met2.play();
     //no point using different sounds, we just need to give the user a reference
   }
+
+  //--------------------END OF METRONOME--------------------
+
+
+  //--------------------WORKER STUFF--------------------
+  analyseSoundFile = function () {
+    //worker stuff
+    //INPUT: x - audio buffer (passed using postMessage)
+    //RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], 
+    //                 polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
+
+    let audioToWorker;
+    setTimeout(() => {
+      audioToWorker = soundFile.buffer.getChannelData(0).slice();
+      console.log("WORKER SETUP: AUDIO DATA COPIED")
+      console.log("Passing the audio data to the worker!")
+    }, 1000)
+
+    setTimeout(() => {
+      worker.postMessage(audioToWorker)
+    }, 2000);
+    worker.onmessage = (event) => {
+      console.log("Main: received the result!")
+      //print the estimated BPM
+      BPM_estimated = event.data[0]
+      second_bpm_estimated = event.data[1]
+      third_bpm_estimated = event.data[2]
+      first_polyrhythm = new Array(event.data[3], event.data[4])
+      second_polyrhythm = new Array(event.data[5], event.data[6])
+    }
+  }
+
+  //--------------------END OF WORKER STUFF--------------------
+
 
 }//end of sketch
 //--------------------END OF P5 SKETCH--------------------

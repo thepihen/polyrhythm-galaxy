@@ -85,7 +85,9 @@ var first_polyrhythm
 var second_polyrhythm
 
 
-
+// Rhythmic Wheel Stuff
+var hitOuter
+var hitInner
 //answer buttons
 var answer1
 var answer2
@@ -94,7 +96,7 @@ var hovered = [0, 0, 0]
 var selectedAnswer = -1 
 
 //use p5 in instance mode
-p5_instance = function (p5c) {
+window.P$ = new p5(p5c => {
   class Message {
     /*
     Message: class that represents a message that the helper will say
@@ -464,7 +466,8 @@ p5_instance = function (p5c) {
     speech = p5c.loadSound('assets/dialogue.wav') //sound for the dialogue
     speech_end = p5c.loadSound('assets/dialogue_end.wav') //sound that plays when user clicks to pass to next message
     messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages
-
+    hitOuter = P$.loadSound('assets/hit_outer.wav'); // hit Outer Circle Rhythmic Wheel
+    hitInner = P$.loadSound('assets/hit_inner.wav'); // hit Inner Circle Rhythmic Wheel
     debug_soundfile = p5c.loadSound('assets/song2_lq.mp3') //debug soundfile
 
     bg = p5c.loadImage('assets/bg.jpg') //background image
@@ -513,6 +516,9 @@ p5_instance = function (p5c) {
 
     //setup everything regarding buttons
     setupMenuButtons()
+
+    // Setup everything about Rhythmic Wheel
+    setupRhythmicWheel()
   }
 
   /*
@@ -680,10 +686,11 @@ p5_instance = function (p5c) {
       */
     })
   }
+
   //var frameCounter = 0; //not used now, might be used to count frames IN GAME
 
   /*
-  draw(): p5js function that gets automatically called once per frame
+  (): p5js function that gets automatically called once per frame
   (by default 60 frames per second) 
   */
   p5c.draw = function () {
@@ -722,6 +729,7 @@ p5_instance = function (p5c) {
         drawInterface()
         helper.showFace()
         helper.say(msg)
+        drawRhythmicWheel()
         break;
     }
   }
@@ -731,7 +739,7 @@ p5_instance = function (p5c) {
   */
   drawInterface = function () {
     //draw audio controls
-    drawAudioControls()
+
 
     //draw a basic rectangle that will contain the waveform of the recorded/uploaded audio
     p5c.push()
@@ -905,12 +913,26 @@ p5_instance = function (p5c) {
   /* 
   mousePressed(): p5js function that gets called every time a mouse button
   is pressed / the touchscreen is touched.
-  We start the AudioContext here with userStartAudio()
   */
   p5c.mousePressed = function () {
-
+      mousePressedRhythmicWheel()
   }
 
+  /*
+  mouseDragged() : p5js function that gets called every time a mouse button
+  is pressed / the touchscreen is touched and dragged.
+   */
+  p5c.mouseDragged = function () {
+    mouseDraggedRhythmicWheel()
+  }
+
+  /*
+  mouseReleased() : p5js function that gets called every time mouse button
+  is released.
+   */
+  p5c.mouseReleased = function() {
+    mouseReleasedRhythmicWheel()
+  }
   /*
   handleFile: handles the file that the user has uploaded
   Needed to actually load the file, extract data from it and update mode 
@@ -1063,6 +1085,9 @@ p5_instance = function (p5c) {
           soundFile.pause()
         }
     }
+
+    //k: try for starting Rhythmic Wheel
+    keyPressedRhythmicWheel()
   }
 
   var micCheck; //needed to check if the user gave us permission to access the microphone
@@ -1365,6 +1390,7 @@ p5_instance = function (p5c) {
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]
+
     }
   }
 
@@ -1372,7 +1398,7 @@ p5_instance = function (p5c) {
 
 
   //--------------------RHYTHM WHEEL STUFF--------------------
-  var rhythmWheelExists = false
+  var rhythmWheelExists = true
   var showRhythmWheel = false
   /*
   createRhythmWheel: creates the rhythm wheel or updates it if it already exists
@@ -1384,6 +1410,9 @@ p5_instance = function (p5c) {
     if (rhythmWheelExists) {
       //update the rhythm wheel
       //rhythmWheel.updateRhythms(rhy_1, rhy_2)
+      rhythmOuter = rhy_1
+      rhythmInner = rhy_2
+      wheelBPM = second_bpm_estimated
     } else {
       //create the rhythm wheel
       //rhythmWheel = new RhythmWheel(rhy_1, rhy_2)
@@ -1419,14 +1448,15 @@ p5_instance = function (p5c) {
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]
+      createRhythmWheel(selectedPolyrhythm[0],selectedPolyrhythm[1])
     }
   }
 
 
-}//end of sketch
+})//end of sketch
 //--------------------END OF P5 SKETCH--------------------
 
-myp5 = new p5(p5_instance)
+// myp5 = new p5(p5_instance)
 
 document.onblur = function () {
   //pause audio and do not update circles

@@ -52,7 +52,7 @@
     {
         "msgId": "commonFound",
         "msg": "I found some polyrhythms in your audio. Use the mouse to select which one sounds closer to your audio\n(hover over the polyrhythm to hear it)",
-        "nextMsgId": "commonFound1"
+        "nextMsgId": "-1"
     },
     {   "msgId": "commonFound1",
         "msg": "If you're not satisfied with the results, you can try using a different audio." ,

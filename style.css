@@ -79,7 +79,6 @@ body {
     z-index: 1;
 }
 
-
 .play_button {
     margin: 0 auto;
     left: 10%;
@@ -92,6 +91,23 @@ body {
     border-style: solid;
     border-width: 15px 0 15px 25px;
     border-color: transparent transparent transparent rgb(0, 255, 76);
+    opacity: 1;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.play_button_rw {
+    margin: 0 auto;
+    left: 10%;
+    top: 22%;
+    background-color: transparent;
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    border-style: solid;
+    border-width: 15px 0 15px 25px;
+    border-color: transparent transparent transparent rgb(255, 85, 232);
     opacity: 1;
     cursor: pointer;
     z-index: 1;
@@ -180,3 +196,20 @@ body {
     transform: translate(-50%, -50%);
     z-index: 2
 }
+
+
+/*if you want a div based approach to the rhythm wheel...*/
+/* 
+.wheel_circle{
+    background-color: yellow;
+    border: none;
+    color: transparent;
+    position: absolute;
+    border: 1px solid black;
+    width: 10;
+    height: 10;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 2;
+}
+*/

@@ -165,7 +165,8 @@ var SF;
 var x
 //load the file "song2_lq.mp3"
 onmessage = (event) => {
-    x = event.data;
+    x = event.data[0];
+    Fs_main = event.data[1];
     console.log("Worker received event data!")
     setTimeout(() => {
         console.log("Worker started main function!")
@@ -205,6 +206,7 @@ var bpmDetected;
 var arr;
 var tempogram;
 
+var Fs_main = 0;
 
 async function main(x) {
     
@@ -215,7 +217,7 @@ async function main(x) {
     }
     console.log("----------------------")
     console.log("Computing the novelty spectrum")
-    novs = await compute_novelty_spectrum(arr, Fs = 44100, N , hop , gamma = 1, M = 10, norm = 1)
+    novs = await compute_novelty_spectrum(arr, Fs = Fs_main, N , hop , gamma = 1, M = 10, norm = 1)
     var nov = novs[0]
     var Fs_nov = novs[1]
     var Theta = new Array();

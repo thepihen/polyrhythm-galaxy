@@ -60,7 +60,7 @@
     },
     {
         "msgId": "commonPolyChose",
-        "msg": "Great! You can now experiment with the polyrhythm using the rhythm wheel we've provided.\nCheck out how a simple shift in time affects your polyrhythm!",
+        "msg": "Great! You can now experiment with the polyrhythm using the rhythm wheel we've provided.\nClick and drag to see how a shift in time affects your polyrhythm!",
         "nextMsgId": "-1"
     },
     {

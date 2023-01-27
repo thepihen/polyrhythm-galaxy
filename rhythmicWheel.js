@@ -66,6 +66,7 @@ var x_inner;
 var y_inner;
 var outer_time;
 var inner_time;
+var wheelPlayButton;
 drawRhythmicWheel = function () {
 
     if (enableSlideOuter){
@@ -147,13 +148,47 @@ drawRhythmicWheel = function () {
         if (wheel_time >= 2*Math.PI){
             wheel_time = 0;
         }
+    }else{
+        wheel_time = 0;
+        y_hand = Math.sin(wheel_time + Math.PI / 2);
+        x_hand = Math.cos(wheel_time + Math.PI / 2);
+        y_hand_start = Math.sin(wheel_time + Math.PI);
+        x_hand_start = Math.cos(wheel_time + Math.PI);
     }
-
+    //add a play button over the wheel
+    
 }
 
+var wheelIsShown = false
 
+setWheelShown = function (shown) {
+    wheelIsShown = shown
+    setupWheelPlayButton(wheelIsShown)
+}
+
+setupWheelPlayButton = function (shown) {
+    if(shown){
+        wheelPlayButton = P$.createDiv('')
+        wheelPlayButton.addClass('play_button_rw')
+        wheelPlayButton.mousePressed(function (){
+            if (!wheelStarted) {
+                wheelStarted = true;
+            }
+            else {
+                wheelStarted = false;
+            }
+        })
+        wheelPlayButton.position(xCenter,yCenter - big_circle_radius - 50)
+    }
+    else{
+        wheelStarted = false;
+        wheelPlayButton.remove()
+    }
+}
 
 keyPressedRhythmicWheel = function () {
+    if (!wheelIsShown)
+        return
     if ( P$.key == 'k' || P$.key == 'K'){
         if (!wheelStarted){
             wheelStarted = true;
@@ -164,6 +199,8 @@ keyPressedRhythmicWheel = function () {
     }
 }
 mousePressedRhythmicWheel = function () {
+    if (!wheelIsShown)
+        return
     for(let i = 0; i < rhythmOuter; i++) {
         const isPressed = mouseInCircle(circlesOuter[i]);
 
@@ -181,6 +218,7 @@ mousePressedRhythmicWheel = function () {
             break;
         }
     }
+
 }
 mouseDraggedRhythmicWheel = function () {
     if(P$.mouseX > xCenter){
@@ -207,6 +245,12 @@ mouseDraggedRhythmicWheel = function () {
 mouseReleasedRhythmicWheel = function () {
     enableSlideOuter = false
     enableSlideInner = false
+}
+
+//updates wheel location (called when window is resized)
+updateWheelLocation = function(){
+    xCenter = P$.width - P$.width / 8;
+    yCenter = P$.height - 150;
 }
 
 function mouseInCircle(pos) {

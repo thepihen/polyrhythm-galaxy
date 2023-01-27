@@ -20,3 +20,10 @@
 * the algorithm for polyrhythm detection now "talks" with the sketch
 * added some new functions to manage user "answers" to the helper's questions (e.g. "which polyrhythm sounds closer?")
 * KNOWN ISSUE: the page lags after audio analysis
+
+## 2023-01-27
+* introduced a rhythm wheel, with its own play button
+* made the interface clearer to the user (the program now indicates when it is analysing, recording,...)
+* almost finished implementing choice buttons (still missing audio)
+* made a function to play polyrhythms when a choice is hovered
+* the audio now gets automatically cut to 15 seconds for the above-detailed reasons

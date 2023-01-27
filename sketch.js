@@ -27,14 +27,16 @@ IF THERE'S TIME:
 /*
 Tone stuff
 */
-/*
-Tone.Transport.bpm.value = 80;
+
+Tone.Transport.bpm.value = 90;
 // start/stop the oscillator every quarter note
+/*
 Tone.Transport.scheduleRepeat(time => {
   osc.start(time).stop(time + 0.1);
 }, "4n");
-Tone.Transport.start();
 */
+//Tone.Transport.start();
+
 
 //needed until we find a better way to track document focus changes
 //(see bottom of this file)
@@ -469,8 +471,10 @@ window.P$ = new p5(p5c => {
     hitOuter = P$.loadSound('assets/hit_outer.wav'); // hit Outer Circle Rhythmic Wheel
     hitInner = P$.loadSound('assets/hit_inner.wav'); // hit Inner Circle Rhythmic Wheel
     debug_soundfile = p5c.loadSound('assets/song2_lq.mp3') //debug soundfile
-
+    
     bg = p5c.loadImage('assets/bg.jpg') //background image
+    loopSound_0 = p5c.loadSound('assets/loop_1.wav') //polyrhythm sound 1
+    loopSound_1 = p5c.loadSound('assets/loop_2.wav') //polyrhythm sound 2
   }
 
   /*
@@ -710,6 +714,7 @@ window.P$ = new p5(p5c => {
   /*
   drawCurrentMode: draw but for the current mode (record, upload, common)
   */
+ var numDots = 0
   drawCurrentMode = function () {
     //show bg image in the background
     p5c.image(bg, 0, 0, p5c.width, p5c.height)
@@ -729,7 +734,52 @@ window.P$ = new p5(p5c => {
         drawInterface()
         helper.showFace()
         helper.say(msg)
-        drawRhythmicWheel()
+        if (isAnalysing){
+          p5c.push()
+          p5c.stroke(255)
+          p5c.strokeWeight(2)
+          p5c.fill(12, 12, 12, 150)
+          p5c.rectMode(p5c.CENTER)
+
+          p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
+          p5c.pop()
+          p5c.push()
+          p5c.textSize(30)
+          //p5c.textAlign(p5c.CENTER, p5c.CENTER)
+          p5c.textAlign(p5c.CORNER, p5c.CENTER)
+          p5c.fill(255)
+          //write "Analysing" with numDots dots in the middle of the box
+          p5c.text("Analysing" + ".".repeat(numDots), p5c.width / 2 - p5c.width/32, p5c.height / 4)
+          if(p5c.frameCount % 30 == 0){
+            numDots = (numDots + 1) % 4
+          }
+          p5c.pop()
+
+          
+        }
+        if(recording){
+          p5c.push()
+          p5c.stroke(255)
+          p5c.strokeWeight(2)
+          p5c.fill(12, 12, 12, 150)
+          p5c.rectMode(p5c.CENTER)
+
+          p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
+          p5c.pop()
+          p5c.push()
+          p5c.textSize(30)
+          //p5c.textAlign(p5c.CENTER, p5c.CENTER)
+          p5c.textAlign(p5c.CORNER, p5c.CENTER)
+          p5c.fill(255)
+          //write "Analysing" with numDots dots in the middle of the box
+          p5c.text("Recording" + ".".repeat(numDots), p5c.width / 2 - p5c.width / 32, p5c.height / 4)
+          if (p5c.frameCount % 30 == 0) {
+            numDots = (numDots + 1) % 4
+          }
+          p5c.pop()
+        }
+        if(showRhythmWheel)
+          drawRhythmicWheel()
         break;
     }
   }
@@ -909,6 +959,7 @@ window.P$ = new p5(p5c => {
   p5c.windowResized = function () {
     //p5c.removeElements();
     p5c.resizeCanvas(p5c.windowWidth, p5c.windowHeight);
+    updateWheelLocation()
   }
   /* 
   mousePressed(): p5js function that gets called every time a mouse button
@@ -944,7 +995,11 @@ window.P$ = new p5(p5c => {
       //if you need to test the file is loaded, uncomment this line
       //soundFile.play()
       //setTimeout(() => {
-      leftChannel = soundFile.buffer.getChannelData(0).slice()
+      if (soundFile.duration() > maxDuration) {
+        cutAudio()
+      } else {
+        leftChannel = soundFile.buffer.getChannelData(0).slice()
+      }
       //}, 3000);
     })
     if(mode != 2){
@@ -960,6 +1015,35 @@ window.P$ = new p5(p5c => {
   }
 
   }
+
+  cutAudio = function(){
+    const ctx = p5c.getAudioContext()
+    let x = soundFile.buffer.getChannelData(0);
+    let y = null
+    if (soundFile.buffer.getChannelData(1) != null)
+      y = soundFile.buffer.getChannelData(1);
+    let rate = soundFile.buffer.sampleRate;
+    //cut the buffer after 10 seconds
+    x = x.slice(0, rate * maxDuration);
+    if (y != null)
+      y = y.slice(0, rate * maxDuration);
+    const buff = ctx.createBuffer(1 + (y != null), x.length, rate)
+    const nowBuffering = buff.getChannelData(0);
+    for (let i = 0; i < buff.length; i++) {
+      nowBuffering[i] = x[i];
+    }
+    if (y != null) {
+      const nowBuffering2 = buff.getChannelData(1);
+      for (let i = 0; i < buff.length; i++) {
+        nowBuffering2[i] = y[i];
+      }
+    }
+    console.log(buff)
+    console.log(buff.getChannelData(0))
+    soundFile.buffer = buff
+    leftChannel = soundFile.buffer.getChannelData(0).slice()
+  }
+  
 
   /*
   loadMessages: loads the messages from the json file
@@ -1064,7 +1148,11 @@ window.P$ = new p5(p5c => {
         setTimeout(() => {
           //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
           //We add slice() to effectively clone the array
-          leftChannel = soundFile.buffer.getChannelData(0).slice()
+          if (soundFile.duration() > maxDuration){
+            cutAudio()
+          }else{
+            leftChannel = soundFile.buffer.getChannelData(0).slice()
+          }
         }, 100);
         setTimeout(() => {
           mode = 2;
@@ -1082,7 +1170,7 @@ window.P$ = new p5(p5c => {
         if (!soundFile.isPlaying()) {
           soundFile.play()
         } else {
-          soundFile.pause()
+          soundFile.stop()
         }
     }
 
@@ -1127,37 +1215,57 @@ window.P$ = new p5(p5c => {
         answer1.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 50)
         answer1.addClass('answer')
         answer1.mousePressed(function () {
+          Tone.Transport.clear(tone1)
+          Tone.Transport.clear(tone2)
           selectedAnswer = 0
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
+          
         })
         answer1.mouseOver(function () {
           hovered[0] = 1
+          startLoop(first_polyrhythm[0], 0)
+          startLoop(first_polyrhythm[1], 1)
         })
         answer1.mouseOut(function () {
           hovered[0] = 0
+          //Tone.Transport.cancel()
+          Tone.Transport.clear(tone1)
+          Tone.Transport.clear(tone2)
         })
         answer2 = p5c.createDiv("")
         answer2.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 100)
         answer2.addClass('answer')
         answer2.mousePressed(function () {
+          Tone.Transport.clear(tone1)
+          Tone.Transport.clear(tone2)
           selectedAnswer = 1
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
+          
         })
         answer2.mouseOver(function () {
           hovered[1] = 1
+          if(second_polyrhythm!=null && second_polyrhythm.length!=NaN){
+            startLoop(second_polyrhythm[0], 0)
+            startLoop(second_polyrhythm[1], 1)
+          }
         })
         answer2.mouseOut(function () {
           hovered[1] = 0
+          Tone.Transport.clear(tone1)
+          Tone.Transport.clear(tone2)
         })
         answer3 = p5c.createDiv("")
         answer3.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 150)
         answer3.addClass('answer')
         answer3.mousePressed(function () {
+          Tone.Transport.clear(tone1)
+          Tone.Transport.clear(tone2)
           selectedAnswer = 2
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
+          
         })
         answer3.mouseOver(function () {
           hovered[2] = 1
@@ -1280,13 +1388,21 @@ window.P$ = new p5(p5c => {
   recordingWaveDrawer = function (waveRefreshInterval, recording){
     //for some reason the whole thing doesn't work at the end unless we do this bad shit
     if(recording){
+      
       waveRefreshInterval = setInterval(() => {
         leftChannel = soundFile.buffer.getChannelData(0).slice();
       }, 300)
       
     }else{
       clearInterval(waveRefreshInterval);
-      leftChannel = soundFile.buffer.getChannelData(0).slice();
+      //leftChannel = soundFile.buffer.getChannelData(0).slice();
+      setTimeout( ()=>{
+      if (soundFile.duration() > maxDuration) {
+        cutAudio()
+      } else {
+        leftChannel = soundFile.buffer.getChannelData(0).slice()
+      }
+     },100);
     }
   };
 
@@ -1329,18 +1445,30 @@ window.P$ = new p5(p5c => {
   startMetronome(): starts a metronome for reference. Calls metroSound()
   to make sound*/
   var metroFlag = 0;
-  startMetronome = function () {
-    Tone.Transport.scheduleRepeat(time => {
-      metroSound()
-    }, "4n");
+  startLoop = function (n, i) {
+    if(i == 0)
+      tone1 = Tone.Transport.scheduleRepeat(time => {
+      loopSound(i)
+    }, n+"n");
+    else{
+      tone2 = Tone.Transport.scheduleRepeat(time => {
+        loopSound(i)
+      }, n + "n");
+    }
+    Tone.Transport.start();
   }
 
+  var loopSound_0
+  var loopSound_1
   /*
   metroSound(): produces the correct metronome sound based on the beat
   */
-  metroSound = function () {
-    met2.play();
-    //no point using different sounds, we just need to give the user a reference
+  loopSound = function (i) {
+    if(i == 0)
+      loopSound_0.play();
+    else{
+      loopSound_1.play()
+    }
   }
 
   //--------------------END OF METRONOME--------------------
@@ -1362,7 +1490,8 @@ window.P$ = new p5(p5c => {
     }, 1000)
 
     setTimeout(() => {
-      worker.postMessage(audioToWorker)
+      console.log(soundFile.buffer.sampleRate)
+      worker.postMessage([audioToWorker, soundFile.buffer.sampleRate])
     }, 2000);
     worker.onmessage = (event) => {
       console.log("Main: received the result!")
@@ -1390,7 +1519,7 @@ window.P$ = new p5(p5c => {
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]
-
+      isAnalysing = false
     }
   }
 
@@ -1448,7 +1577,11 @@ window.P$ = new p5(p5c => {
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]
-      createRhythmWheel(selectedPolyrhythm[0],selectedPolyrhythm[1])
+      if(answer!=2){
+        createRhythmWheel(selectedPolyrhythm[0],selectedPolyrhythm[1])
+        showRhythmWheel = true
+        setWheelShown(showRhythmWheel)
+      }
     }
   }
 
@@ -1457,6 +1590,8 @@ window.P$ = new p5(p5c => {
 //--------------------END OF P5 SKETCH--------------------
 
 // myp5 = new p5(p5_instance)
+var tone1
+var tone2
 
 document.onblur = function () {
   //pause audio and do not update circles

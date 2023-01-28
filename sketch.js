@@ -1188,8 +1188,6 @@ window.P$ = new p5(p5c => {
         }
     }
 
-    //k: try for starting Rhythmic Wheel
-    keyPressedRhythmicWheel()
   }
 
   var micCheck; //needed to check if the user gave us permission to access the microphone
@@ -1571,6 +1569,8 @@ window.P$ = new p5(p5c => {
       rhythmOuter = rhy_1
       rhythmInner = rhy_2
       wheelBPM = second_bpm_estimated
+      slideInner = 0
+      slideOuter = 0
     } else {
       //create the rhythm wheel
       //rhythmWheel = new RhythmWheel(rhy_1, rhy_2)

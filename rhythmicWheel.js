@@ -67,6 +67,7 @@ var y_inner;
 var outer_time;
 var inner_time;
 var wheelPlayButton;
+var wheelResetButton;
 drawRhythmicWheel = function () {
 
     if (enableSlideOuter){
@@ -163,11 +164,18 @@ var wheelIsShown = false
 
 setWheelShown = function (shown) {
     wheelIsShown = shown
-    setupWheelPlayButton(wheelIsShown)
+    setupWheelButtons(wheelIsShown)
 }
 
-setupWheelPlayButton = function (shown) {
+setupWheelButtons = function (shown) {
     if(shown){
+        wheelResetButton = P$.createDiv('RESET SHIFT')
+        wheelResetButton.addClass('reset_button_rw')
+        wheelResetButton.mousePressed(function (){
+            slideOuter = 0;
+            slideInner = 0;
+        })
+
         wheelPlayButton = P$.createDiv('')
         wheelPlayButton.addClass('play_button_rw')
         wheelPlayButton.mousePressed(function (){
@@ -179,10 +187,12 @@ setupWheelPlayButton = function (shown) {
             }
         })
         wheelPlayButton.position(xCenter,yCenter - big_circle_radius - 50)
+        wheelResetButton.position(xCenter,yCenter + big_circle_radius + 25)
     }
     else{
         wheelStarted = false;
         wheelPlayButton.remove()
+        wheelResetButton.remove()
     }
 }
 

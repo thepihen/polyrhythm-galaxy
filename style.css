@@ -113,6 +113,24 @@ body {
     z-index: 1;
 }
 
+.reset_button_rw {
+    position: absolute;
+    transform: translate(-50%, -50%);
+
+    border: none;
+    background-color: transparent;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-family: "Arial Rounded MT Bold", sans-serif;
+    -webkit-text-stroke-width: 2px;
+    -webkit-text-stroke-color: darkred;
+    color: darkred;
+    cursor: pointer;
+    display: inline-block;
+}
+
+
+
 .stop_button {
     background-color: whitesmoke;
     color:black;

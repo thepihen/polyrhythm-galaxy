@@ -28,7 +28,7 @@ Tone.Transport.bpm.rampTo(120, 10);
 //this just tracks the state
 var pageFoc = true;
 var gameScore = 50;
-var lifes = 3;
+var lifes = 500;
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
@@ -74,16 +74,15 @@ p5_instance = function (p5c) {
   (e.g. fonts, sounds,...)
   */
   p5c.preload = function () {
-    //soundFormats('wav');
     hit = p5c.loadSound('assets/hit.wav');
-    hitSoundL = p5c.loadSound('assets/hitSX.wav');
-    hitSoundR = p5c.loadSound('assets/hitDX.wav');
-    beat1 = p5c.loadSound('assets/BEAT1.wav');
-    beat2 = p5c.loadSound('assets/BEAT2.wav');
+    hitSoundL = p5c.loadSound('assets/hitSXogg.ogg');
+    hitSoundR = p5c.loadSound('assets/hitDXogg.ogg');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
     font = p5c.loadFont('assets/Montserrat-Bold.ttf');
+    beat1 = p5c.loadSound('assets/BEAT1ogg.ogg');
+    beat2 = p5c.loadSound('assets/BEAT2ogg.ogg');
   }
 
 
@@ -124,6 +123,17 @@ p5_instance = function (p5c) {
   var firstElemInGameR = 0;
   var lastElemL = 0;
   var lastElemR = 0;
+
+  // BONUS STREAK STUFF
+  var multiplier = 1;
+  var multiplierGreat = 0;
+  var multiplierAmazing = 0;
+  var multiplierPerfect = 0;
+  var greatCounter = 0;
+  var amazingCounter = 0;
+  var perfectCounter = 0;
+  var consecutiveHits = 0; // TODO
+  var lastHit = "OK";
 
   /*
   Circle(): class representing a beat circle.
@@ -199,6 +209,11 @@ p5_instance = function (p5c) {
             }
             else{
                 miss.play();
+                lastHit = "OK"
+                multiplier = 1
+                multiplierGreat = 0;
+                multiplierAmazing = 0;
+                multiplierPerfect = 0;
                 lifes -= 1;
             }
         }
@@ -281,10 +296,16 @@ p5_instance = function (p5c) {
     Tone.Transport.cancel()
     stopCircleArrays()
     p5c.getAudioContext().resume()
-    //newPodium();
     lifes = 3;
+    gameScore = 0;
     rhythmLimit = 4;
     metroFlagChange = 0;
+    multiplier = 1;
+    goodCounter = 0;
+    greatCounter = 0;
+    amazingCounter = 0;
+    perfectCounter = 0;
+    consecutiveHits = 0;
     triplet = false;
     mindBlowing = false;
     noReference = false;
@@ -299,6 +320,7 @@ p5_instance = function (p5c) {
     p5c.getAudioContext().suspend();
     p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
     //in a church hoping for a miracle
+    // Trying to solve audio distortion by using a compressor
 
     //initialise guide coordinates
     xLine1 = p5c.width / 2 - p5c.width / 12;
@@ -372,34 +394,91 @@ p5_instance = function (p5c) {
     if(!noReference){
         drawReference();
       }
-    //console.log(frameRate())
+    // Visual Metronome ( only outer ellipses )
+    p5c.fill("black");
+    p5c.strokeWeight(1);
+    p5c.stroke(240, 240, 10)
+    p5c.ellipse(xLine1 + (xLine2 - xLine1)/5 , yLineH + 100, guideRadius, guideRadius);
+    p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
+    p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
+    p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
     if (started) {
 
-      p5c.fill(240)
+      // Visual Metronome ( inside ellipses )
+      p5c.fill("yellow");
+      if (metroFlag > 0){
+          metroColor = ((metroFlag - 1) % 4) + 1
+      }
+      p5c.strokeWeight(1);
+      p5c.stroke(240, 240, 10)
+      p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
+
       p5c.textFont(font)
-      p5c.textSize(30)
-      ////write a text in p5.js displaying firstElemnInGameL
-      //p5c.text(firstElemInGameL, 100, 100)
-      ////write a text in p5.js displaying firstElemInGameR
-      //p5c.text(firstElemInGameR, 100, 200)
+
       //write a text in p5.js displaying "Score: " and the score
-      p5c.text("Score: " + gameScore, 100, 50)
-      ////write a text in p5.js displaying "Left elements: " and leftElem
-      //p5c.text("Left elements: " + leftElem, 150, 400)
+      p5c.fill(255)
+      p5c.textSize(30)
+      p5c.noStroke()
+      p5c.text("Score: " + gameScore, 150, 60)
+
+      // Display Global Multiplier
+      p5c.noFill()
+      p5c.strokeWeight(2);
+      p5c.stroke("yellow");
+      p5c.ellipse(300,60 - 9,60,60)
+
+      p5c.fill(255)
+      p5c.noStroke()
+      p5c.text("x" + multiplier,300,60)
+
+      // Display Left and Right Rhythms
+      p5c.fill("yellow")
+      p5c.noStroke()
       p5c.textSize(300)
       p5c.text(visualLeftR, (p5c.width / 2 - p5c.width / 12)/2, 400)
       p5c.text(visualRightR,p5c.width - (p5c.width / 2 - p5c.width / 12)/2, 400)
-      ////write a text in p5.js displaying the difficulty settings of the game
+
+      /*//write a text in p5.js displaying the difficulty settings of the game
       //p5c.textSize(15)
       //p5c.text("Triplet : " + triplet, 110, 80)
       //p5c.text("MindBlowing : " + mindBlowing, 110, 110)
       //p5c.text("NoReference : " + noReference, 110, 140)
-      //p5c.text("MetroFlag : " + metroFlag, 100, 170)
+      //p5c.text("MetroFlag : " + metroFlag, 100, 170)*/
+
+      // Display available Lifes
+      p5c.fill("white")
+      p5c.noStroke()
       p5c.textSize(30)
-      p5c.text("Lifes : " + lifes, p5c.width - 100, 50)
+      p5c.text("Lifes : " + lifes, p5c.width - 150, 60)
+
+
+      p5c.fill("white")
+      p5c.textSize(15)
+      // Consecutive Great Hits and relative Multiplier
+      p5c.text("Consecutive\nGreat", xLine2 + 1*(p5c.width - xLine2)/4, p5c.height - 125 )
+      p5c.text(greatCounter, xLine2 + 1*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      if (multiplierGreat > 0){
+        p5c.text(multiplierGreat, xLine2 + 1*(p5c.width - xLine2)/4 , p5c.height - 50 )
+      }
+
+      // Consecutive Amazing Hits and relative Multiplier
+      p5c.text("Consecutive\nAmazing", xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 125 )
+      p5c.text(amazingCounter, xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      if (multiplierAmazing > 0){
+        p5c.text(multiplierAmazing, xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 50 )
+      }
+
+      // Consecutive Perfect Hits and relative Multiplier
+      p5c.text("Consecutive\nPerfect", xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 125 )
+      p5c.text(perfectCounter, xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      if (multiplierPerfect > 0){
+        p5c.text(multiplierPerfect, xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 50 )
+      }
+
 
       if (rhythmTransition){
-            p5c.stroke('red');
+            p5c.fill("darkred")
+            p5c.stroke('darkred');
             p5c.strokeWeight(4);
             p5c.textSize(75);
             p5c.text(visualNextLeftR, (p5c.width / 2 - p5c.width / 12)/2, 500);
@@ -486,38 +565,20 @@ p5_instance = function (p5c) {
     drawReference(): draws the guide
     */
     drawReference = function () {
-      p5c.stroke(240);
+      p5c.stroke("white");
       p5c.strokeWeight(1);
       p5c.line(xLine1, 0, xLine1, p5c.height);
       p5c.line(xLine2, 0, xLine2, p5c.height);
       p5c.line(0, yLineH, p5c.width, yLineH)
       p5c.fill(12);
       p5c.strokeWeight(4);
-      p5c.stroke(240, 240, 10)
+      p5c.stroke("yellow")
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
       p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
       p5c.fill(12);
       p5c.strokeWeight(4);
-      p5c.stroke(240, 240, 10)
+      p5c.stroke("yellow")
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
-
-      p5c.fill("black");
-      p5c.strokeWeight(1);
-      p5c.stroke(240, 240, 10)
-      p5c.ellipse(xLine1 + (xLine2 - xLine1)/5 , yLineH + 100, guideRadius, guideRadius);
-      p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
-      p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
-      p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
-
-      if (started){
-        p5c.fill("yellow");
-        if (metroFlag > 0){
-            metroColor = ((metroFlag - 1) % 4) + 1
-        }
-        p5c.strokeWeight(1);
-        p5c.stroke(240, 240, 10)
-        p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
-      }
 
     }
     /*drawPodium = function () {
@@ -671,12 +732,21 @@ p5_instance = function (p5c) {
                 hitL = true;
                 //play sound
                 hitSoundL.play();
-                //TODO calculate the points
-                //add points to the score of the player proportionally to the
+
+                /*** add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
-                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-                gameScore = gameScore + points
-                displayHitQuality(points, 0)
+                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))*** */
+
+                // RULES FOR CALCULATING POINTS
+                // distance*10 = [0,7]     -> perfect -> 100 points
+                // distance*10 = [7, 20]   -> amazing -> 75 points
+                // distance*10 = [20, 70]  ->  great  -> 50 points
+                // distance*10 = [70, 150] ->  good   -> 25 points
+                // distance*10 = [150, - ] ->   ok    -> 0 points
+
+                let points = Math.round(Math.abs(c.y - yLineH)*10);
+                hitQuality(points, 0)
+
                 //delete circle(s)
                 leftCircles[k].toggle();
 
@@ -705,6 +775,11 @@ p5_instance = function (p5c) {
               }
               else{
                 miss.play();
+                lastHit = "OK"
+                multiplier = 1
+                multiplierGreat = 0;
+                multiplierAmazing = 0;
+                multiplierPerfect = 0;
                 lifes -= 1;
               }
               //point penalty / error count
@@ -722,10 +797,15 @@ p5_instance = function (p5c) {
                 hitR = true;
                 //play sound
                 hitSoundR.play();
-                //TODO calculate the points
-                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
-                gameScore = gameScore + points
-                displayHitQuality(points, 1)
+                // RULES FOR CALCULATING POINTS
+                // distance*10 = [0,7]     -> perfect -> 100 points
+                // distance*10 = [7, 20]   -> amazing -> 75 points
+                // distance*10 = [20, 70]  ->  great  -> 50 points
+                // distance*10 = [70, 150] ->  good   -> 25 points
+                // distance*10 = [150, - ] ->   ok    -> 0 points
+                let points = Math.round(Math.abs(c.y - yLineH)*10);
+                hitQuality(points, 1)
+
                 //delete circle(s)
                 rightCircles[k].toggle();
                 if (k == firstElemInGameR) {
@@ -765,6 +845,11 @@ p5_instance = function (p5c) {
               }
               else{
                 miss.play();
+                lastHit = "OK"
+                multiplier = 1
+                multiplierGreat = 0;
+                multiplierAmazing = 0;
+                multiplierPerfect = 0;
                 lifes -= 1;
               }
               //point penalty / error count
@@ -791,13 +876,14 @@ p5_instance = function (p5c) {
     metroSound = function () {
     //To play the beat in background
       if(metroFlag % 32 == 0){
-        p5c.getAudioContext().resume()
-        beat2.stop();
-        beat1.play()
+        //p5c.getAudioContext().resume()
+        /*beat2.stop();
+        beat1.play()*/
+
       }
       else if (metroFlag % 32 == 16) {
-        beat1.stop()
-        beat2.play()
+        /*beat1.stop()
+        beat2.play()*/
       }
       if (metroFlag % 4 == 0) {
         //met1.play()
@@ -825,11 +911,19 @@ p5_instance = function (p5c) {
     hitMessages[0] = ""
     hitMessages[1] = ""
 
-    displayHitQuality = function(points, side){
+    hitQuality = function(points, side){
       //prints a message on the side (side can be 0 or 1, indicating left or right side) 
       //of the guide circle 
       //to indicate how good a hit was ("OK", "GREAT", "AMAZING","PERFECT")
       //depending on the points scored
+
+      // RULES FOR CALCULATING POINTS
+      // [0,7] -> perfect
+      // [7, 20] -> amazing
+      // [20, 70]-> great
+      // [70, 150] -> good
+      // [150, - ] -> ok
+
       let x = 0;
       let y = 0;
       if(side == 0){
@@ -840,17 +934,39 @@ p5_instance = function (p5c) {
         y = yLineH;
       }
       let msg = "";
-      if(points == 100){
+      if(points >= 0 && points < 7){
         msg = "PERFECT";
-      }else if(points >= 50 && points < 100){
+        perfectCounter += 1;
+        gameScore = gameScore + 100*multiplier;
+      }else if(points >= 7 && points < 20){
         msg = "AMAZING";
-      }else if(points >= 30 && points < 50){
+        amazingCounter += 1;
+        gameScore = gameScore + 100*multiplier;
+        perfectCounter = 0;
+        multiplierPerfect = 0;
+      }else if(points >= 20 && points < 70){
         msg = "GREAT";
-      }else if(points >= 7 && points < 30){
-        msg = "GOOD"
+        greatCounter += 1;
+        gameScore = gameScore + 100*multiplier;
+        multiplierAmazing = 0;
+        amazingCounter = 0;
+        multiplierPerfect = 0;
+        perfectCounter = 0;
+      }else if(points >= 70 && points < 150){
+        msg = "GOOD";
+        gameScore = gameScore + 100*multiplier;
+        multiplierGreat = 0;
+        greatCounter = 0;
+        multiplierAmazing = 0;
+        amazingCounter = 0;
+        multiplierPerfect = 0;
+        perfectCounter = 0;
       }
-      else if(points >= 0 && points < 7){
+      else if(points >= 150){
         msg = "OK";
+        greatCounter = 0;
+        amazingCounter = 0;
+        perfectCounter = 0;
       }
       if(msg != ""){
         p5c.fill(240);
@@ -859,6 +975,23 @@ p5_instance = function (p5c) {
         p5c.text(msg, x, y);
       }
         hitMessages[side] = msg;
+
+        // CONSECUTIVE GREAT BONUS STREAK
+        if ( greatCounter > 0 && greatCounter % 10 == 0 ){
+            multiplierGreat += 1;
+        }
+
+        // CONSECUTIVE AMAZING BONUS STREAK
+        if ( amazingCounter > 0 && amazingCounter % 3 == 0 ){
+            multiplierAmazing += 1;
+        }
+
+        // CONSECUTIVE PERFECT BONUS STREAK
+        if ( perfectCounter > 0 && perfectCounter % 1 == 0 ){
+            multiplierPerfect += 1;
+        }
+
+        multiplier = 1 + multiplierGreat + multiplierAmazing + multiplierPerfect;
     }
 
     // STEP
@@ -886,7 +1019,7 @@ p5_instance = function (p5c) {
            mindBlowing = true;
         }
         // NO REFERENCE
-        if ( gameScore >= 5000 ){
+        if ( gameScore >= 15000 ){
             noReference = true;
         }
         // RAISE LIMIT TO 7

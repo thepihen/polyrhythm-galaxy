@@ -1,25 +1,18 @@
 # TODO:
 ## RECORDING MODE:
-* The user is asked a bpm value, the program will start a metronome at that bpm
-* Add a button to save the recorded audio
-
-## UPLOAD MODE:
-* The BPM can't be known in advance
-* Ask the user to either set the bpm of their file or upload a file with a given bpm value
+* Option to add a metronome
 
 ## MAIN / COMMON MODE:
-* The mode only influences the way the user gets to the first audio; after that, the user can always choose to record or upload a new file
-* Peak detection
-* Polyrhythm detection
-* Rhythm wheel (needs to be created after the user has selected the correct polyrhythm)
 * Transition to training
 * Euclidean wheel
+* Instead of using 1v1 for non polyrhythms, use something else
+* Rhythm wheel: reset the position when a new analysis is started
 
 ## TRAINING MODE:
 * Button to go back to _main mode_
 
 ## METHODS:
-* Try to port CMRM implementation of tempogram
+* Improve polyrhythm detection even more
 
 ## IF THERE'S TIME:
 * Implement a createGraphics approach to manage helper text

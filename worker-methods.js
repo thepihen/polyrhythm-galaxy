@@ -616,6 +616,18 @@ function refineResults(tempogram, BPM_estimated, temp_max){
     //console.log(poly)
     let polyrhythm = findClosestPolyrhythm(polyTable, polyML)
     let polyrhythm_second_ML = findClosestPolyrhythm(polyTable, poly_second_ML)
+    if(Math.abs(polyrhythm[0] - polyrhythm[1]) && polyrhythm[0]>=10){
+        //set both to 1
+        polyrhythm[0] = 1
+        polyrhythm[1] = 1
+    }
+    //do the same for the second
+    if(Math.abs(polyrhythm_second_ML[0] - polyrhythm_second_ML[1]) && polyrhythm_second_ML[0]>=10){
+        //set both to 1
+        polyrhythm_second_ML[0] = 1
+        polyrhythm_second_ML[1] = 1
+    }
+
     console.log("Closest polyrhythms:")
     console.log(polyrhythm[0] + " vs " + polyrhythm[1])
     console.log(polyrhythm_second_ML[0] + " vs " + polyrhythm_second_ML[1])
@@ -682,6 +694,14 @@ function buildPolyrhythmRatioTable() {
         }
         table.push(row)
     }
+    /*
+    //fill "uncommon" positions with a very low number (e.g. -50)
+    //fill the last row and the last column with -50
+    for (var i = 0; i < 12; i++) {
+        table[11][i] = -50;
+        table[i][11] = -50;
+    }
+    */
     return table;
 }
 

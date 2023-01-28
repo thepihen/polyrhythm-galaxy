@@ -51,11 +51,11 @@
     },
     {
         "msgId": "commonFound",
-        "msg": "I found some polyrhythms in your audio. Use the mouse to select which one sounds closer to your audio\n(hover over the polyrhythm to hear it)",
+        "msg": "I found some polyrhythms. Use the mouse to select which one sounds closer to your audio\n(hover over the polyrhythm to hear it)",
         "nextMsgId": "-1"
     },
     {   "msgId": "commonFound1",
-        "msg": "If you're not satisfied with the results, you can try using a different audio." ,
+        "msg": "(*) indicates the option is not really a polyrhythm. If you're not satisfied with the results, you can try using a different audio." ,
         "nextMsgId": "-1"
     },
     {
@@ -65,7 +65,7 @@
     },
     {
         "msgId": "commonPolyChoseNeither",
-        "msg": "Sorry if what I found doesn't sound like your audio. Try using a different audio file!",
+        "msg": "Sorry if what I found doesn't sound like your audio. Try using a different file!",
         "nextMsgId": "-1"
     },
     {

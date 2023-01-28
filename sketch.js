@@ -331,18 +331,30 @@ window.P$ = new p5(p5c => {
       for (let i = 0; i < choices.length; i++) {
         this.answers.push(choices[i])
       }
-
-
       this.hasAnswers = true
+    }
+    stopText(clearTextFlag){
+      clearInterval(this.interval)
+      if (clearTextFlag){
+        //also clear the text
+        this.lastMsg = ""
+        this.counter = 0
+
+        this.setIdle() 
+      }
     }
 
     removeAnswers(){
+      if(!this.hasAnswers) 
+        return
       this.hasAnswers = false
       answer1.remove()
       answer2.remove()
       answer3.remove()
       this.answers = []
     }
+
+
     /*
     createChoicesBox: creates the choices that the user can select
     */
@@ -776,6 +788,11 @@ window.P$ = new p5(p5c => {
           if (p5c.frameCount % 30 == 0) {
             numDots = (numDots + 1) % 4
           }
+          if (recording && numDots<2) {
+            p5c.fill(255, 0, 0)
+            p5c.noStroke()
+            p5c.ellipse(p5c.width / 2 + 3 * p5c.width / 8 - 15, p5c.height / 4 - p5c.height / 6 + 15, 20, 20)
+          }
           p5c.pop()
         }
         if(showRhythmWheel)
@@ -799,11 +816,7 @@ window.P$ = new p5(p5c => {
     p5c.rectMode(p5c.CENTER)
     p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
     //if the user is recording (recording = true) draw a small red circle top right of the rectangle
-    if (recording) {
-      p5c.fill(255, 0, 0)
-      p5c.noStroke()
-      p5c.ellipse(p5c.width / 2 + 3 * p5c.width / 8 - 15, p5c.height / 4 - p5c.height / 6 + 15, 20, 20)
-    }
+    
     if (leftChannel != null) {
       //draw the waveform
       p5c.stroke(255)
@@ -812,9 +825,9 @@ window.P$ = new p5(p5c => {
       let resolution = p5c.int(p5c.max(1, p5c.round(leftChannel.length / (3 * p5c.width / 4))));
       let x = p5c.width / 2 - 3 * p5c.width / 8;
       let sum = 0;
-      let maxAmp; //maximum amplitude
-      for (let i = 0; i < leftChannel.length; i++) {
-        if (maxAmp === undefined || p5c.abs(leftChannel[i]) > maxAmp) {
+      let maxAmp = leftChannel[0]; //maximum amplitude
+      for (let i = 1; i < leftChannel.length; i++) {
+        if (p5c.abs(leftChannel[i]) > maxAmp) {
           maxAmp = leftChannel[i];
         }
       }
@@ -824,17 +837,18 @@ window.P$ = new p5(p5c => {
       for (let i = 0; i < leftChannel.length; i++) {
         // Compute an average for each set of values
         sum += p5c.abs(leftChannel[i]);
-        if (i % resolution == 0) {
+        if (i % resolution == 0 && x <= p5c.width / 2 + 3 * p5c.width / 8) {
           p5c.vertex(
             x++,
             // map the average amplitude to range from the center of the canvas to
             // either the top or bottom depending on the channel
-            p5c.map(sum / resolution, 0, maxAmp, p5c.height / 4 + p5c.height / 6, p5c.height / 4 - p5c.height / 6)
+            p5c.max(p5c.map(sum / resolution, 0, maxAmp, p5c.height / 4 + p5c.height / 6, p5c.height / 4 - p5c.height / 6), p5c.height / 4 - p5c.height / 6)
           );
           sum = 0;
         }
       }
       p5c.endShape()
+      
     }
 
     p5c.pop()
@@ -1205,6 +1219,16 @@ window.P$ = new p5(p5c => {
         //show the multiple-choice dialogue box
         let answ1 = first_polyrhythm[0] +" vs " + first_polyrhythm[1]
         let answ2 = second_polyrhythm[0] +" vs " + second_polyrhythm[1]
+        //if one of the two polyrhythms is a simple rhythm, show it but say specify that it's a simple rhythm
+        if (first_polyrhythm[0] == 1 && first_polyrhythm[1] == 1){
+          answ1 = answ1 + " (*)"
+        }
+        //do the same for second_polyrhythm
+        if (second_polyrhythm[0] == 1 && second_polyrhythm[1] == 1){
+          answ2 = answ2 + " (*)"
+        }
+
+        
         let answ3 = "Neither..."
         helper.addAnswers([answ1,answ2,answ3])
         //TODO: these don't get deleted when the window is resized, the should be created and deleted only once
@@ -1302,7 +1326,7 @@ window.P$ = new p5(p5c => {
     recordButton = p5c.createDiv('')
     recordButton.addClass('record_button')
     recordButton.mousePressed(function () {
-      if(!recording){
+      if(!recording && !isAnalysing){
         soundFile = new p5.SoundFile();
         //soundFile.buffer = 0;
         recorder.record(soundFile);
@@ -1361,7 +1385,9 @@ window.P$ = new p5(p5c => {
       if (soundFile != null) {
         soundFile.stop()
       }
-      uploadButton.click()
+      if(isAnalysing == false){
+        uploadButton.click()
+      }
     })
     //check if the web worker is supported by the browser
     if(workerSupported == true){
@@ -1388,13 +1414,13 @@ window.P$ = new p5(p5c => {
   recordingWaveDrawer = function (waveRefreshInterval, recording){
     //for some reason the whole thing doesn't work at the end unless we do this bad shit
     if(recording){
-      
+      /*
       waveRefreshInterval = setInterval(() => {
         leftChannel = soundFile.buffer.getChannelData(0).slice();
       }, 300)
-      
+      */
     }else{
-      clearInterval(waveRefreshInterval);
+      //clearInterval(waveRefreshInterval);
       //leftChannel = soundFile.buffer.getChannelData(0).slice();
       setTimeout( ()=>{
       if (soundFile.duration() > maxDuration) {
@@ -1482,6 +1508,10 @@ window.P$ = new p5(p5c => {
     //RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], 
     //                 polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
     isAnalysing = true
+    helper.stopText(true)
+    msg = new Message("", -1, -1)
+    helper.removeAnswers()
+    
     let audioToWorker;
     setTimeout(() => {
       audioToWorker = soundFile.buffer.getChannelData(0).slice();
@@ -1504,15 +1534,14 @@ window.P$ = new p5(p5c => {
 
       let ind;
       if (first_polyrhythm != null && first_polyrhythm != NaN) {
+        loadMessages("common")
         ind = getMessageById("commonFound")
         if (ind == -1) {
-          loadMessages("common")
           ind = getMessageById("commonFound")
         }
       } else {
         ind = getMessageById("commonNotFound")
         if (ind == -1) {
-          loadMessages("common")
           ind = getMessageById("commonNotFound")
         }
       }
@@ -1574,6 +1603,7 @@ window.P$ = new p5(p5c => {
           ind = getMessageById("commonPolyChoseNeither")
         }
       }
+      helper.removeAnswers()
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]

@@ -27,3 +27,8 @@
 * almost finished implementing choice buttons (still missing audio)
 * made a function to play polyrhythms when a choice is hovered
 * the audio now gets automatically cut to 15 seconds for the above-detailed reasons
+
+## 2023-01-28
+* fixed all (hopefully) bugs regarding text management when analysing an audio file
+* the user is now unable to record or upload a new audio while the worker is analysing the existing audio file
+* removed some __very uncommon__ polyrhythms from the table to improve detection accuracy (before it was almost impossible to get a correct estimation for non-polyrhythmic rhythmic structures (e.g. 1v1))

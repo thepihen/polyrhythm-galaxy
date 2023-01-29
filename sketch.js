@@ -27,8 +27,8 @@ Tone.Transport.bpm.rampTo(120, 10);
 //(see bottom of this file)
 //this just tracks the state
 var pageFoc = true;
-var gameScore = 50;
-var lifes = 500;
+var gameScore = 0;
+var lifes = 3;
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
@@ -75,14 +75,25 @@ p5_instance = function (p5c) {
   */
   p5c.preload = function () {
     hit = p5c.loadSound('assets/hit.wav');
-    hitSoundL = p5c.loadSound('assets/hitSXogg.ogg');
-    hitSoundR = p5c.loadSound('assets/hitDXogg.ogg');
+    hitSoundL = p5c.loadSound('assets/hitSXwav.wav');
+    hitSoundR = p5c.loadSound('assets/hitDXwav.wav');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
     font = p5c.loadFont('assets/Montserrat-Bold.ttf');
-    beat1 = p5c.loadSound('assets/BEAT1ogg.ogg');
-    beat2 = p5c.loadSound('assets/BEAT2ogg.ogg');
+    beat1 = p5c.loadSound('assets/BEAT1wav.wav');
+    beat2 = p5c.loadSound('assets/BEAT2wav.wav');
+    mult1 = p5c.loadSound('assets/mult1.wav');
+    mult2 = p5c.loadSound('assets/mult2.wav');
+    mult3 = p5c.loadSound('assets/mult3.wav');
+    mult4 = p5c.loadSound('assets/mult4.wav');
+    mult5 = p5c.loadSound('assets/mult5.wav');
+    mult6 = p5c.loadSound('assets/mult6.wav');
+    mult7 = p5c.loadSound('assets/mult7.wav');
+    mult8 = p5c.loadSound('assets/mult8.wav');
+    mult9 = p5c.loadSound('assets/mult9.wav');
+    mult10 = p5c.loadSound('assets/mult10.wav');
+    multFail = p5c.loadSound('assets/multFail.wav');
   }
 
 
@@ -126,14 +137,17 @@ p5_instance = function (p5c) {
 
   // BONUS STREAK STUFF
   var multiplier = 1;
+  var multiplierConsecutiveHits = 0;
   var multiplierGreat = 0;
   var multiplierAmazing = 0;
   var multiplierPerfect = 0;
   var greatCounter = 0;
   var amazingCounter = 0;
   var perfectCounter = 0;
-  var consecutiveHits = 0; // TODO
+  var consecutiveHits = 0;
+  var newConsecutiveHitsBonus = false;
   var lastHit = "OK";
+  var lastMultiplier = 1;
 
   /*
   Circle(): class representing a beat circle.
@@ -214,6 +228,8 @@ p5_instance = function (p5c) {
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
                 multiplierPerfect = 0;
+                multiplierConsecutiveHits = 0;
+                consecutiveHits = 0;
                 lifes -= 1;
             }
         }
@@ -301,6 +317,10 @@ p5_instance = function (p5c) {
     rhythmLimit = 4;
     metroFlagChange = 0;
     multiplier = 1;
+    multiplierGreat = 0;
+    multiplierAmazing = 0;
+    multiplierPerfect = 0;
+    multiplierConsecutiveHits = 0;
     goodCounter = 0;
     greatCounter = 0;
     amazingCounter = 0;
@@ -382,18 +402,19 @@ p5_instance = function (p5c) {
   */
   p5c.draw = function () {
 
-     p5c.background(10);
-     //drawPodium()
-     p5c.textFont(font)
-     p5c.noStroke()
-     p5c.fill(colorMenu)
-     p5c.textAlign(p5c.CENTER)
-     p5c.textSize(23)
-     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
+    p5c.background(10);
+    //drawPodium()
+    p5c.textFont(font)
+    p5c.noStroke()
+    p5c.fill(colorMenu)
+    p5c.textAlign(p5c.CENTER)
+    p5c.textSize(23)
+    p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
     if(!noReference){
         drawReference();
       }
+
     // Visual Metronome ( only outer ellipses )
     p5c.fill("black");
     p5c.strokeWeight(1);
@@ -402,8 +423,8 @@ p5_instance = function (p5c) {
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
-    if (started) {
 
+    if (started) {
       // Visual Metronome ( inside ellipses )
       p5c.fill("yellow");
       if (metroFlag > 0){
@@ -484,7 +505,12 @@ p5_instance = function (p5c) {
             p5c.text(visualNextLeftR, (p5c.width / 2 - p5c.width / 12)/2, 500);
             p5c.text(visualNextRightR, p5c.width - (p5c.width / 2 - p5c.width / 12)/2 , 500);
       }
-
+      if (newConsecutiveHitsBonus){
+            p5c.fill("white")
+            p5c.noStroke()
+            p5c.textSize(40)
+            p5c.text(consecutiveHits + " CONSECUTIVE HITS", xLine1/2, yLineH + (p5c.height - yLineH)/2 )
+      }
       //we're in the game, draw the reference and update and show the cirlces
 
 
@@ -780,6 +806,8 @@ p5_instance = function (p5c) {
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
                 multiplierPerfect = 0;
+                multiplierConsecutiveHits = 0;
+                consecutiveHits = 0;
                 lifes -= 1;
               }
               //point penalty / error count
@@ -850,6 +878,8 @@ p5_instance = function (p5c) {
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
                 multiplierPerfect = 0;
+                multiplierConsecutiveHits = 0;
+                consecutiveHits = 0;
                 lifes -= 1;
               }
               //point penalty / error count
@@ -877,13 +907,13 @@ p5_instance = function (p5c) {
     //To play the beat in background
       if(metroFlag % 32 == 0){
         //p5c.getAudioContext().resume()
-        /*beat2.stop();
-        beat1.play()*/
+        beat2.stop();
+        beat1.play()
 
       }
       else if (metroFlag % 32 == 16) {
-        /*beat1.stop()
-        beat2.play()*/
+        beat1.stop()
+        beat2.play()
       }
       if (metroFlag % 4 == 0) {
         //met1.play()
@@ -941,20 +971,20 @@ p5_instance = function (p5c) {
       }else if(points >= 7 && points < 20){
         msg = "AMAZING";
         amazingCounter += 1;
-        gameScore = gameScore + 100*multiplier;
+        gameScore = gameScore + 75*multiplier;
         perfectCounter = 0;
         multiplierPerfect = 0;
       }else if(points >= 20 && points < 70){
         msg = "GREAT";
         greatCounter += 1;
-        gameScore = gameScore + 100*multiplier;
+        gameScore = gameScore + 50*multiplier;
         multiplierAmazing = 0;
         amazingCounter = 0;
         multiplierPerfect = 0;
         perfectCounter = 0;
       }else if(points >= 70 && points < 150){
         msg = "GOOD";
-        gameScore = gameScore + 100*multiplier;
+        gameScore = gameScore + 25*multiplier;
         multiplierGreat = 0;
         greatCounter = 0;
         multiplierAmazing = 0;
@@ -991,9 +1021,77 @@ p5_instance = function (p5c) {
             multiplierPerfect += 1;
         }
 
-        multiplier = 1 + multiplierGreat + multiplierAmazing + multiplierPerfect;
-    }
+        // REFRESH BONUS VARIABLES
+        consecutiveHits +=1
+        lastMultiplier = multiplier;
 
+        // CHECK IF CONSECUTIVE HITS BONUS
+        // TODO : IMPROVE THIS TRANSITION
+        if (consecutiveHits % 100 == 0 ){
+            multiplierConsecutiveHits += 1;
+            setTimeout( () => {
+                newConsecutiveHitsBonus = true;}, 0);
+            setTimeout( () => {
+                newConsecutiveHitsBonus = false;}, 700);
+            setTimeout( () => {
+                newConsecutiveHitsBonus = true;}, 1100);
+            setTimeout( () => {
+                newConsecutiveHitsBonus = false;}, 1700);
+            setTimeout( () => {
+                newConsecutiveHitsBonus = true;}, 2100);
+            setTimeout( () => {
+                newConsecutiveHitsBonus = false;}, 2700);
+        }
+
+        // NEW MULTIPLIER
+        multiplier = 1 + multiplierGreat + multiplierAmazing + multiplierPerfect + multiplierConsecutiveHits;
+
+        // MAXIMUM POSSIBLE BONUS
+        if (multiplier > 10){
+            multiplier = 10;
+        }
+
+        // NEW BONUS OR FINISHED BONUS
+        if( multiplier > lastMultiplier || multiplier == 10){
+            multiplierSound()
+        }
+        else if (multiplier < lastMultiplier){
+            multFail.play()
+        }
+
+    }
+    function multiplierSound() {
+        switch(multiplier){
+            case 2:
+                mult2.play()
+            break;
+            case 3:
+                mult3.play()
+            break;
+            case 4:
+                mult4.play()
+            break;
+            case 5:
+                mult5.play()
+            break;
+            case 6:
+                mult6.play()
+            break;
+            case 7:
+                mult7.play()
+            break;
+            case 8:
+                mult8.play()
+            break;
+            case 9:
+                mult9.play()
+            break;
+            case 10:
+                mult10.play()
+            break;
+            default:
+        }
+    }
     // STEP
     // 1) BASIC
     // 2) TRIPLET
@@ -1015,11 +1113,11 @@ p5_instance = function (p5c) {
             rhythmLimit = 6;
         }
         // MINDBLOWING
-        if ( gameScore >= 6000 || metroFlag >= 65*4){
+        if ( gameScore >= 25000 || metroFlag >= 65*4){
            mindBlowing = true;
         }
         // NO REFERENCE
-        if ( gameScore >= 15000 ){
+        if ( gameScore >= 50000 ){
             noReference = true;
         }
         // RAISE LIMIT TO 7

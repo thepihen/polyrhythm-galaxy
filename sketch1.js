@@ -3,41 +3,45 @@ var pageFoc = true;
 
 var score = 0;
 
-    /*
-    Variables we will use in preload()
-    */
-    var hit; //hit.wav (sound played when you successfully hit a note)
-    var miss; //miss.wav (sound played when you miss a note)
-    var font; //font used for text
-    var met1; //higher pitched hit of metronome
-    var met2; //lower pitched hit of metronome
+/*
+Variables we will use in preload()
+*/
+var hit; //hit.wav (sound played when you successfully hit a note)
+var miss; //miss.wav (sound played when you miss a note)
+var font; //font used for text
+var met1; //higher pitched hit of metronome
+var met2; //lower pitched hit of metronome
 
-    /*
-    Variables related to bpm and polyrhythms
-    bpm = track bpm
-    leftR = left side rhythm
-    rightR = right side rhythm
-    interval = time distance between beats [in seconds]
-    errorL = error in seconds committed each bar, left side
-    errorR = same error but for the right side
-    */
-    var bpm;
-    var leftR;
-    var rightR;
-    var interval;
+/*
+Variables related to bpm and polyrhythms
+bpm = track bpm
+leftR = left side rhythm
+rightR = right side rhythm
+interval = time distance between beats [in seconds]
+errorL = error in seconds committed each bar, left side
+errorR = same error but for the right side
+*/
+var bpm;
+var leftR;
+var rightR;
+var interval;
 
-    //frameRate (need this to use it outside of )
-    var frate;
-    /*
-    preload: function that gets automatically by p5js before loading the sketch.
-    ->Everything that needs to be available when the sketch starts needs to be loaded here
-    (e.g. fonts, sounds,...)
-    */
-function sketchPreload(){
+//frameRate (need this to use it outside of )
+var frate;
+var logo
+/*
+preload: function that gets automatically by p5js before loading the sketch.
+->Everything that needs to be available when the sketch starts needs to be loaded here
+(e.g. fonts, sounds,...)
+*/
+function sketchPreload() {
     hit = P$.loadSound('assets/hit.wav');
     miss = P$.loadSound('assets/miss.wav')
     met1 = P$.loadSound('assets/met1.wav');
     met2 = P$.loadSound('assets/met2.wav');
+    //this isn't loading...
+    //font = P$.loadFont('assets/Roboto-Regular.ttf');
+    logo = P$.loadImage('assets/icon_transparent.png');
 }
 
 
@@ -51,15 +55,22 @@ var yLineH;
 
 //arrays containing circles ("rhythm hits / beats") for left and right side
 //it would be better to use a queue to manage these
-//we set their lengt to 200
-var leftCircles = new Array(200);
-var rightCircles = new Array(200);
+var circlesNumber = 50;
+var leftCircles = new Array(circlesNumber);
+var rightCircles = new Array(circlesNumber);
 var leftElem = 0;
 var rightElem = 0;
 var firstElemInGameL = 0;
 var firstElemInGameR = 0;
 var lastElemL = 0;
 var lastElemR = 0;
+
+var debugMode = false
+
+/*
+  Circle: class representing a beat circle.
+  Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
+*/
 class Circle {
     /*
     params:
@@ -139,6 +150,7 @@ class Circle {
                     j = j % leftCircles.length;
                 }
                 firstElemInGameL = j;
+                leftElem--;
             }
             else if (this.side == 1) {
                 let j = firstElemInGameR;
@@ -147,6 +159,7 @@ class Circle {
                     j = j % rightCircles.length;
                 }
                 firstElemInGameR = j;
+                rightElem--;
             }
         }
     }
@@ -168,7 +181,9 @@ class Circle {
             P$.stroke(12)
             P$.ellipse(this.x, this.y, this.radius, this.radius);
             //show a p5.js text beside the circle with its id
-            P$.text(this.id, this.x + this.radius, this.y + this.radius)
+            if (debugMode) {
+                P$.text(this.id, this.x + this.radius, this.y + this.radius)
+            }
         }
     }
 }
@@ -218,56 +233,90 @@ var guideRadius = 30; //radius of guide circles
 var counter = 0; //not used now, might be used to count frames IN GAME
 var rhythm_rad = 20; //radius of rhythm circles
 
-
+var hitMessages = new Array(2);
+hitMessages[0] = ""
+hitMessages[1] = ""
 /*
 draw(): p5js function that gets automatically called once per frame
 (by default 60 frames per second)
 */
-function sketchDraw (){
+function sketchDraw() {
     P$.background(12);
-        //write a text in p5.js displaying firstElemnInGameL
-        P$.text(firstElemInGameL, 100, 100)
-        //write a text in p5.js displaying firstElemInGameR
-        P$.text(firstElemInGameR, 100, 200)
-        //write a text in p5.js displaying "Score: " and the score
-        P$.text("Score: " + score, 100, 300)
-        //write a text in p5.js displaying "Left elements: " and leftElem
-        P$.text("Left elements: " + leftElem, 150, 400)
+    if(debugMode){
+    //write a text in p5.js displaying firstElemnInGameL
+    P$.text(firstElemInGameL, 100, 100)
+    //write a text in p5.js displaying firstElemInGameR
+    P$.text(firstElemInGameR, 100, 200)
+    //write a text in p5.js displaying "Left elements: " and leftElem
+    P$.text("Left elements: " + leftElem, 150, 400)
+    }
+    //display training mode
+    P$.push()
+    //use the "Maven Pro" text font
+    P$.textFont('Maven Pro', 72)
+    //display it on the top left corner
+    P$.textAlign(P$.LEFT, P$.CENTER)
+    P$.stroke(12)
+    P$.fill(240)
+    P$.text("t r a i n i n g", 50, 70)
+    P$.text("m o d e", 50, 150)
+    let tx_wdt = P$.textWidth("m o d e")
+    //display the logo next to mode by resizing to be 70x70
+    P$.image(logo, 50 + tx_wdt+20, 120, 70, 70)
+    P$.pop()
 
-        //we're in the game, draw the reference and update and show the cirlces
-        drawReference2();
-        if (pageFoc) {
-            let nL = firstElemInGameL + leftElem
-            let nR = firstElemInGameR + rightElem
-            let counterL = 0;
-            let counterR = 0;
-            //TODO: solve an error: deleting for example element 1 implies
-            //leftElem-- but firstElemInGameL is still 0
-            //This means we're counting one less element than we should
+    //display the score
+    P$.push()
+    //we have to keep the font otherwise it gets bugged
+    P$.textFont('Maven Pro', 72)
+    P$.textSize(72);
+    //display it on the top left corner, inside a white rectangle
+    P$.textAlign(P$.CENTER, P$.CENTER)
+    P$.fill(240)
+    P$.stroke(12)
+    P$.text(score, P$.width/2, 70)
+    P$.pop()
+    //we're in the game, draw the reference and update and show the cirlces
+    drawReference2();
+    if (pageFoc) {
+        P$.push()
+        P$.fill(12)
+        P$.stroke(240, 20, 20)
+        P$.text(hitMessages[0], xLine1 + 20, yLineH + 50)
+        P$.stroke(20, 100, 240)
+        P$.text(hitMessages[1], xLine2 - 20, yLineH + 50)
+        P$.pop()
+        let nL = firstElemInGameL + leftElem
+        let nR = firstElemInGameR + rightElem
+        let counterL = 0;
+        let counterR = 0;
+        //TODO: solve an error: deleting for example element 1 implies
+        //leftElem-- but firstElemInGameL is still 0
+        //This means we're counting one less element than we should
 
-            //TODO write a better fix
-            for (let i = firstElemInGameL; i < nL; i++) {
-                if (leftCircles[i % leftCircles.length].flag == 0) {
-                    counterL++;
-                }
-            }
-            for (let i = firstElemInGameR; i < nR; i++) {
-                if (rightCircles[i % rightCircles.length].flag == 0) {
-                    counterR++;
-                }
-            }
-            nL = nL + counterL
-            nR = nR + counterR
-
-            for (let i = firstElemInGameL; i < nL; i++) {
-                leftCircles[i % leftCircles.length].update();
-                leftCircles[i % leftCircles.length].show();
-            }
-            for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
-                rightCircles[i % rightCircles.length].update();
-                rightCircles[i % rightCircles.length].show();
+        //TODO write a better fix
+        for (let i = firstElemInGameL; i < nL; i++) {
+            if (leftCircles[i % leftCircles.length].flag == 0) {
+                counterL++;
             }
         }
+        for (let i = firstElemInGameR; i < nR; i++) {
+            if (rightCircles[i % rightCircles.length].flag == 0) {
+                counterR++;
+            }
+        }
+        nL = nL + counterL
+        nR = nR + counterR
+
+        for (let i = firstElemInGameL; i < nL; i++) {
+            leftCircles[i % leftCircles.length].update();
+            leftCircles[i % leftCircles.length].show();
+        }
+        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
+            rightCircles[i % rightCircles.length].update();
+            rightCircles[i % rightCircles.length].show();
+        }
+    }
 }
 
 var v; //speed of circles in [pixel/frame]
@@ -316,7 +365,7 @@ windowResized(): p5js function that gets called every time the window
 gets resized; recalculate here all the variables that contain coordinates
 in their formulas
 */
-function sketchWindowResized () {
+function sketchWindowResized() {
     P$.removeElements();
     P$.resizeCanvas(P$.windowWidth, P$.windowHeight);
     xLine1 = P$.width / 2 - P$.width / 12;
@@ -373,8 +422,11 @@ P$.keyPressed = function () {
                 //TODO calculate the points
                 //add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
-                score = score + Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)));
-
+                let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
+                let points = Math.round(yy) //Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+                //let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+                score = score + points;
+                displayHitQuality(points, 0)
                 //delete circle(s)
                 leftCircles[k].toggle();
 
@@ -429,11 +481,14 @@ P$.keyPressed = function () {
                 hitR = true;
                 //play sound
                 hit.play();
-                //TODO calculate the poin
-                score = score + Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)));
+                //calculate the poin
+                let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
+                let points = Math.round(yy) //Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
+                score = score + points
+                displayHitQuality(points, 1)
                 //delete circle(s)
                 rightCircles[k].toggle();
-                ts
+                
                 if (k == firstElemInGameR) {
                     //update firstElemInGameL by finding the next element in leftCircles
                     //which is active (its flag is 1)
@@ -451,6 +506,7 @@ P$.keyPressed = function () {
                 firstElemInGameL = firstElemInGameL % leftCircles.length;
                 }*/
                 rightElem--;
+                
             }
         }
         /*
@@ -470,6 +526,9 @@ P$.keyPressed = function () {
             //point penalty / error count
         }
     }
+    if(key == 'b' || key == 'B'){
+        debugMode = !debugMode;
+    }
 }
 
 /*
@@ -486,14 +545,14 @@ startMetronome = function () {
 metroSound(): produces the correct metronome sound based on the beat
 */
 metroSound = function () {
+    /*
     if (metroFlag == 4) {
-        /*
         addCircle('l')
         addCircle('r')
         setInterval(addCircle, intervalL * 1000, 'l');
         setInterval(addCircle, intervalR * 1000, 'r');
-        */
     }
+    */
     if (metroFlag % 4 == 0) {
         met1.play()
     } else {
@@ -501,6 +560,55 @@ metroSound = function () {
     }
     metroFlag += 1;
 }
+var clearTimeoutL
+var clearTimeoutR
+displayHitQuality = function (points, side) {
+    //prints a message on the side (side can be 0 or 1, indicating left or right side) 
+    //of the guide circle 
+    //to indicate how good a hit was ("OK", "GREAT", "AMAZING","PERFECT")
+    //depending on the points scored
+    let x = 0;
+    let y = 0;
+    if (side == 0) {
+        clearTimeout(clearTimeoutL)
+        x = xLine1;
+        y = yLineH;
+    } else {
+        clearTimeout(clearTimeoutR)
+        x = xLine2;
+        y = yLineH;
+    }
+    let msg = "";
+    if (points >= 95) {
+        msg = "PERFECT";
+    } else if (points >= 85 && points < 95) {
+        msg = "AMAZING";
+    } else if (points >= 70 && points < 85) {
+        msg = "GREAT";
+    } else if (points >= 40 && points < 70) {
+        msg = "GOOD"
+    }
+    else if (points >= 0 && points < 40) {
+        msg = "OK";
+    }
+    if (msg != "") {
+        P$.fill(240);
+        P$.textFont(font)
+        P$.textSize(30);
+        P$.text(msg, x, y);
+    }
+    hitMessages[side] = msg;
+    //if you want disappearing messages insert a function here (we could use for example a function that
+    //sets the text color to be closer and closer to transparency)
+    if (side == 0) {
+        clearTimeoutL = setTimeout(()=>{hitMessages[side] = ""}, 1000);
+    }
+    if (side == 1) {
+        clearTimeoutR = setTimeout(() => { hitMessages[side] = "" }, 1000);
+    }
+}
+
+
 
 document.onblur = function () {
     //pause audio and do not update circles

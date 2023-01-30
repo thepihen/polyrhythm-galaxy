@@ -27,7 +27,9 @@ IF THERE'S TIME:
 /*
 Tone stuff
 */
-
+const limiter = new Tone.Limiter(-2).toMaster();
+const compressor = new p5.Compressor()
+limiter.connect(Tone.Master)
 Tone.Transport.bpm.value = 90;
 // start/stop the oscillator every quarter note
 /*
@@ -861,6 +863,13 @@ window.P$ = new p5(p5c => {
     p5c.noFill()
     //player current X position
     let playerCurrX = p5c.map(soundFile.currentTime(), 0, soundFile.duration(), p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8)
+    //if the soundFile is not playing then set the playerCurrX to the beginning of the waveform
+    /* //this is bugged
+    if (!soundFile.isPlaying()) {
+      playerCurrX = p5c.width / 2 - 3 * p5c.width / 8
+    }
+    */
+
     p5c.line(playerCurrX, p5c.height / 4 - p5c.height / 6 + 1, playerCurrX, p5c.height / 4 + p5c.height / 6 - 1) //+1,-1 to avoid overlapping with the window
 
     p5c.pop()
@@ -980,7 +989,16 @@ window.P$ = new p5(p5c => {
   is pressed / the touchscreen is touched.
   */
   p5c.mousePressed = function () {
-      mousePressedRhythmicWheel()
+    //if the mouse was pressed inside the waveform display, move the audio playback to that location
+    if (p5c.mouseX >= p5c.width / 2 - 3 * p5c.width / 8 && p5c.mouseX <= p5c.width / 2 + 3 * p5c.width / 8 && p5c.mouseY >= p5c.height / 4 - p5c.height / 6 && p5c.mouseY <= p5c.height / 4 + p5c.height / 6) {
+      if (soundFile != null) {
+        let time = p5c.map(p5c.mouseX, p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8, 0, soundFile.duration());
+        //let pos = p5c.mouseX
+        soundFile.jump(time);
+      }
+    }
+
+    mousePressedRhythmicWheel()
   }
 
   /*

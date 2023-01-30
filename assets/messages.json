@@ -83,5 +83,32 @@
         "msg" : "Welcome back!",
         "nextMsgId" : "-1"
     }
+],
+"analysisFill":[
+    {
+        "msgId": "analysisFillIntro",
+        "msg": "Hey! While we wait, I could tell you a little bit about polyrhythms.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill1",
+        "msg": "A polyrhythm is a rhythm composed of two or more rhythms that share their periodicity. \nIt's a great way to surprise a listener and explore the world of music.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill2",
+        "msg": "Polyrhythms are everywhere in music, even when you least expect them. For example, \"Carol of the Bells\" contains a 3v2 polyrhythm in its main melodic line.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill3",
+        "msg": "I'm still analyzing your audio. It may take a while, so please be patient!",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill4",
+        "msg": "",
+        "nextMsgId": "-2"
+    }
 ]
 }

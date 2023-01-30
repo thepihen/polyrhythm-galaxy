@@ -32,3 +32,6 @@
 * fixed all (hopefully) bugs regarding text management when analysing an audio file
 * the user is now unable to record or upload a new audio while the worker is analysing the existing audio file
 * removed some __very uncommon__ polyrhythms from the table to improve detection accuracy (before it was almost impossible to get a correct estimation for non-polyrhythmic rhythmic structures (e.g. 1v1))
+
+## 2023-01-29
+* the user can now jump to a certain point of the audio by clicking on the waveform with their mouse

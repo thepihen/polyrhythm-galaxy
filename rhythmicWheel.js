@@ -305,7 +305,6 @@ class WheelCircle {
             const a = -171.7391
             const b = 1.2172 * 10000
             const bugTimeout = a*wheelBPM + b
-            console.log(bugTimeout)
             if (side == 'inner') {
                 hitInner.play()
             }

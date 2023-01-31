@@ -27,7 +27,7 @@ Tone.Transport.bpm.rampTo(120, 10);
 //(see bottom of this file)
 //this just tracks the state
 var pageFoc = true;
-var gameScore = 0;
+var gameScore = 500;
 var lifes = 3;
 
 //use p5 in instance mode
@@ -94,6 +94,8 @@ p5_instance = function (p5c) {
     mult9 = p5c.loadSound('assets/mult9.wav');
     mult10 = p5c.loadSound('assets/mult10.wav');
     multFail = p5c.loadSound('assets/multFail.wav');
+
+    //imgPodium = p5c.loadImage('assets/podium.png');
   }
 
 
@@ -148,6 +150,30 @@ p5_instance = function (p5c) {
   var newConsecutiveHitsBonus = false;
   var lastHit = "OK";
   var lastMultiplier = 1;
+
+  // RANKING STUFF
+  var rankingDisplayed = false;
+  var firstShow = true;
+  var titleRanking;
+  var columnRanking1 = [];
+  var columnRanking2 = [];
+  var columnRanking3 = [];
+  var namesRanking = [];
+  var pointsRanking = []
+  var posRecord = 5;
+  // FAKE RANKING
+  namesRanking[0] = "Paolo Bestagini"
+  namesRanking[1] = "Jesus Cevallos"
+  namesRanking[2] = "Riccardo Giampic"
+  namesRanking[3] = "Giovanni Rana"
+  namesRanking[4] = "Ferruccio Resta"
+  pointsRanking[0] = 50525
+  pointsRanking[1] = 45503
+  pointsRanking[2] = 40005
+  pointsRanking[3] = 25899
+  pointsRanking[4] = 5
+  // TUTORIAL STUFF
+  var tutorialDisplayed = false;
 
   /*
   Circle(): class representing a beat circle.
@@ -294,7 +320,17 @@ p5_instance = function (p5c) {
   needed in the sketch here; load audio files, fonts, etc, in preload() instead
   */
   function reSetup(){
-    dieMenuTransition()
+    resetGame();
+    if (gameScore > pointsRanking[4]){
+        dieNewRecordMenuTransition()
+    }
+    else{
+        dieMenuTransition()
+    }
+    gameScore = 0;
+  }
+
+  resetGame = function () {
     started = false;
     died = true
     hitMessages[0] = ''
@@ -313,7 +349,6 @@ p5_instance = function (p5c) {
     stopCircleArrays()
     p5c.getAudioContext().resume()
     lifes = 3;
-    gameScore = 0;
     rhythmLimit = 4;
     metroFlagChange = 0;
     multiplier = 1;
@@ -332,7 +367,7 @@ p5_instance = function (p5c) {
     startCircleArrays()
   }
   p5c.setup = function () {
-    p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
+    canvas = p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
     /*
     see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
     There's no need for the audio context to be running as soon as the page is loaded
@@ -355,7 +390,6 @@ p5_instance = function (p5c) {
     //font = p5c.textFont('Montserrat', 30)
 
     bpm = 130;
-    gameScore = 50;
     scheduleL = null;
     scheduleR = null;
     Tone.Transport.bpm.value = bpm;
@@ -374,6 +408,66 @@ p5_instance = function (p5c) {
 
     startCircleArrays();
     textUpTransition('Press the spacebar\nto start')
+    // ranking stuff
+    rankingButton = p5c.createDiv('')
+    rankingButton.addClass('ranking_button')
+    rankingButton.mouseOver(displayRanking)
+    canvas.mouseOver(noDisplayRanking)
+
+    nicknameInput = p5c.createInput('');
+    nicknameInput.position(p5c.width/2, p5c.height/2 + 50);
+    nicknameInput.addClass('translateClass')
+    nicknameInput.style('opacity', '0%')
+    nicknameInput.size(200);
+
+    nicknameSubmit = p5c.createButton('SUBMIT');
+    nicknameSubmit.style('font-family' , 'Montserrat, sans-serif')
+    nicknameSubmit.position(p5c.width/2, p5c.height/2 + 75);
+    nicknameSubmit.addClass('translateClass')
+    nicknameSubmit.style('opacity', '0%')
+    nicknameSubmit.size(100);
+
+  }
+
+  displayRanking = function () {
+    if (firstShow){firstShow = false}
+    rankingDisplayed = true
+    titleRanking = p5c.createDiv('ENDLESS MODE GLOBAL RANKING').size(200, 70);
+    titleRanking.position(p5c.width/2,p5c.height/2 - 250)
+    titleRanking.addClass('ranking_text')
+    for (let i = 0; i<6 ; i++){
+        if(i==0){
+            columnRanking1[i] = p5c.createDiv('Position').size(200, 70);
+            columnRanking2[i] = p5c.createDiv('Name').size(200, 70);
+            columnRanking3[i] = p5c.createDiv('Points').size(200, 70);
+        }
+        else{
+            columnRanking1[i] = p5c.createDiv(i).size(200, 70);
+            columnRanking2[i] = p5c.createDiv(namesRanking[i-1]).size(250, 70);
+            columnRanking3[i] = p5c.createDiv(pointsRanking[i-1]).size(200, 70);
+        }
+        columnRanking1[i].position(p5c.width/2 - 200,p5c.height/2  - 140 + i*75)
+        columnRanking1[i].addClass('ranking_text')
+
+        columnRanking2[i].position(p5c.width/2,p5c.height/2  - 140 + i*75)
+        columnRanking2[i].addClass('ranking_text')
+
+        columnRanking3[i].position(p5c.width/2 + 200,p5c.height/2  - 140 + i*75)
+        columnRanking3[i].addClass('ranking_text')
+        columnRanking3[i].style('transform', 'translate(-50%, -50%)')
+    }
+  }
+
+  noDisplayRanking = function () {
+      if(!firstShow){
+        rankingDisplayed = false
+        titleRanking.remove()
+        for (let i = 0; i<6 ; i++){
+            columnRanking1[i].remove()
+            columnRanking2[i].remove()
+            columnRanking3[i].remove()
+        }
+      }
   }
   startCircleArrays = function () {
     for (let i = 0; i < leftCircles.length; i++) {
@@ -401,7 +495,6 @@ p5_instance = function (p5c) {
   (by default 60 frames per second) 
   */
   p5c.draw = function () {
-
     p5c.background(10);
     //drawPodium()
     p5c.textFont(font)
@@ -415,6 +508,7 @@ p5_instance = function (p5c) {
         drawReference();
       }
 
+
     // Visual Metronome ( only outer ellipses )
     p5c.fill("black");
     p5c.strokeWeight(1);
@@ -423,6 +517,10 @@ p5_instance = function (p5c) {
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
+
+    if(rankingDisplayed){
+        rankingBackground();
+    }
 
     if (started) {
       // Visual Metronome ( inside ellipses )
@@ -607,18 +705,23 @@ p5_instance = function (p5c) {
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
 
     }
-    /*drawPodium = function () {
-        p5c.fill(30,144,255)
+    rankingBackground = function () {
+
+        // Background
+        p5c.strokeWeight(1);
+        p5c.stroke(255,255,255)
+        p5c.fill(62,69,75,255)
+        p5c.translate(-300, -300);
+        p5c.rect(p5c.width/2,p5c.height/2,600,600)
+        p5c.translate(+300,+300);
+
         p5c.noStroke()
-        p5c.rect(40,p5c.height - 230,220,200)
-        p5c.fill(500)
-        p5c.textSize(25)
-        p5c.stroke(20,100,240)
-        p5c.text('Ranking', 150,p5c.height - 200)
-        p5c.text('1°   ' + podiumStrings[0] + ' ' + podiumStrings[1], 150, p5c.height - 150)
-        p5c.text('2°   ' + podiumStrings[2] + ' ' + podiumStrings[3], 150, p5c.height - 100)
-        p5c.text('3°   ' + podiumStrings[4] + ' ' + podiumStrings[5], 150, p5c.height - 50)
-    }*/
+        p5c.fill(62,69,75,100)
+        p5c.translate(-335, -335);
+        p5c.rect(p5c.width/2,p5c.height/2,600,600)
+        p5c.translate(+335,+335)
+    }
+
     /* 
     windowResized(): p5js function that gets called every time the window
     gets resized; recalculate here all the variables that contain coordinates 
@@ -684,7 +787,32 @@ p5_instance = function (p5c) {
             }, 2000)
     }
 
+    function dieNewRecordMenuTransition(){
+        textUpDownTransition('You Died',10)
+        setTimeout(() => {
+            textUpDownTransition('But Congratulations you are at the position ' + posRecord + ' in the global ranking!',30)
+            }, 3000)
+        setTimeout(() => {
+            textUpTransition('Insert your nickname!',30)
+            }, 10000)
+        setTimeout(() => {
+            inputNickNameTransition('Insert your nickname!',30)
+            }, 11000)
+    }
 
+    function inputNickNameTransition(){
+        let opacity = 1;
+        menuTransitionInterval = setInterval( () => {
+                if(opacity < 100){
+                    nicknameInput.style("opacity",opacity)
+                    nicknameSubmit.style("opacity",opacity)
+                    opacity += 1;
+                    }
+                else{
+                    clearInterval(menuTransitionInterval);
+                    }
+            },10)
+    }
     function textUpDownTransition(text,ms){
         menuTransitionInterval = setInterval( () => {
                 textMenu = text;
@@ -717,7 +845,6 @@ p5_instance = function (p5c) {
                     }
                 else{
                     clearInterval(menuTransitionInterval);
-
                     }
             },ms)
     }
@@ -994,6 +1121,7 @@ p5_instance = function (p5c) {
       }
       else if(points >= 150){
         msg = "OK";
+        gameScore = gameScore + 1*multiplier;
         greatCounter = 0;
         amazingCounter = 0;
         perfectCounter = 0;
@@ -1196,31 +1324,10 @@ p5_instance = function (p5c) {
         nextR = itemsR[Math.floor(Math.random() * itemsR.length)];
         return [nextL,nextR];
     }
-    /*function newPodium(){
-        var changed = true;
-        var string;
-        if (gameScore > podiumStrings[1]){
-            podiumStrings[5] = podiumStrings[3]
-            podiumStrings[3] = podiumStrings[1]
-            podiumStrings[1] = gameScore
-        }
-        else if (gameScore > podiumStrings[3]){
-            podiumStrings[5] = podiumStrings[3]
-            podiumStrings[3] = gameScore
-        }
-        else if (gameScore > podiumStrings[5]){
-            podiumStrings[5] = gameScore
-        }
-        else{
-            changed = false;
-        }
-        gameScore = 0;
-        if (changed){
 
-        }
-    }*/
+    function newPodium(){
 
-
+    }
  }
 myp5 = new p5(p5_instance)
 

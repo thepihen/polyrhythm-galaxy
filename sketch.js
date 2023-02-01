@@ -22,7 +22,14 @@ Tone.Transport.start();
 // ramp the bpm to 120 over 10 seconds
 Tone.Transport.bpm.rampTo(120, 10);
 */
-
+var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
+                "The game will provide you two rhythms, one to the left and one to the right, " +
+                "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
+                "every time a falling rhythm dot is inside the yellow circle of the related side.&#10;";
+var tutorialText2 = "Pay Attention!&#10;The provided rhythms will be more and more difficult and every time " +
+                "you miss a dot or press a key at the wrong time you will lose one of the three available " +
+                "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
+                "in order to increase extra points bonus and climb the global ranking!";
 //needed until we find a better way to track document focus changes
 //(see bottom of this file)
 //this just tracks the state
@@ -154,7 +161,10 @@ p5_instance = function (p5c) {
 
   // RANKING STUFF
   var rankingDisplayed = false;
-  var firstShow = true;
+  var firstShowRanking = true;
+  var badNickname = false;
+  var badNicknameText;
+  var imgPodium;
   var titleRanking;
   var columnRanking1 = [];
   var columnRanking2 = [];
@@ -175,7 +185,11 @@ p5_instance = function (p5c) {
   pointsRanking[4] = 5
   // TUTORIAL STUFF
   var tutorialDisplayed = false;
+  var placeZeroTutorialDisplayed = false;
+  var tutorialButton;
 
+  // OTHER
+  var exitButton;
   /*
   Circle(): class representing a beat circle.
   Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
@@ -413,45 +427,149 @@ p5_instance = function (p5c) {
 
     startCircleArrays();
     textUpTransition('Press the spacebar\nto start')
+
+    // logo
+    logo = p5c.createImg(
+          'assets/icon_transparent.png',
+          'app logo'
+        );
+    logo.addClass('logo')
+
     // ranking stuff
-    rankingButton = p5c.createDiv('')
-    rankingButton.addClass('ranking_button')
-    rankingButton.mouseOver(displayRanking)
+    imgPodium = p5c.createImg(
+          'assets/podium3.png',
+          'podium logo'
+        );
+    imgPodium.addClass('ranking_button')
+    imgPodium.mouseOver(displayRanking)
     canvas.mouseOver(noDisplayRanking)
 
+    // tutorial stuff
+    tutorialButton = p5c.createDiv('?')
+    tutorialButton.addClass('tutorial_button')
+    tutorialButton.mousePressed(displayTutorial)
 
+    // exit stuff
+    exitButton = p5c.createDiv('X')
+    exitButton.addClass('exit_button')
   }
-  displayRanking = function () {
-    if (firstShow){firstShow = false}
-    rankingDisplayed = true
-    titleRanking = p5c.createDiv('ENDLESS MODE GLOBAL RANKING').size(200, 70);
-    titleRanking.position(p5c.width/2,p5c.height/2 - 250)
-    titleRanking.addClass('ranking_text')
-    for (let i = 0; i<6 ; i++){
-        if(i==0){
-            columnRanking1[i] = p5c.createDiv('Position').size(200, 70);
-            columnRanking2[i] = p5c.createDiv('Name').size(200, 70);
-            columnRanking3[i] = p5c.createDiv('Points').size(200, 70);
-        }
+  var nextButton;
+  var previousButton;
+  var imgStartingFrame;
+  var imgPlayingFrame;
+  var textFirstDisplay;
+  var textFirstDisplay2;
+  var place = 0;
+  displayTutorial = function () {
+    if(!started && !rankingDisplayed){
+            if(tutorialDisplayed){
+                nextButton.remove();
+                previousButton.remove();
+                if(place == 0){
+                        textFirstDisplay.remove();
+                        textFirstDisplay2.remove();
+                    }
+                if(place == 1){imgStartingFrame.remove();}
+                if(place == 2){imgPlayingFrame.remove();}
+                place=0;
+                tutorialDisplayed = false;
+            }
         else{
-            columnRanking1[i] = p5c.createDiv(i).size(200, 70);
-            columnRanking2[i] = p5c.createDiv(namesRanking[i-1]).size(250, 70);
-            columnRanking3[i] = p5c.createDiv(pointsRanking[i-1]).size(200, 70);
+                nextButton = p5c.createDiv('>');
+                nextButton.addClass('next_button');
+                nextButton.mousePressed(nextButtonFunction)
+
+                previousButton = p5c.createDiv('<');
+                previousButton.addClass('previous_button');
+                previousButton.mousePressed(previousButtonFunction)
+
+                textFirstDisplay = p5c.createDiv(tutorialText)
+                textFirstDisplay.addClass('tutorial_text')
+
+                textFirstDisplay2 = p5c.createDiv(tutorialText2)
+                textFirstDisplay2.addClass('tutorial_text')
+                textFirstDisplay2.style("top","62.5%")
+
+                tutorialDisplayed = true;
+            }
+    }
+  }
+
+  nextButtonFunction = function() {
+    if(place == 0){
+        textFirstDisplay.remove();
+        textFirstDisplay2.remove();
+        place += 1;
+        imgStartingFrame = p5c.createImg(
+                'assets/startingFrame.png',
+                'starting Frame'
+             );
+        imgStartingFrame.addClass('tutorial_image')
+    }
+    else if (place == 1) {
+        place += 1;
+        imgStartingFrame.remove();
+        imgPlayingFrame = p5c.createImg(
+                'assets/playingFrame.png',
+                'playing Frame'
+            );
+        imgPlayingFrame.addClass('tutorial_image')
+    }
+  }
+  previousButtonFunction = function() {
+    if (place == 1) {
+        place -= 1;
+        textFirstDisplay = p5c.createDiv(tutorialText)
+        textFirstDisplay.addClass('tutorial_text')
+        textFirstDisplay2 = p5c.createDiv(tutorialText2)
+        textFirstDisplay2.addClass('tutorial_text')
+        textFirstDisplay2.style("top","65%")
+        imgStartingFrame.remove()
+    }
+    else if (place == 2) {
+        place -=1
+        imgPlayingFrame.remove()
+        imgStartingFrame = p5c.createImg(
+                'assets/startingFrame.png',
+                'starting Frame'
+             );
+        imgStartingFrame.addClass('tutorial_image')
+    }
+  }
+
+  displayRanking = function () {
+    if(!started && !tutorialDisplayed){
+        if (firstShowRanking){firstShowRanking = false}
+        rankingDisplayed = true
+        titleRanking = p5c.createDiv('ENDLESS MODE GLOBAL RANKING').size(200, 70);
+        titleRanking.position(p5c.width/2,p5c.height/2 - 250)
+        titleRanking.addClass('ranking_text')
+        for (let i = 0; i<6 ; i++){
+            if(i==0){
+                columnRanking1[i] = p5c.createDiv('Position').size(200, 70);
+                columnRanking2[i] = p5c.createDiv('Name').size(200, 70);
+                columnRanking3[i] = p5c.createDiv('Points').size(200, 70);
+            }
+            else{
+                columnRanking1[i] = p5c.createDiv(i).size(200, 70);
+                columnRanking2[i] = p5c.createDiv(namesRanking[i-1]).size(250, 70);
+                columnRanking3[i] = p5c.createDiv(pointsRanking[i-1]).size(200, 70);
+            }
+            columnRanking1[i].position(p5c.width/2 - 200,p5c.height/2  - 140 + i*75)
+            columnRanking1[i].addClass('ranking_text')
+
+            columnRanking2[i].position(p5c.width/2,p5c.height/2  - 140 + i*75)
+            columnRanking2[i].addClass('ranking_text')
+
+            columnRanking3[i].position(p5c.width/2 + 200,p5c.height/2  - 140 + i*75)
+            columnRanking3[i].addClass('ranking_text')
+            columnRanking3[i].style('transform', 'translate(-50%, -50%)')
         }
-        columnRanking1[i].position(p5c.width/2 - 200,p5c.height/2  - 140 + i*75)
-        columnRanking1[i].addClass('ranking_text')
-
-        columnRanking2[i].position(p5c.width/2,p5c.height/2  - 140 + i*75)
-        columnRanking2[i].addClass('ranking_text')
-
-        columnRanking3[i].position(p5c.width/2 + 200,p5c.height/2  - 140 + i*75)
-        columnRanking3[i].addClass('ranking_text')
-        columnRanking3[i].style('transform', 'translate(-50%, -50%)')
     }
   }
 
   noDisplayRanking = function () {
-      if(!firstShow){
+      if(!firstShowRanking){
         rankingDisplayed = false
         titleRanking.remove()
         for (let i = 0; i<6 ; i++){
@@ -510,9 +628,7 @@ p5_instance = function (p5c) {
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
 
-    if(rankingDisplayed){
-        rankingBackground();
-    }
+
 
     if (started) {
       // Visual Metronome ( inside ellipses )
@@ -649,6 +765,25 @@ p5_instance = function (p5c) {
         }
       } 
     }
+    // Ranking Stuff
+
+
+    if(badNickname){
+        p5c.textFont(font)
+        p5c.noStroke()
+        p5c.fill("red")
+        p5c.textAlign(p5c.CENTER)
+        p5c.textSize(15)
+        p5c.text(badNicknameText, p5c.width / 2, p5c.height / 2 + 120);
+    }
+
+    if(rankingDisplayed){
+        rankingBackground();
+    }
+
+    if(tutorialDisplayed){
+        tutorialBackground();
+    }
   }
 
     var v; //speed of circles in [pixel/frame]
@@ -698,8 +833,6 @@ p5_instance = function (p5c) {
 
     }
     rankingBackground = function () {
-
-        // Background
         p5c.strokeWeight(1);
         p5c.stroke(255,255,255)
         p5c.fill(62,69,75,255)
@@ -712,6 +845,31 @@ p5_instance = function (p5c) {
         p5c.translate(-335, -335);
         p5c.rect(p5c.width/2,p5c.height/2,600,600)
         p5c.translate(+335,+335)
+    }
+
+    tutorialBackground = function () {
+        p5c.strokeWeight(1);
+        p5c.stroke(255,255,255)
+        p5c.fill(62,69,75,255)
+        p5c.translate(-480, -270);
+        p5c.rect(p5c.width/2,p5c.height/2,960,540)
+        p5c.translate(480, 270);
+
+        p5c.noStroke()
+        p5c.fill(62,69,75,100)
+        p5c.translate(-500, -290);
+        p5c.rect(p5c.width/2,p5c.height/2,960,540)
+        p5c.translate(500, 290);
+
+        if(placeZeroTutorialDisplayed){
+            p5c.textFont(font)
+            p5c.noStroke()
+            p5c.fill(255,255,255)
+            p5c.textAlign(p5c.CENTER)
+            p5c.textSize(17.5)
+            p5c.text(tutorialText, p5c.width / 2, p5c.height / 2 - 75);
+        }
+
     }
 
     /* 
@@ -806,17 +964,27 @@ p5_instance = function (p5c) {
 
         nicknameSubmit.mousePressed(() => {
             let name = nicknameInput.value()
-            pointsRanking[posRecord] = gameScore;
-            namesRanking[posRecord] = name;
-            nicknameInput.remove()
-            nicknameSubmit.remove()
-            gameScore = 0;
-            textUpDownTransition('Updated Ranking!',30)
-            setTimeout(() => {
-                    textUpTransition('Press the spacebar\nto retry')
-                    restart = true
-                }, 4000)
-
+            if ( name == ''){
+                badNicknameText = "The string is empty\ncannot submit the nickname!"
+                badNickname = true;
+            }
+            else if ( name.length > 10){
+                badNicknameText = "Nickname should be maximum\n10 characters long!"
+                badNickname = true;
+            }
+            else{
+                badNickname = false;
+                pointsRanking[posRecord] = gameScore;
+                namesRanking[posRecord] = name;
+                nicknameInput.remove()
+                nicknameSubmit.remove()
+                gameScore = 0;
+                textUpDownTransition('Updated Ranking!',30)
+                setTimeout(() => {
+                        textUpTransition('Press the spacebar\nto retry')
+                        restart = true
+                    }, 4000)
+                }
             })
     }
 
@@ -862,7 +1030,7 @@ p5_instance = function (p5c) {
       //check if any of the active circles is overlapping with the
       //reference
       if (key == ' '){
-          if (!started && restart) {
+          if (!started && restart && !rankingDisplayed && !tutorialDisplayed) {
             clearInterval(menuTransitionInterval)
             textDownTransition(5)
             p5c.userStartAudio();

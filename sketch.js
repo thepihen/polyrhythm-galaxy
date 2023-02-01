@@ -325,9 +325,10 @@ p5_instance = function (p5c) {
         dieNewRecordMenuTransition()
     }
     else{
+        gameScore = 0;
         dieMenuTransition()
     }
-    gameScore = 0;
+
   }
 
   resetGame = function () {
@@ -426,9 +427,18 @@ p5_instance = function (p5c) {
     nicknameSubmit.addClass('translateClass')
     nicknameSubmit.style('opacity', '0%')
     nicknameSubmit.size(100);
+    nicknameSubmit.mousePressed(() => {
+        let name = nicknameInput.value()
+        pointsRanking[posRecord - 1] = gameScore;
+        namesRanking[posRecord - 1] = name;
+        nicknameInput.style("opacity","0%")
+        nicknameSubmit.style("opacity","0%")
+        gameScore = 0;
+        textUpTransition('press spacebar\nto retry',10)
+        restart = true
+            })
 
   }
-
   displayRanking = function () {
     if (firstShow){firstShow = false}
     rankingDisplayed = true
@@ -796,23 +806,15 @@ p5_instance = function (p5c) {
             textUpTransition('Insert your nickname!',30)
             }, 10000)
         setTimeout(() => {
-            inputNickNameTransition('Insert your nickname!',30)
+            inputNickNameTransition()
             }, 11000)
     }
 
     function inputNickNameTransition(){
-        let opacity = 1;
-        menuTransitionInterval = setInterval( () => {
-                if(opacity < 100){
-                    nicknameInput.style("opacity",opacity)
-                    nicknameSubmit.style("opacity",opacity)
-                    opacity += 1;
-                    }
-                else{
-                    clearInterval(menuTransitionInterval);
-                    }
-            },10)
+        nicknameInput.style("opacity","100%")
+        nicknameSubmit.style("opacity","100%")
     }
+
     function textUpDownTransition(text,ms){
         menuTransitionInterval = setInterval( () => {
                 textMenu = text;

@@ -94,7 +94,8 @@ p5_instance = function (p5c) {
     mult9 = p5c.loadSound('assets/mult9.wav');
     mult10 = p5c.loadSound('assets/mult10.wav');
     multFail = p5c.loadSound('assets/multFail.wav');
-
+    die = p5c.loadSound('assets/die.wav');
+    record = p5c.loadSound('assets/record.wav');
     //imgPodium = p5c.loadImage('assets/podium.png');
   }
 
@@ -322,10 +323,12 @@ p5_instance = function (p5c) {
   function reSetup(){
     resetGame();
     if (gameScore > pointsRanking[4]){
+        record.play()
         newPodium()
         dieNewRecordMenuTransition()
     }
     else{
+        die.play()
         gameScore = 0;
         dieMenuTransition()
     }

@@ -27,7 +27,7 @@ Tone.Transport.bpm.rampTo(120, 10);
 //(see bottom of this file)
 //this just tracks the state
 var pageFoc = true;
-var gameScore = 500;
+var gameScore = 0;
 var lifes = 3;
 
 //use p5 in instance mode
@@ -167,10 +167,10 @@ p5_instance = function (p5c) {
   namesRanking[2] = "Riccardo Giampic"
   namesRanking[3] = "Giovanni Rana"
   namesRanking[4] = "Ferruccio Resta"
-  pointsRanking[0] = 50525
-  pointsRanking[1] = 45503
-  pointsRanking[2] = 40005
-  pointsRanking[3] = 25899
+  pointsRanking[0] = 50
+  pointsRanking[1] = 25
+  pointsRanking[2] = 15
+  pointsRanking[3] = 10
   pointsRanking[4] = 5
   // TUTORIAL STUFF
   var tutorialDisplayed = false;
@@ -322,6 +322,7 @@ p5_instance = function (p5c) {
   function reSetup(){
     resetGame();
     if (gameScore > pointsRanking[4]){
+        newPodium()
         dieNewRecordMenuTransition()
     }
     else{
@@ -415,28 +416,6 @@ p5_instance = function (p5c) {
     rankingButton.mouseOver(displayRanking)
     canvas.mouseOver(noDisplayRanking)
 
-    nicknameInput = p5c.createInput('');
-    nicknameInput.position(p5c.width/2, p5c.height/2 + 50);
-    nicknameInput.addClass('translateClass')
-    nicknameInput.style('opacity', '0%')
-    nicknameInput.size(200);
-
-    nicknameSubmit = p5c.createButton('SUBMIT');
-    nicknameSubmit.style('font-family' , 'Montserrat, sans-serif')
-    nicknameSubmit.position(p5c.width/2, p5c.height/2 + 75);
-    nicknameSubmit.addClass('translateClass')
-    nicknameSubmit.style('opacity', '0%')
-    nicknameSubmit.size(100);
-    nicknameSubmit.mousePressed(() => {
-        let name = nicknameInput.value()
-        pointsRanking[posRecord - 1] = gameScore;
-        namesRanking[posRecord - 1] = name;
-        nicknameInput.style("opacity","0%")
-        nicknameSubmit.style("opacity","0%")
-        gameScore = 0;
-        textUpTransition('press spacebar\nto retry',10)
-        restart = true
-            })
 
   }
   displayRanking = function () {
@@ -800,7 +779,7 @@ p5_instance = function (p5c) {
     function dieNewRecordMenuTransition(){
         textUpDownTransition('You Died',10)
         setTimeout(() => {
-            textUpDownTransition('But Congratulations you are at the position ' + posRecord + ' in the global ranking!',30)
+            textUpDownTransition('But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!',30)
             }, 3000)
         setTimeout(() => {
             textUpTransition('Insert your nickname!',30)
@@ -811,8 +790,31 @@ p5_instance = function (p5c) {
     }
 
     function inputNickNameTransition(){
-        nicknameInput.style("opacity","100%")
-        nicknameSubmit.style("opacity","100%")
+        nicknameInput = p5c.createInput('');
+        nicknameInput.position(p5c.width/2, p5c.height/2 + 50);
+        nicknameInput.addClass('translateClass')
+        nicknameInput.size(200);
+
+        nicknameSubmit = p5c.createButton('SUBMIT');
+        nicknameSubmit.style('font-family' , 'Montserrat, sans-serif')
+        nicknameSubmit.position(p5c.width/2, p5c.height/2 + 75);
+        nicknameSubmit.addClass('translateClass')
+        nicknameSubmit.size(100);
+
+        nicknameSubmit.mousePressed(() => {
+            let name = nicknameInput.value()
+            pointsRanking[posRecord] = gameScore;
+            namesRanking[posRecord] = name;
+            nicknameInput.remove()
+            nicknameSubmit.remove()
+            gameScore = 0;
+            textUpDownTransition('Updated Ranking!',30)
+            setTimeout(() => {
+                    textUpTransition('Press the spacebar\nto retry')
+                    restart = true
+                }, 4000)
+
+            })
     }
 
     function textUpDownTransition(text,ms){
@@ -1328,7 +1330,41 @@ p5_instance = function (p5c) {
     }
 
     function newPodium(){
-
+        if(gameScore > pointsRanking[0]){
+            posRecord = 0;
+            pointsRanking[4] = pointsRanking[3];
+            pointsRanking[3] = pointsRanking[2];
+            pointsRanking[2] = pointsRanking[1];
+            pointsRanking[1] = pointsRanking[0];
+            namesRanking[4] = namesRanking[3];
+            namesRanking[3] = namesRanking[2];
+            namesRanking[2] = namesRanking[1];
+            namesRanking[1] = namesRanking[0];
+        }
+        else if(gameScore > pointsRanking[1]){
+            posRecord = 1;
+            pointsRanking[4] = pointsRanking[3];
+            pointsRanking[3] = pointsRanking[2];
+            pointsRanking[2] = pointsRanking[1];
+            namesRanking[4] = namesRanking[3];
+            namesRanking[3] = namesRanking[2];
+            namesRanking[2] = namesRanking[1];
+        }
+        else if(gameScore > pointsRanking[2]){
+            posRecord = 2;
+            pointsRanking[4] = pointsRanking[3];
+            pointsRanking[3] = pointsRanking[2];
+            namesRanking[4] = namesRanking[3];
+            namesRanking[3] = namesRanking[2];
+        }
+        else if(gameScore > pointsRanking[3]){
+            posRecord = 3;
+            pointsRanking[4] = pointsRanking[3];
+            namesRanking[4] = namesRanking[3];
+        }
+        else {
+            posRecord = 4;
+        }
     }
  }
 myp5 = new p5(p5_instance)

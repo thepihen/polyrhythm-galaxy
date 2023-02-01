@@ -1,0 +1,114 @@
+{
+"record":[
+    {
+        "msgId": "recordIntro1",
+        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev and I'll be your guide!",
+        "nextMsgId": "recordIntro2"
+    },
+    {
+        "msgId": "recordIntro2",
+        "msg": "OK. Let's get started!\nRecord something and I'll try to identify what you're doing",
+        "nextMsgId": "recordIntro3"
+    },
+    {
+        "msgId": "recordIntro3",
+        "msg": "(don't forget to authorize access to the microphone\nwhen the browser asks you to do so!!!)",
+        "nextMsgId": "-1"
+    },
+    {
+        "msgId": "record1",
+        "msg": "Great, everything seems to be ok. Now you can start recording. Press the RECORD button when you're ready",
+        "nextMsgId": "record2"
+    },
+    {
+        "msgId": "record2",
+        "msg": "When you're satisfied with your recording press the stop button and then the 'DONE' button. The full interface will now appear",
+        "nextMsgId": "-1"
+    }
+],
+"upload":[
+    {
+        "msgId": "upload1",
+        "msg": "Hello there! Welcome to the world of polyrhythms.\nMy name is Polyev and I'll be your guide!",
+        "nextMsgId": "upload2"
+    },
+    {
+        "msgId": "upload2",
+        "msg": "It seems you already have a recording. I will now try to identify what you're doing",
+        "nextMsgId": "upload3"
+    },
+    {
+        "msgId": "upload3",
+        "msg": "If you want to upload or record a new audio, you can do so at any time by interacting with the UI!",
+        "nextMsgId": "-1"
+    }
+],
+"common":[
+    {
+        "msgId": "common1",
+        "msg": "Click the OK button when you want me to start analyzing your audio",
+        "nextMsgId": "-1"
+    },
+    {
+        "msgId": "commonFound",
+        "msg": "I found some polyrhythms. Use the mouse to select which one sounds closer to your audio\n(hover over the polyrhythm to hear it)",
+        "nextMsgId": "-1"
+    },
+    {   "msgId": "commonFound1",
+        "msg": "(*) indicates the option is not really a polyrhythm. If you're not satisfied with the results, you can try using a different audio." ,
+        "nextMsgId": "-1"
+    },
+    {
+        "msgId": "commonPolyChose",
+        "msg": "Great! You can now experiment with the polyrhythm using the rhythm wheel we've provided.\nClick and drag to see how a shift in time affects your polyrhythm!",
+        "nextMsgId": "-1"
+    },
+    {
+        "msgId": "commonPolyChoseNeither",
+        "msg": "Sorry if what I found doesn't sound like your audio. Try using a different file!",
+        "nextMsgId": "-1"
+    },
+    {
+        "msgId" : "commonNotFound",
+        "msg" : "I couldn't find any polyrhythm in your audio. I'm sorry, try recording something else!",
+        "nextMsgId" : "-1"
+    },
+    {
+        "msgId" : "commonError",
+        "msg" : "Something went wrong. I'm sorry, try recording something else!",
+        "nextMsgId" : "-1"
+    },
+    {
+        "msgId" : "commonWelcomeBack",
+        "msg" : "Welcome back!",
+        "nextMsgId" : "-1"
+    }
+],
+"analysisFill":[
+    {
+        "msgId": "analysisFillIntro",
+        "msg": "Hey! While we wait, I could tell you a little bit about polyrhythms.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill1",
+        "msg": "A polyrhythm is a rhythm composed of two or more rhythms that share their periodicity. \nIt's a great way to surprise a listener and explore the world of music.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill2",
+        "msg": "Polyrhythms are everywhere in music, even when you least expect them. For example, \"Carol of the Bells\" contains a 3v2 polyrhythm in its main melodic line.",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill3",
+        "msg": "I'm still analyzing your audio. It may take a while, so please be patient!",
+        "nextMsgId": "-2"
+    },
+    {
+        "msgId": "analysisFill4",
+        "msg": "",
+        "nextMsgId": "-2"
+    }
+]
+}

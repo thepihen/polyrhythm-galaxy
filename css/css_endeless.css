@@ -1,0 +1,29 @@
+.ranking_button{
+    background-color: white;
+    color:black;
+    text-align: center;
+    right:0px;
+    top:25px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 30px;
+    position: absolute;
+    width:30px;
+    height:30px;
+    cursor: help;
+    opacity: 80%;
+    transform: translate(-50%, -50%);
+    z-index: 2
+}
+
+.ranking_text{
+    font-size: 24px;
+    color: white;
+    transform: translate(-50%, -50%);
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+}
+
+.translateClass{
+    transform: translate(-50%, -50%);
+}

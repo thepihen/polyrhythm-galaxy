@@ -170,7 +170,7 @@ onmessage = (event) => {
     console.log("Worker received event data!")
     setTimeout(() => {
         console.log("Worker started main function!")
-        x = lowpass(x, 1000, 44100);
+        x = lowpass(x, 1000, Fs_main);
         main(x)
     }, 2000
     )
@@ -187,6 +187,7 @@ function lowpass(x, cutoff, fs) {
     }
     return y;
 }
+
 
 //while(!SF.isLoaded()) {
 //    console.log("loading");}
@@ -266,6 +267,17 @@ async function main(x) {
     const result = better_results
     console.log("Worker: sending result back to main thread...")
     postMessage(result)
+}
+
+function normalise(s) {
+    //normalise the audio signal in s
+    var max = math.max(s);
+    //calculate the difference between abs(max) and 1
+    var diff = 1 - math.abs(max);
+    //add diff to all values inside s, multiplying it by the sign of the value
+    for (var i = 0; i < s.length; i++) {
+        s[i] = s[i] + diff * math.sign(s[i]);
+    }
 }
 
 function maxIndex(x) {

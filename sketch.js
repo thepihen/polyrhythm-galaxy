@@ -73,6 +73,7 @@ p5_instance = function (p5c) {
   var scheduleL;
   var scheduleR;
   var scheduleMetro
+  var soundtrack;
   //frameRate (need this to use it outside of )
   var frate;
   /*
@@ -81,13 +82,13 @@ p5_instance = function (p5c) {
   (e.g. fonts, sounds,...)
   */
   p5c.preload = function () {
-    hit = p5c.loadSound('assets/hit.wav');
+    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
+    /*hit = p5c.loadSound('assets/hit.wav');
     hitSoundL = p5c.loadSound('assets/hitSXwav.wav');
     hitSoundR = p5c.loadSound('assets/hitDXwav.wav');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
-    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
     beat1 = p5c.loadSound('assets/BEAT1wav.wav');
     beat2 = p5c.loadSound('assets/BEAT2wav.wav');
     mult1 = p5c.loadSound('assets/mult1.wav');
@@ -102,8 +103,41 @@ p5_instance = function (p5c) {
     mult10 = p5c.loadSound('assets/mult10.wav');
     multFail = p5c.loadSound('assets/multFail.wav');
     die = p5c.loadSound('assets/die.wav');
-    record = p5c.loadSound('assets/record.wav');
-    //imgPodium = p5c.loadImage('assets/podium.png');
+    record = p5c.loadSound('assets/record.wav');*/
+    soundtrackDieRecord = new Tone.Players({
+        die: "assets/die.wav",
+        record: "assets/record.wav"
+    }).toDestination();
+
+    soundtrackHitL1 = new Tone.Player("assets/hitSXwav.wav").toDestination();
+    soundtrackHitL2 = new Tone.Player("assets/hitSXwav.wav").toDestination();
+
+    soundtrackHitR1 = new Tone.Player("assets/hitDXwav.wav").toDestination();
+    soundtrackHitR2 = new Tone.Player("assets/hitDXwav.wav").toDestination();
+
+    soundtrackMiss = new Tone.Players({
+        0: "assets/miss.wav",
+        1: "assets/miss.wav",
+        2: "assets/miss.wav",
+        3: "assets/miss.wav",
+    }).toDestination();
+
+    soundtrackMultipliers = new Tone.Players({
+        mult2: "assets/mult2.wav",
+        mult3: "assets/mult3.wav",
+        mult4: "assets/mult4.wav",
+        mult5: "assets/mult5.wav",
+        mult6: "assets/mult6.wav",
+        mult7: "assets/mult7.wav",
+        mult8: "assets/mult8.wav",
+        mult9: "assets/mult9.wav",
+        mult10: "assets/mult10.wav",
+        multFail: "assets/multFail.wav",
+    }).toDestination();
+    
+    soundtrackBeat1 = new Tone.Player("assets/BEAT1wav.wav").toDestination();
+    soundtrackBeat2 = new Tone.Player("assets/BEAT2wav.wav").toDestination();
+
   }
 
 
@@ -213,6 +247,11 @@ p5_instance = function (p5c) {
   var guideG = 255;
   var guideB = 0;
 
+  // BUG MULTIPLE DOTS OR MISSES VERY CLOSE
+  var lastL = 2;
+  var lastR = 2;
+  var lastMiss = 4;
+
   /*
   Circle(): class representing a beat circle.
   Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
@@ -286,7 +325,10 @@ p5_instance = function (p5c) {
                 reSetup()
             }
             else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss += 1;
+                lastMiss = (lastMiss % 3);
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -360,12 +402,14 @@ p5_instance = function (p5c) {
   function reSetup(){
     resetGame();
     if (gameScore > pointsRanking[4]){
-        record.play()
+        /*record.play()*/
+        soundtrackDieRecord.player("record").start();
         newPodium()
         dieNewRecordMenuTransition()
     }
     else{
-        die.play()
+        /*die.play()*/
+        soundtrackDieRecord.player("die").start();
         gameScore = 0;
         dieMenuTransition()
     }
@@ -383,13 +427,19 @@ p5_instance = function (p5c) {
     firstElemInGameR = 0;
     lastElemL = 0;
     lastElemR = 0;
-    miss.stop();
-    beat1.stop();
-    beat2.stop();
+    /*miss.stop();*/
+    for( let i=0 ; i<3; i++){
+        soundtrackMiss.player(i).stop();
+    }
+
+    /*beat1.stop();*/
+    soundtrackBeat1.stop();
+    /*beat2.stop();*/
+    soundtrackBeat2.stop();
     metroFlag = 0;
     Tone.Transport.cancel()
     stopCircleArrays()
-    p5c.getAudioContext().resume()
+    /*p5c.getAudioContext().resume()*/
     lifes = 3;
     rhythmLimit = 4;
     metroFlagChange = 0;
@@ -414,7 +464,7 @@ p5_instance = function (p5c) {
     see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
     There's no need for the audio context to be running as soon as the page is loaded
     */
-    p5c.getAudioContext().suspend();
+    /*p5c.getAudioContext().suspend();*/
     p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
     //in a church hoping for a miracle
     // Trying to solve audio distortion by using a compressor
@@ -430,6 +480,8 @@ p5_instance = function (p5c) {
     textMenu = 'Press the spacebar\n to start'
 
     //font = p5c.textFont('Montserrat', 30)
+
+    Tone.start();
 
     bpm = 130;
     scheduleL = null;
@@ -1199,8 +1251,7 @@ p5_instance = function (p5c) {
             clearNoPlayingAnimations();
             clearInterval(menuTransitionInterval);
             textDownTransition(5);
-            p5c.userStartAudio();
-            Tone.start();
+            /*p5c.userStartAudio();*/
             Tone.Transport.start();
             toggleRhythms();
             visualLeftR = leftR;
@@ -1225,7 +1276,16 @@ p5_instance = function (p5c) {
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitL = true;
                 //play sound
-                hitSoundL.play();
+                /*hitSoundL.play();*/
+                if(lastL == 1){
+                    soundtrackHitL2.start();
+                    lastL = 2;
+                }
+                else if (lastL == 2){
+                    soundtrackHitL1.start();
+                    lastL = 1;
+                }
+
 
                 /*** add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
@@ -1268,7 +1328,10 @@ p5_instance = function (p5c) {
                 reSetup()
               }
               else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss +=1;
+                lastMiss = lastMiss % 3;
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -1292,7 +1355,16 @@ p5_instance = function (p5c) {
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitR = true;
                 //play sound
-                hitSoundR.play();
+                /*hitSoundR.play();*/
+                if(lastR == 1){
+                    soundtrackHitR2.start();
+                    lastR = 2;
+                }
+                else if (lastR == 2){
+                    soundtrackHitR1.start();
+                    lastR = 1;
+                }
+
                 // RULES FOR CALCULATING POINTS
                 // distance*10 = [0,7]     -> perfect -> 100 points
                 // distance*10 = [7, 20]   -> amazing -> 75 points
@@ -1340,7 +1412,10 @@ p5_instance = function (p5c) {
                 reSetup()
               }
               else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss +=1;
+                lastMiss = lastMiss % 3;
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -1375,13 +1450,17 @@ p5_instance = function (p5c) {
     //To play the beat in background
       if(metroFlag % 32 == 0){
         //p5c.getAudioContext().resume()
-        beat2.stop();
-        beat1.play()
+        /*beat2.stop();*/
+        // soundtrackBeat2.stop();
+        /*beat1.play()*/
+        soundtrackBeat1.start();
 
       }
       else if (metroFlag % 32 == 16) {
-        beat1.stop()
-        beat2.play()
+        /*beat1.stop()*/
+        // soundtrackBeat1.stop();
+        /*beat2.play()*/
+        soundtrackBeat2.start();
       }
       if (metroFlag % 4 == 0) {
         //met1.play()
@@ -1525,38 +1604,48 @@ p5_instance = function (p5c) {
             multiplierSound()
         }
         else if (multiplier < lastMultiplier){
-            multFail.play()
+            /*multFail.play()*/
+            soundtrackMultipliers.player("multFail").start();
         }
 
     }
     function multiplierSound() {
         switch(multiplier){
             case 2:
-                mult2.play()
+                /*mult2.play()*/
+                soundtrackMultipliers.player("mult2").start();
             break;
             case 3:
-                mult3.play()
+                /*mult3.play()*/
+                soundtrackMultipliers.player("mult3").start();
             break;
             case 4:
-                mult4.play()
+                /*mult4.play()*/
+                soundtrackMultipliers.player("mult4").start();
             break;
             case 5:
-                mult5.play()
+                /*mult5.play()*/
+                soundtrackMultipliers.player("mult5").start();
             break;
             case 6:
-                mult6.play()
+                /*mult6.play()*/
+                soundtrackMultipliers.player("mult6").start();
             break;
             case 7:
-                mult7.play()
+                /*mult7.play()*/
+                soundtrackMultipliers.player("mult7").start();
             break;
             case 8:
-                mult8.play()
+                /*mult8.play()*/
+                soundtrackMultipliers.player("mult8").start();
             break;
             case 9:
-                mult9.play()
+                /*mult9.play()*/
+                soundtrackMultipliers.player("mult9").start();
             break;
             case 10:
-                mult10.play()
+                /*mult10.play()*/
+                soundtrackMultipliers.player("mult10").start();
             break;
             default:
         }

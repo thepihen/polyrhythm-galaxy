@@ -190,6 +190,29 @@ p5_instance = function (p5c) {
 
   // OTHER
   var exitButton;
+  var animationY
+  var animationXLeft;
+  var animationXRight;
+  var animationDisplayedLeft = false;
+  var animationDisplayedRight = false;
+  var animationVisualMetronomeDisplayed = false;
+  var intervalAnimationVisualMetronome;
+  var intervalAnimationGuides;
+  var intervalAnimationLeft;
+  var intervalAnimationRight;
+  var animationTimeout1;
+  var animationTimeout2;
+  var animationTimeout3;
+  var animationTimeout4;
+  var animationTimeout5;
+  var animationTimeout6;
+  var animationTimeout7;
+  var animationTimeout8;
+  var animationRadius;
+  var guideR = 255;
+  var guideG = 255;
+  var guideB = 0;
+
   /*
   Circle(): class representing a beat circle.
   Constructor: Circle([ xCenter, yCenter, radius, velocity (pixel/frame) ])
@@ -452,7 +475,97 @@ p5_instance = function (p5c) {
     // exit stuff
     exitButton = p5c.createDiv('X')
     exitButton.addClass('exit_button')
+
+    noPlayingAnimation();
   }
+
+  noPlayingAnimation = function () {
+    animationDisplayedLeft = false;
+    animationDisplayedRight = false;
+    animationXLeft = 0;
+    animationXRight = p5c.width;
+    animationY = yLineH;
+    animationRadius = 10;
+    intervalAnimationLeft = setInterval( () => {
+            animationDisplayedLeft = true;
+            animationTimeout1 = setTimeout( () => {
+                animationDisplayedLeft = false;
+                animationXLeft = 0;
+                } , 8000)
+        }, 15000);
+    animationTimeout2 = setTimeout(() => {
+            intervalAnimationRight = setInterval( () => {
+            animationDisplayedRight = true;
+            animationTimeout3 = setTimeout( () => {
+                animationDisplayedRight = false;
+                animationXRight = p5c.width;
+                } , 8000)
+        }, 15000);} , 3000);
+
+    animationTimeout4 = setTimeout( () => {
+        // FIRST GUIDES ANIMATION
+        guideR = 253;
+        guideG = 253;
+        guideB = 150;
+        animationTimeout5 = setTimeout( () => {
+            guideR = 255;
+            guideG = 255;
+            guideB = 0;
+            } , 700)
+        // START GUIDES ANIMATION INTERVAL
+        intervalAnimationGuides = setInterval( () => {
+            guideR = 253;
+            guideG = 253;
+            guideB = 150;
+            animationTimeout6 = setTimeout( () => {
+                guideR = 255;
+                guideG = 255;
+                guideB = 0;
+                } , 700)
+        }, 7000);
+
+        // FIRST METRONOME ANIMATION
+        animationTimeout7 = setTimeout(() => {
+            animationVisualMetronomeDisplayed = true;
+            metroColor = 1;
+            setTimeout( () => {metroColor = 2;} , 150)
+            setTimeout( () => {metroColor = 3;} , 300)
+            setTimeout( () => {metroColor = 4;} , 450)
+            setTimeout( () => {animationVisualMetronomeDisplayed = false;} , 600)
+            },
+        1100)
+        // START METRONOME ANIMATION INTERVAL
+        animationTimeout8 = setTimeout(() => {
+            intervalAnimationVisualMetronome = setInterval( () => {
+                    animationVisualMetronomeDisplayed = true;
+                    metroColor = 1;
+                    setTimeout( () => {metroColor = 2;} , 150)
+                    setTimeout( () => {metroColor = 3;} , 300)
+                    setTimeout( () => {metroColor = 4;} , 450)
+                    setTimeout( () => {animationVisualMetronomeDisplayed = false;} , 600)
+                              },
+                        7000);
+                    },
+            1100);
+        }, 2000);
+  }
+  clearNoPlayingAnimations = function () {
+      clearInterval(intervalAnimationVisualMetronome);
+      clearInterval(intervalAnimationGuides);
+      clearInterval(intervalAnimationLeft);
+      clearInterval(intervalAnimationRight);
+      clearInterval(animationTimeout1);
+      clearInterval(animationTimeout2);
+      clearInterval(animationTimeout3);
+      clearInterval(animationTimeout4);
+      clearInterval(animationTimeout5);
+      clearInterval(animationTimeout6);
+      clearInterval(animationTimeout7);
+      clearInterval(animationTimeout8);
+      animationVisualMetronomeDisplayed = false;
+      animationDisplayedLeft = false;
+      animationDisplayedRight = false;
+    }
   var nextButton;
   var previousButton;
   var imgStartingFrame;
@@ -464,13 +577,23 @@ p5_instance = function (p5c) {
     if(!started && !rankingDisplayed){
             if(tutorialDisplayed){
                 nextButton.remove();
-                previousButton.remove();
+
                 if(place == 0){
                         textFirstDisplay.remove();
                         textFirstDisplay2.remove();
+                        placeZeroTutorialDisplayed = false;
+                        previousButton.remove();
+                        nextButton.remove();
                     }
-                if(place == 1){imgStartingFrame.remove();}
-                if(place == 2){imgPlayingFrame.remove();}
+                if(place == 1){
+                    imgStartingFrame.remove();
+                    previousButton.remove();
+                    nextButton.remove();
+                    }
+                if(place == 2){
+                    imgPlayingFrame.remove();
+                    previousButton.remove();
+                    }
                 place=0;
                 tutorialDisplayed = false;
             }
@@ -479,17 +602,14 @@ p5_instance = function (p5c) {
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
 
-                previousButton = p5c.createDiv('<');
-                previousButton.addClass('previous_button');
-                previousButton.mousePressed(previousButtonFunction)
-
                 textFirstDisplay = p5c.createDiv(tutorialText)
                 textFirstDisplay.addClass('tutorial_text')
 
                 textFirstDisplay2 = p5c.createDiv(tutorialText2)
                 textFirstDisplay2.addClass('tutorial_text')
-                textFirstDisplay2.style("top","62.5%")
+                textFirstDisplay2.style("top","62%")
 
+                placeZeroTutorialDisplayed = true;
                 tutorialDisplayed = true;
             }
     }
@@ -499,6 +619,10 @@ p5_instance = function (p5c) {
     if(place == 0){
         textFirstDisplay.remove();
         textFirstDisplay2.remove();
+        placeZeroTutorialDisplayed = false;
+        previousButton = p5c.createDiv('<');
+        previousButton.addClass('previous_button');
+        previousButton.mousePressed(previousButtonFunction)
         place += 1;
         imgStartingFrame = p5c.createImg(
                 'assets/startingFrame.png',
@@ -507,8 +631,10 @@ p5_instance = function (p5c) {
         imgStartingFrame.addClass('tutorial_image')
     }
     else if (place == 1) {
+        nextButton.remove()
         place += 1;
         imgStartingFrame.remove();
+        nextButton.style("opacity","100%")
         imgPlayingFrame = p5c.createImg(
                 'assets/playingFrame.png',
                 'playing Frame'
@@ -519,6 +645,8 @@ p5_instance = function (p5c) {
   previousButtonFunction = function() {
     if (place == 1) {
         place -= 1;
+        previousButton.remove()
+        placeZeroTutorialDisplayed = true;
         textFirstDisplay = p5c.createDiv(tutorialText)
         textFirstDisplay.addClass('tutorial_text')
         textFirstDisplay2 = p5c.createDiv(tutorialText2)
@@ -528,6 +656,9 @@ p5_instance = function (p5c) {
     }
     else if (place == 2) {
         place -=1
+        nextButton = p5c.createDiv('>');
+        nextButton.addClass('next_button');
+        nextButton.mousePressed(nextButtonFunction)
         imgPlayingFrame.remove()
         imgStartingFrame = p5c.createImg(
                 'assets/startingFrame.png',
@@ -611,7 +742,7 @@ p5_instance = function (p5c) {
     p5c.noStroke()
     p5c.fill(colorMenu)
     p5c.textAlign(p5c.CENTER)
-    p5c.textSize(23)
+    p5c.textSize(21)
     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
     if(!noReference){
@@ -765,9 +896,8 @@ p5_instance = function (p5c) {
         }
       } 
     }
+
     // Ranking Stuff
-
-
     if(badNickname){
         p5c.textFont(font)
         p5c.noStroke()
@@ -775,6 +905,30 @@ p5_instance = function (p5c) {
         p5c.textAlign(p5c.CENTER)
         p5c.textSize(15)
         p5c.text(badNicknameText, p5c.width / 2, p5c.height / 2 + 120);
+    }
+
+    if(animationDisplayedLeft){
+        animationXLeft = animationXLeft + 2;
+        p5c.fill("red")
+        p5c.noStroke()
+        for(let i =0; i<16; i++){
+            if(animationXLeft - 15*i < xLine1){p5c.ellipse(animationXLeft - 15*i ,animationY,animationRadius,animationRadius)}
+        }
+    }
+
+    if(animationDisplayedRight){
+        animationXRight = animationXRight - 2;
+        p5c.fill("blue")
+        p5c.noStroke()
+        for(let i =0; i<16; i++){
+            if(animationXRight + 15*i > xLine2){p5c.ellipse(animationXRight + 15*i ,animationY,animationRadius,animationRadius)}
+        }
+    }
+    if(animationVisualMetronomeDisplayed){
+        p5c.fill("yellow");
+        p5c.strokeWeight(1);
+        p5c.stroke(240, 240, 10)
+        p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
     }
 
     if(rankingDisplayed){
@@ -823,13 +977,13 @@ p5_instance = function (p5c) {
       p5c.line(0, yLineH, p5c.width, yLineH)
       p5c.fill(12);
       p5c.strokeWeight(4);
-      p5c.stroke("yellow")
+      p5c.stroke(guideR,guideG,guideB)
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
       p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
       p5c.fill(12);
-      p5c.strokeWeight(4);
+      /*p5c.strokeWeight(4);
       p5c.stroke("yellow")
-      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
+      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);*/
 
     }
     rankingBackground = function () {
@@ -864,10 +1018,10 @@ p5_instance = function (p5c) {
         if(placeZeroTutorialDisplayed){
             p5c.textFont(font)
             p5c.noStroke()
-            p5c.fill(255,255,255)
+            p5c.fill("red")
             p5c.textAlign(p5c.CENTER)
-            p5c.textSize(17.5)
-            p5c.text(tutorialText, p5c.width / 2, p5c.height / 2 - 75);
+            p5c.textSize(10)
+            p5c.text("Click here\nto see visual\nexamples of a\nmatch game", p5c.width / 2 + 435, p5c.height / 2 + 30);
         }
 
     }
@@ -933,6 +1087,7 @@ p5_instance = function (p5c) {
         textUpDownTransition('You Died',10)
         setTimeout(() => {
             textUpTransition('Press the spacebar\nto retry')
+            noPlayingAnimation()
             restart = true
             }, 2000)
     }
@@ -982,6 +1137,7 @@ p5_instance = function (p5c) {
                 textUpDownTransition('Updated Ranking!',30)
                 setTimeout(() => {
                         textUpTransition('Press the spacebar\nto retry')
+                        noPlayingAnimation();
                         restart = true
                     }, 4000)
                 }
@@ -1029,10 +1185,20 @@ p5_instance = function (p5c) {
       let key = p5c.key;
       //check if any of the active circles is overlapping with the
       //reference
+      if (key == "p" || key == "P"){
+            if(animationDisplayedLeft){
+                animationDisplayedLeft = false;
+                animationXLeft = 0;
+            }
+            else{
+                animationDisplayedLeft = true;
+            }
+      }
       if (key == ' '){
           if (!started && restart && !rankingDisplayed && !tutorialDisplayed) {
-            clearInterval(menuTransitionInterval)
-            textDownTransition(5)
+            clearNoPlayingAnimations();
+            clearInterval(menuTransitionInterval);
+            textDownTransition(5);
             p5c.userStartAudio();
             Tone.start();
             Tone.Transport.start();

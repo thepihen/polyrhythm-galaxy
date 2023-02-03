@@ -1,19 +1,30 @@
-
-var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
-                "The game will provide you two rhythms, one to the left and one to the right, " +
-                "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
-                "every time a falling rhythm dot is inside the yellow circle of the related side.&#10;";
-var tutorialText2 = "Pay Attention!&#10;The provided rhythms will be more and more difficult and every time " +
-                "you miss a dot or press a key at the wrong time you will lose one of the three available " +
-                "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
-                "in order to increase extra points bonus and climb the global ranking!";
 var pageFoc = true;
-var gameScore = 0;
-var lifes = 3;
 
 //use p5 in instance mode
 p5_instance = function (p5c) {
+  var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
+                "The game will provide you two rhythms, one to the left and one to the right, " +
+                "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
+                "every time a falling rhythm dot is inside the yellow circle of the related side.&#10;";
+  var tutorialText2 = "Pay Attention!&#10;The provided rhythms will be more and more difficult and every time " +
+                "you miss a dot or press a key at the wrong time you will lose one of the three available " +
+                "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
+                "in order to increase extra points bonus and climb the global ranking!";
 
+  var dieTexts = ['You Died','You Died','Press the spacebar\nto retry'];
+  var dieDirs = ['up', 'down', 'up']
+  var dieIndex = 0;
+
+  var recordTexts = ['You Died','You Died','','','Insert your Nickname!']
+  var recordDirs = ['up', 'down', 'up','down','up']
+  var recordIndex = 0;
+
+  var updateTexts = ['Updated Ranking!','Updated Ranking!','Press the spacebar\nto retry']
+  var updateDirs = ['up', 'down', 'up']
+  var updateIndex = 0;
+
+  var gameScore = 0;
+  var lifes = 3;
   /*
   Variables we will use in preload()
   */
@@ -118,6 +129,7 @@ p5_instance = function (p5c) {
   var started; //bool: T if we're in the game, F is we're in the menù
   var restart;
   var died;
+  var loaded = false;
   var colorMenu;
   var textMenu;
 
@@ -381,13 +393,22 @@ p5_instance = function (p5c) {
         /*record.play()*/
         soundtrackDieRecord.player("record").start();
         newPodium()
-        dieNewRecordMenuTransition()
+        recordIndex = 0;
+        recordTexts[2] = 'But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!'
+        recordTexts[3] = 'But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!'
+        mainTextTransition(recordTexts,recordIndex,recordDirs,12,true,() => {
+                                                                                setTimeout(() => {
+                                                                                inputNickNameTransition()
+                                                                                }, 200)
+                                                                             })
     }
     else{
         /*die.play()*/
         soundtrackDieRecord.player("die").start();
         gameScore = 0;
-        dieMenuTransition()
+        /*dieMenuTransition1()*/
+        dieIndex = 0;
+        mainTextTransition(dieTexts,dieIndex,dieDirs,10,true,() => {noPlayingAnimation();restart = true;})
     }
 
   }
@@ -405,13 +426,12 @@ p5_instance = function (p5c) {
     lastElemR = 0;
     /*miss.stop();*/
     for( let i=0 ; i<3; i++){
-        soundtrackMiss.player(i).stop();
+        if(soundtrackMiss.player(i).state == "started"){soundtrackMiss.player(i).stop();}
     }
-
     /*beat1.stop();*/
-    soundtrackBeat1.stop();
+    if(soundtrackBeat1.state == "started"){soundtrackBeat1.stop();}
     /*beat2.stop();*/
-    soundtrackBeat2.stop();
+    if(soundtrackBeat2.state == "started"){soundtrackBeat2.stop();}
     metroFlag = 0;
     Tone.Transport.cancel()
     stopCircleArrays()
@@ -444,7 +464,7 @@ p5_instance = function (p5c) {
     p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
     //in a church hoping for a miracle
     // Trying to solve audio distortion by using a compressor
-
+    Tone.start();
     //initialise guide coordinates
     xLine1 = p5c.width / 2 - p5c.width / 12;
     xLine2 = p5c.width / 2 + p5c.width / 12;
@@ -452,12 +472,11 @@ p5_instance = function (p5c) {
     started = false;
     died = false;
     restart = true;
+    loaded = true;
     colorMenu = 10;
     textMenu = 'Press the spacebar\n to start'
 
     //font = p5c.textFont('Montserrat', 30)
-
-    Tone.start();
 
     bpm = 130;
     scheduleL = null;
@@ -477,7 +496,7 @@ p5_instance = function (p5c) {
     nextRightR = 1;
 
     startCircleArrays();
-    textUpTransition('Press the spacebar\nto start')
+    mainTextTransition(['Press the spacebar\nto start',],0,['up',],10,false)
 
     // logo
     logo = p5c.createImg(
@@ -1110,27 +1129,42 @@ p5_instance = function (p5c) {
     The circle will also need to be deleted
     */
     var menuTransitionInterval;
-
-    function dieMenuTransition(){
-        textUpDownTransition('You Died',10)
-        setTimeout(() => {
-            textUpTransition('Press the spacebar\nto retry')
-            noPlayingAnimation()
-            restart = true
-            }, 2000)
-    }
-
-    function dieNewRecordMenuTransition(){
-        textUpDownTransition('You Died',10)
-        setTimeout(() => {
-            textUpDownTransition('But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!',30)
-            }, 3000)
-        setTimeout(() => {
-            textUpTransition('Insert your nickname!',30)
-            }, 10000)
-        setTimeout(() => {
-            inputNickNameTransition()
-            }, 11000)
+    function mainTextTransition(texts,i,dirs,ms,doLastFunction,lastFunction){
+        clearInterval(menuTransitionInterval);
+        textMenu = texts[i];
+        const dir = dirs[i];
+        menuTransitionInterval = setInterval( () => {
+                if(dir == 'up'){
+                    if(colorMenu < 500){
+                        colorMenu += 5;
+                        }
+                    else{
+                        clearInterval(menuTransitionInterval);
+                        i += 1;
+                        if ( i < texts.length){
+                                mainTextTransition(texts,i,dirs,ms,doLastFunction,lastFunction)
+                            }
+                        if (i >= texts.length && doLastFunction){
+                                lastFunction();
+                            }
+                        }
+                    }
+                else if (dir == 'down'){
+                    if(colorMenu > 11){
+                        colorMenu -= 5;
+                    }
+                    else{
+                        clearInterval(menuTransitionInterval);
+                        i += 1;
+                        if ( i < texts.length){
+                                mainTextTransition(texts,i,dirs,ms,doLastFunction,lastFunction)
+                            }
+                        if (i >= texts.length && doLastFunction){
+                                lastFunction();
+                            }
+                        }
+                    }
+                },ms)
     }
 
     function inputNickNameTransition(){
@@ -1162,50 +1196,10 @@ p5_instance = function (p5c) {
                 nicknameInput.remove()
                 nicknameSubmit.remove()
                 gameScore = 0;
-                textUpDownTransition('Updated Ranking!',30)
-                setTimeout(() => {
-                        textUpTransition('Press the spacebar\nto retry')
-                        noPlayingAnimation();
-                        restart = true
-                    }, 4000)
+                updateIndex = 0;
+                mainTextTransition(updateTexts,updateIndex,updateDirs,10,true, () => {noPlayingAnimation();restart = true; })
                 }
             })
-    }
-
-    function textUpDownTransition(text,ms){
-        menuTransitionInterval = setInterval( () => {
-                textMenu = text;
-                if(colorMenu < 500){
-                    colorMenu += 5;
-                    }
-                else{
-                    clearInterval(menuTransitionInterval);
-                    textDownTransition(ms)
-                    }
-            },ms)
-    }
-
-    function textUpTransition(text){
-        menuTransitionInterval = setInterval( () => {
-                textMenu = text;
-                if(colorMenu < 500){
-                    colorMenu += 5;
-                    }
-                else{
-                    clearInterval(menuTransitionInterval);
-                    }
-            },10)
-    }
-
-    function textDownTransition(ms){
-        menuTransitionInterval = setInterval( () => {
-                if(colorMenu > 11){
-                    colorMenu -= 5;
-                    }
-                else{
-                    clearInterval(menuTransitionInterval);
-                    }
-            },ms)
     }
 
     var paused = false;
@@ -1224,16 +1218,16 @@ p5_instance = function (p5c) {
             }
       }
       if (key == ' '){
-          if (!started && restart && !rankingDisplayed && !tutorialDisplayed) {
+          if (!started && restart && loaded && !rankingDisplayed && !tutorialDisplayed) {
+            Tone.start();
+            Tone.Transport.start();
             clearNoPlayingAnimations();
             clearInterval(menuTransitionInterval);
-            textDownTransition(5);
+            mainTextTransition([textMenu,],0,['down',],5,false)
             /*p5c.userStartAudio();*/
             guideR = 255;
             guideG = 255;
             guideB = 0;
-            Tone.Transport.start();
-            Tone.start();
             toggleRhythms();
             visualLeftR = leftR;
             visualRightR = rightR;
@@ -1243,8 +1237,8 @@ p5_instance = function (p5c) {
             restart = false;
             died = false;
           }
-         else{}
       }
+
       if(started){
           if (key == 's' || key == 'S') {
             let hitL = false;
@@ -1723,6 +1717,7 @@ p5_instance = function (p5c) {
             namesRanking[3] = namesRanking[2];
             namesRanking[2] = namesRanking[1];
             namesRanking[1] = namesRanking[0];
+            namesRanking[0] = '';
         }
         else if(gameScore > pointsRanking[1]){
             posRecord = 1;

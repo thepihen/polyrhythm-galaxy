@@ -193,11 +193,20 @@ window.P$ = new p5(p5c => {
     showFace: displays the face of the helper
     */
     showFace() {
+      p5c.push()
+      //p5c.imageMode(p5c.CORNERS)
+      //make the face appear next to the text box in the same position
+      //REGARDLESS of the screen resolution and zoom
+      
       if (!started)
-        p5c.image(this.faces[this.currFace], p5c.width - 400, p5c.height - 400)
+        p5c.image(this.faces[this.currFace], p5c.width - 1 * p5c.width/5, p5c.height - 2*p5c.height/5)
       else {
-        p5c.image(this.faces[this.currFace], p5c.width / 14, 2 * p5c.height / 4)
+        //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
+        let h = this.faces[this.currFace].height
+        p5c.image(this.faces[this.currFace], p5c.width / 14, 2 * p5c.height / 4, 37*p5c.width/192, p5c.height/2 * 8/7)
       }
+      
+      p5c.pop()
       /*
       //this made more sense when there were multiple faces
       this.showedFor++
@@ -218,7 +227,7 @@ window.P$ = new p5(p5c => {
       //the text is in the middle of the rect
       p5c.rectMode(p5c.CENTER)
       p5c.fill(12, 12, 12, 150)
-      p5c.rect(p5c.width / 2, p5c.height - 150, p5c.width / 2, 200)
+      p5c.rect(p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5)
       //print message using speech_font
       p5c.stroke(255)
       p5c.fill(255)
@@ -233,7 +242,8 @@ window.P$ = new p5(p5c => {
         }
         if (!this.cursorBlink) {
           //draw a small white square on the bottom right of the text box (the cursor)
-          p5c.rect(3 / 4 * p5c.width - 25, p5c.height - 75, 15, 15)
+          //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
+          p5c.rect(3 / 4 * p5c.width - 30, 5 * p5c.height / 6 + p5c.height/10 - 30, 15, 15)
         }
       }
 
@@ -250,11 +260,11 @@ window.P$ = new p5(p5c => {
       //TODO: this part is more of a meme, you decide if we keep it or not
       p5c.push()
       p5c.fill(255)
-      p5c.rect(p5c.width / 4, p5c.height - 300, p5c.width / 6, 50)
+      p5c.rect(p5c.width / 4, 5 * p5c.height / 6 - p5c.height / 10 - p5c.height / 20, p5c.width / 6, p5c.height/20)
       p5c.fill(0)
       p5c.textSize(32)
       p5c.textAlign(p5c.LEFT)
-      p5c.text(this.name, p5c.width / 4 + 10, p5c.height - 300 + 20)
+      p5c.text(this.name, p5c.width / 4 + 10, 5 * p5c.height / 6 - p5c.height / 10 - p5c.height / 40 - 5)
       p5c.pop()
     }
     /*
@@ -325,8 +335,9 @@ window.P$ = new p5(p5c => {
     */
     printMsg(msg, to) {
       p5c.stroke(255)
+      //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
       p5c.text(msg.substring(0, to),
-        1 * p5c.width / 4 + 10, p5c.height - 250, p5c.width / 2 - 20, 200)
+        1 * p5c.width / 4 + 10, 5 * p5c.height / 6 - p5c.height / 10, p5c.width / 2 - 20, p5c.height / 5)
     }
 
     addAnswers(choices) {
@@ -479,7 +490,7 @@ window.P$ = new p5(p5c => {
     face = p5c.loadImage('assets/face.png') //helper's face
     face_talking1 = p5c.loadImage('assets/face_talking1.png'); //helper's face while talking
     face_talking2 = p5c.loadImage('assets/face_talking2.png'); //helper's face while talking
-    speech = p5c.loadSound('assets/dialogue.wav') //sound for the dialogue
+    speech = p5c.loadSound('assets/dialogue_1.wav') //sound for the dialogue
     speech_end = p5c.loadSound('assets/dialogue_end.wav') //sound that plays when user clicks to pass to next message
     messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages
     hitOuter = P$.loadSound('assets/hit_outer.wav'); // hit Outer Circle Rhythmic Wheel

@@ -146,6 +146,9 @@ class Circle {
                 while (leftCircles[j].flag == 0) {
                     j++;
                     j = j % leftCircles.length;
+                    if(j == firstElemInGameL){
+                        break;
+                    }
                 }
                 firstElemInGameL = j;
                 leftElem--;
@@ -155,6 +158,9 @@ class Circle {
                 while (rightCircles[j].flag == 0) {
                     j++;
                     j = j % rightCircles.length;
+                    if (j == firstElemInGameR) {
+                        break;
+                    }
                 }
                 firstElemInGameR = j;
                 rightElem--;
@@ -406,6 +412,20 @@ P$.keyPressed = function () {
     let key = P$.key;
     //check if any of the active circles is overlapping with the
     //reference
+    
+    if(debugMode){
+        //if the key is o stop tone
+        if (key == 'o' || key == 'O') {
+            Tone.Transport.stop();
+        }
+        //if the key is p start tone
+        if (key == 'p' || key == 'P') {
+            Tone.Transport.start();
+        }
+    }
+    
+
+
     if (key == 's' || key == 'S') {
         let hitL = false;
         for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
@@ -439,6 +459,9 @@ P$.keyPressed = function () {
                     while (leftCircles[j].flag == 0) {
                         j++;
                         j = j % leftCircles.length;
+                        if (j == firstElemInGameL) {
+                            break;
+                        }
                     }
                     firstElemInGameL = j;
                 }
@@ -495,6 +518,9 @@ P$.keyPressed = function () {
                     while (rightCircles[j].flag == 0) {
                         j++;
                         j = j % rightCircles.length;
+                        if (j == firstElemInGameR) {
+                            break;
+                        }
                     }
                     firstElemInGameR = j;
                 }

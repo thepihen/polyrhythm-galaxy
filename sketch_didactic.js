@@ -677,7 +677,7 @@ window.P$ = new p5(p5c => {
       or record/upload a new audio.<br>
       <br>
       COMMANDS:<br>
-      z: pass to the helper's next message<br>
+      z / mouse1: pass to the helper's next message<br>
       m: skip all useless dialogue and get into the action right away<br>
       <br>
       We hope you enjoy your stay!<br>
@@ -1101,6 +1101,26 @@ window.P$ = new p5(p5c => {
         //let pos = p5c.mouseX
         soundFile.jump(time);
       }
+    }
+    //if the mouse was pressed inside the text box, do something
+    //p5c.rect(p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5)
+    if (p5c.mouseX >= p5c.width / 4 && p5c.mouseX <= 3 * p5c.width / 4 && p5c.mouseY >= 5 * p5c.height / 6 - p5c.height / 10 && p5c.mouseY <= 5 * p5c.height / 6 + p5c.height / 10) {
+        //if (!paused) {
+        //if the game is not paused, 
+        //check if the helper is waiting (isWaiting == true); if so,
+        //play the 'speech_end' sound and set isWaiting to false
+        if (helper.isWaiting()) {
+          speech_end.play();
+          handleMessage(msg.getId())
+          //switch msg to the next message to display
+          currMessage++
+          msg.makeEmpty()
+          if (msg.nextMsgId != -1) {
+            setTimeout(() => { msg = messages[currMessage] }, 150)
+          } else {
+            helper.setIdle()
+          }
+        }
     }
 
     mousePressedAudioControls()

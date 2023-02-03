@@ -819,7 +819,7 @@ window.P$ = new p5(p5c => {
   */
   drawInterface = function () {
     //draw audio controls
-
+    drawAudioControls()
 
     //draw a basic rectangle that will contain the waveform of the recorded/uploaded audio
     p5c.push()
@@ -911,6 +911,85 @@ window.P$ = new p5(p5c => {
   */
   drawAudioControls = function () {
     p5c.push()
+    //draw a rectangle that will contain the audio controls LEFT of the waveform display
+    p5c.stroke(255)
+    p5c.strokeWeight(2)
+    p5c.fill(100)
+    p5c.rectMode(p5c.CENTER)
+    p5c.rect(p5c.width/8 - p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
+    //divide this rectangle in 5 equal parts
+    let rectHeight = p5c.height / 3
+    let rectWidth = p5c.width / 22
+    let rectX = p5c.width/8 - p5c.width/44
+    let rectY = p5c.height / 4
+    let rectStep = rectHeight / 5
+    //draw 5 squares
+    p5c.fill(150)
+    p5c.rect(rectX, rectY - rectStep * 2, rectWidth, rectStep)
+    p5c.rect(rectX, rectY - rectStep, rectWidth, rectStep)
+    p5c.rect(rectX, rectY, rectWidth, rectStep)
+    p5c.rect(rectX, rectY + rectStep, rectWidth, rectStep)
+    p5c.rect(rectX, rectY + rectStep * 2, rectWidth, rectStep)
+    
+    //draw a "OK" button in the first square
+    p5c.fill(12)
+    p5c.stroke(12)
+    p5c.textSize(24)
+    p5c.textAlign(p5c.CENTER, p5c.CENTER)
+    p5c.text("OK", rectX, rectY - rectStep * 2)
+    
+    //draw a play button (rotated triangle) in the middle of the second square
+
+    p5c.fill(0, 255, 76)
+    p5c.stroke(12)
+    p5c.strokeWeight(2)
+    let playL = p5c.width/110
+    p5c.triangle(rectX - playL, rectY - rectStep - playL, rectX - playL, rectY - rectStep +playL, rectX + playL, rectY-rectStep)
+
+    //draw a stop button (rectangle) in the middle of the third square
+    p5c.fill(240)
+    p5c.stroke(12)
+    p5c.strokeWeight(2)
+    let stopL = p5c.width/110
+    p5c.rect(rectX, rectY, 2*stopL, 2*stopL)
+
+    //draw a record button (circle) in the middle of the fourth square
+    p5c.fill(220, 20, 60)
+    p5c.stroke(12)
+    p5c.strokeWeight(2)
+    let recordR = p5c.width/110
+    p5c.ellipse(rectX, rectY + rectStep, 2*recordR, 2*recordR)
+
+    //draw an upload button (triangle) in the middle of the fifth square
+    p5c.fill(32, 184, 255)
+    p5c.stroke(12)
+    p5c.strokeWeight(2)
+    let uploadL = p5c.width/110
+    p5c.push()
+    //draw the play button again in this square but rotate it by 90 degress
+    p5c.translate(rectX, rectY + 2*rectStep)
+    p5c.rotate(-p5c.PI/2)
+    p5c.triangle(-uploadL, -uploadL, -uploadL, uploadL, uploadL, 0)
+    p5c.pop()
+
+    //draw a rectangle that will contain the audio controls RIGHT of the waveform display
+    p5c.fill(150)
+    p5c.stroke(255)
+    p5c.rect(3*p5c.width/4 + p5c.width/8 + p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
+    //print the audio duration and the current time inside this box
+    p5c.fill(12)
+    p5c.stroke(12)
+    p5c.textSize(24)
+    p5c.textAlign(p5c.CENTER, p5c.CENTER)
+    /*
+    p5c.text(p5c.nfc(soundFile.currentTime(), 2) + " / " + p5c.nfc(soundFile.duration(), 2), 3 * p5c.width / 4 + p5c.width / 8 + p5c.width / 44, p5c.height / 4)
+    */
+    //print the text vertically
+    p5c.push()
+    p5c.translate(3 * p5c.width / 4 + p5c.width / 8 + p5c.width / 44, p5c.height / 4)
+    p5c.rotate(p5c.PI / 2)
+    p5c.text(p5c.nfc(soundFile.currentTime(), 2) + " / " + p5c.nfc(soundFile.duration(), 2), 0, 0)
+    p5c.pop()
 
     p5c.pop()
   }
@@ -1008,6 +1087,8 @@ window.P$ = new p5(p5c => {
         soundFile.jump(time);
       }
     }
+
+    mousePressedAudioControls()
 
     mousePressedRhythmicWheel()
   }
@@ -1201,7 +1282,7 @@ window.P$ = new p5(p5c => {
           mode = 2;
           requestMicrophoneAccess();
 
-          createAudioControls();
+          //createAudioControls();
           started = true
         }, 200);
       }
@@ -1233,13 +1314,13 @@ window.P$ = new p5(p5c => {
         //can begin common mode
         mode = 2;
         leftChannel = null;
-        createAudioControls();
+        //createAudioControls();
         loadMessages("common")
         break;
       case "upload3":
         //can begin common mode
         mode = 2;
-        createAudioControls();
+        //createAudioControls();
         loadMessages("common")
         break;
       case "commonFound":
@@ -1342,13 +1423,126 @@ window.P$ = new p5(p5c => {
     }, 1000)
   }
 
+  mousePressedAudioControls = function () {
+    //find which audio control was clicked (using mouseX and mouseY) and call clickAudioControl
+    //with the corresponding id (0: analyse, 1: play, 2: stop, 3: record, 4: upload)
+
+    //first of all if the user didn't click inside the audio controls rectangle, return
+    //p5c.width/8 - p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3
+    if (p5c.mouseX < p5c.width / 8 - p5c.width / 22 || p5c.mouseX > p5c.width / 8 ) {
+      return
+    }
+    if(p5c.mouseY < p5c.height / 4 - p5c.height/6 || p5c.mouseY > p5c.height / 4 + p5c.height / 6){
+      return
+    }
+    
+    //find out which button was pressed and call clickAudioControl with the corresponding id
+    let rectHeight = p5c.height / 3
+    let rectWidth = p5c.width / 22
+    let rectX = p5c.width / 8 - p5c.width / 44
+    let rectY = p5c.height / 4
+    let rectStep = rectHeight / 5
+
+    if (p5c.mouseY >= rectY - 2 * rectStep - rectStep / 2 && p5c.mouseY < rectY - 2 * rectStep + rectStep / 2) {
+      clickAudioControl(0)
+    } else if (p5c.mouseY >= rectY - rectStep - rectStep / 2 && p5c.mouseY < rectY - rectStep + rectStep / 2) {
+      clickAudioControl(1)
+    } else if (p5c.mouseY >= rectY - rectStep / 2 && p5c.mouseY < rectY + rectStep / 2) {
+      clickAudioControl(2)
+    } else if (p5c.mouseY >= rectY + rectStep - rectStep / 2 && p5c.mouseY < rectY + rectStep + rectStep / 2) {
+      clickAudioControl(3)
+    } else if (p5c.mouseY >= rectY + 2 * rectStep - rectStep / 2 && p5c.mouseY < rectY + 2 * rectStep + rectStep / 2) {
+      clickAudioControl(4)
+    }
+
+  }
   /*
   createAudioControls: used to create the audio controls when passing to common mode
-  TODO: add an upload button
-  TODO: add a volume slider
   */
   var waveRefreshInterval;
+  clickAudioControl = function(id){
+    //id:
+    //0: analyse
+    //1: play
+    //2: stop
+    //3: record
+    //4: upload
+    realUploadButton = p5c.createFileInput(handleFile)
+    //hide realUploadButton and give it the realUpload ID
+    realUploadButton.hide()
+    realUploadButton.id('realUpload')
 
+    uploadButton = document.getElementById('realUpload')
+    switch (id) {
+      case 0:
+        if (recording) {
+          recorder.stop();
+          recording = false;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        }
+        if (soundFile != null) {
+          soundFile.stop()
+        }
+        if (leftChannel != null && isAnalysing == false) {
+          //if we have a soundFile, we can analyse it
+          analyseSoundFile()
+        }
+        break;
+      case 1:
+        if (recording) {
+          recorder.stop();
+          recording = false;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        }
+        if (!soundFile != null) {
+          if (!soundFile.isPlaying()) {
+            soundFile.play()
+          } else {
+            soundFile.pause()
+          }
+        }
+        break;
+      case 2:
+        if (recording) {
+          recorder.stop();
+          recording = false;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        }
+        if (soundFile != null) {
+          soundFile.stop()
+        }
+        break;
+      case 3:
+        if (!recording && !isAnalysing) {
+          soundFile = new p5.SoundFile();
+          //soundFile.buffer = 0;
+          recorder.record(soundFile);
+          recording = true;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        } else {
+          recorder.stop();
+          recording = false;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        }
+        break;
+      case 4:
+        if (recording) {
+          recorder.stop();
+          recording = false;
+          recordingWaveDrawer(waveRefreshInterval, recording);
+        }
+        if (soundFile != null) {
+          soundFile.stop()
+        }
+        if (isAnalysing == false) {
+          uploadButton.click()
+        }
+        break;
+    }
+    uploadButton.remove()
+    realUploadButton.remove()
+  }
+  /*
   createAudioControls = function () {
     recordButton = p5c.createDiv('')
     recordButton.addClass('record_button')
@@ -1437,6 +1631,7 @@ window.P$ = new p5(p5c => {
     })
     }
   }
+  */
 
   recordingWaveDrawer = function (waveRefreshInterval, recording){
     //for some reason the whole thing doesn't work at the end unless we do this bad shit

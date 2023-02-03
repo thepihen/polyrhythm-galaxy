@@ -792,13 +792,6 @@ p5_instance = function (p5c) {
     p5c.textSize(21)
     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
-    p5c.textFont(font)
-    p5c.noStroke()
-    p5c.fill(255)
-    p5c.textAlign(p5c.CENTER)
-    p5c.textSize(21)
-    p5c.text(metroFlag, p5c.width / 2 - 200, p5c.height / 2 - 200);
-
 
     if(!noReference){
         drawReference();
@@ -1102,7 +1095,6 @@ p5_instance = function (p5c) {
       yLineH = 3 / 4 * p5c.height;
       v = yLineH / (60 / bpm * 8 * p5c.frameRate());
       //recenter circles on the lines
-      //TODO: make this so it works only with active circles
       leftCircles.forEach((item, i) => {
         let c = leftCircles[i];
         c.setNewCoords(xLine1, p5c.map(c.y, 0, c.windowH, 0, p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
@@ -1284,11 +1276,6 @@ p5_instance = function (p5c) {
                     lastL = 1;
                 }
 
-
-                /*** add points to the score of the player proportionally to the
-                //inverse of the distance between the circle and the reference yLineH
-                let points = Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))*** */
-
                 // RULES FOR CALCULATING POINTS
                 // distance*10 = [0,7]     -> perfect -> 100 points
                 // distance*10 = [7, 20]   -> amazing -> 75 points
@@ -1390,7 +1377,6 @@ p5_instance = function (p5c) {
                 reSetup()
               }
               else{
-                /*miss.play();*/
                 lastMiss +=1;
                 lastMiss = lastMiss % 3;
                 soundtrackMiss.player(lastMiss).start();
@@ -1622,7 +1608,6 @@ p5_instance = function (p5c) {
             multiplierSound()
         }
         else if (multiplier < lastMultiplier){
-            /*multFail.play()*/
             soundtrackMultipliers.player("multFail").start();
         }
 
@@ -1630,39 +1615,30 @@ p5_instance = function (p5c) {
     function multiplierSound() {
         switch(multiplier){
             case 2:
-                /*mult2.play()*/
                 soundtrackMultipliers.player("mult2").start();
             break;
             case 3:
-                /*mult3.play()*/
                 soundtrackMultipliers.player("mult3").start();
             break;
             case 4:
-                /*mult4.play()*/
                 soundtrackMultipliers.player("mult4").start();
             break;
             case 5:
-                /*mult5.play()*/
                 soundtrackMultipliers.player("mult5").start();
             break;
             case 6:
-                /*mult6.play()*/
                 soundtrackMultipliers.player("mult6").start();
             break;
             case 7:
-                /*mult7.play()*/
                 soundtrackMultipliers.player("mult7").start();
             break;
             case 8:
-                /*mult8.play()*/
                 soundtrackMultipliers.player("mult8").start();
             break;
             case 9:
-                /*mult9.play()*/
                 soundtrackMultipliers.player("mult9").start();
             break;
             case 10:
-                /*mult10.play()*/
                 soundtrackMultipliers.player("mult10").start();
             break;
             default:

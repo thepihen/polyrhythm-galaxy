@@ -22,7 +22,14 @@ Tone.Transport.start();
 // ramp the bpm to 120 over 10 seconds
 Tone.Transport.bpm.rampTo(120, 10);
 */
-
+var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
+                "The game will provide you two rhythms, one to the left and one to the right, " +
+                "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
+                "every time a falling rhythm dot is inside the yellow circle of the related side.&#10;";
+var tutorialText2 = "Pay Attention!&#10;The provided rhythms will be more and more difficult and every time " +
+                "you miss a dot or press a key at the wrong time you will lose one of the three available " +
+                "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
+                "in order to increase extra points bonus and climb the global ranking!";
 //needed until we find a better way to track document focus changes
 //(see bottom of this file)
 //this just tracks the state
@@ -66,6 +73,7 @@ p5_instance = function (p5c) {
   var scheduleL;
   var scheduleR;
   var scheduleMetro
+  var soundtrack;
   //frameRate (need this to use it outside of )
   var frate;
   /*
@@ -74,13 +82,13 @@ p5_instance = function (p5c) {
   (e.g. fonts, sounds,...)
   */
   p5c.preload = function () {
-    hit = p5c.loadSound('assets/hit.wav');
+    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
+    /*hit = p5c.loadSound('assets/hit.wav');
     hitSoundL = p5c.loadSound('assets/hitSXwav.wav');
     hitSoundR = p5c.loadSound('assets/hitDXwav.wav');
     miss = p5c.loadSound('assets/miss.wav')
     met1 = p5c.loadSound('assets/met1.wav');
     met2 = p5c.loadSound('assets/met2.wav');
-    font = p5c.loadFont('assets/Montserrat-Bold.ttf');
     beat1 = p5c.loadSound('assets/BEAT1wav.wav');
     beat2 = p5c.loadSound('assets/BEAT2wav.wav');
     mult1 = p5c.loadSound('assets/mult1.wav');
@@ -95,8 +103,41 @@ p5_instance = function (p5c) {
     mult10 = p5c.loadSound('assets/mult10.wav');
     multFail = p5c.loadSound('assets/multFail.wav');
     die = p5c.loadSound('assets/die.wav');
-    record = p5c.loadSound('assets/record.wav');
-    //imgPodium = p5c.loadImage('assets/podium.png');
+    record = p5c.loadSound('assets/record.wav');*/
+    soundtrackDieRecord = new Tone.Players({
+        die: "assets/die.wav",
+        record: "assets/record.wav"
+    }).toDestination();
+
+    soundtrackHitL1 = new Tone.Player("assets/hitSXwav.wav").toDestination();
+    soundtrackHitL2 = new Tone.Player("assets/hitSXwav.wav").toDestination();
+
+    soundtrackHitR1 = new Tone.Player("assets/hitDXwav.wav").toDestination();
+    soundtrackHitR2 = new Tone.Player("assets/hitDXwav.wav").toDestination();
+
+    soundtrackMiss = new Tone.Players({
+        0: "assets/miss.wav",
+        1: "assets/miss.wav",
+        2: "assets/miss.wav",
+        3: "assets/miss.wav",
+    }).toDestination();
+
+    soundtrackMultipliers = new Tone.Players({
+        mult2: "assets/mult2.wav",
+        mult3: "assets/mult3.wav",
+        mult4: "assets/mult4.wav",
+        mult5: "assets/mult5.wav",
+        mult6: "assets/mult6.wav",
+        mult7: "assets/mult7.wav",
+        mult8: "assets/mult8.wav",
+        mult9: "assets/mult9.wav",
+        mult10: "assets/mult10.wav",
+        multFail: "assets/multFail.wav",
+    }).toDestination();
+    
+    soundtrackBeat1 = new Tone.Player("assets/BEAT1wav.wav").toDestination();
+    soundtrackBeat2 = new Tone.Player("assets/BEAT2wav.wav").toDestination();
+
   }
 
 
@@ -154,7 +195,10 @@ p5_instance = function (p5c) {
 
   // RANKING STUFF
   var rankingDisplayed = false;
-  var firstShow = true;
+  var firstShowRanking = true;
+  var badNickname = false;
+  var badNicknameText;
+  var imgPodium;
   var titleRanking;
   var columnRanking1 = [];
   var columnRanking2 = [];
@@ -175,6 +219,38 @@ p5_instance = function (p5c) {
   pointsRanking[4] = 5
   // TUTORIAL STUFF
   var tutorialDisplayed = false;
+  var placeZeroTutorialDisplayed = false;
+  var tutorialButton;
+
+  // OTHER
+  var exitButton;
+  var animationY
+  var animationXLeft;
+  var animationXRight;
+  var animationDisplayedLeft = false;
+  var animationDisplayedRight = false;
+  var animationVisualMetronomeDisplayed = false;
+  var intervalAnimationVisualMetronome;
+  var intervalAnimationGuides;
+  var intervalAnimationLeft;
+  var intervalAnimationRight;
+  var animationTimeout1;
+  var animationTimeout2;
+  var animationTimeout3;
+  var animationTimeout4;
+  var animationTimeout5;
+  var animationTimeout6;
+  var animationTimeout7;
+  var animationTimeout8;
+  var animationRadius;
+  var guideR = 250;
+  var guideG = 127;
+  var guideB = 250;
+
+  // BUG MULTIPLE DOTS OR MISSES VERY CLOSE
+  var lastL = 2;
+  var lastR = 2;
+  var lastMiss = 4;
 
   /*
   Circle(): class representing a beat circle.
@@ -207,7 +283,7 @@ p5_instance = function (p5c) {
       this.flag = 1;
       this.speed = v
       this.side = 0 + (this.x == xLine2);
-      this.fillColor = p5c.color(50 + 200 * (1 - this.side), 10, 50 + 200 * (this.side))
+      this.fillColor = p5c.color((1 - this.side) * 160 + 65, 20, 220 + (this.side))
       this.id = id;
     }
     toggle() {
@@ -249,7 +325,10 @@ p5_instance = function (p5c) {
                 reSetup()
             }
             else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss += 1;
+                lastMiss = (lastMiss % 3);
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -323,12 +402,14 @@ p5_instance = function (p5c) {
   function reSetup(){
     resetGame();
     if (gameScore > pointsRanking[4]){
-        record.play()
+        /*record.play()*/
+        soundtrackDieRecord.player("record").start();
         newPodium()
         dieNewRecordMenuTransition()
     }
     else{
-        die.play()
+        /*die.play()*/
+        soundtrackDieRecord.player("die").start();
         gameScore = 0;
         dieMenuTransition()
     }
@@ -346,13 +427,19 @@ p5_instance = function (p5c) {
     firstElemInGameR = 0;
     lastElemL = 0;
     lastElemR = 0;
-    miss.stop();
-    beat1.stop();
-    beat2.stop();
+    /*miss.stop();*/
+    for( let i=0 ; i<3; i++){
+        soundtrackMiss.player(i).stop();
+    }
+
+    /*beat1.stop();*/
+    soundtrackBeat1.stop();
+    /*beat2.stop();*/
+    soundtrackBeat2.stop();
     metroFlag = 0;
     Tone.Transport.cancel()
     stopCircleArrays()
-    p5c.getAudioContext().resume()
+    /*p5c.getAudioContext().resume()*/
     lifes = 3;
     rhythmLimit = 4;
     metroFlagChange = 0;
@@ -377,7 +464,7 @@ p5_instance = function (p5c) {
     see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
     There's no need for the audio context to be running as soon as the page is loaded
     */
-    p5c.getAudioContext().suspend();
+    /*p5c.getAudioContext().suspend();*/
     p5c.frameRate(60) //this doesn't hope but it's like lighting a candle 
     //in a church hoping for a miracle
     // Trying to solve audio distortion by using a compressor
@@ -392,7 +479,7 @@ p5_instance = function (p5c) {
     colorMenu = 10;
     textMenu = 'Press the spacebar\n to start'
 
-    //font = p5c.textFont('Montserrat', 30)
+    Tone.start();
 
     bpm = 130;
     scheduleL = null;
@@ -413,45 +500,251 @@ p5_instance = function (p5c) {
 
     startCircleArrays();
     textUpTransition('Press the spacebar\nto start')
-    // ranking stuff
-    rankingButton = p5c.createDiv('')
-    rankingButton.addClass('ranking_button')
-    rankingButton.mouseOver(displayRanking)
+
+      // ranking stuff
+    imgPodium = p5c.createImg(
+          'assets/podium.png',
+          'podium logo'
+        );
+    imgPodium.addClass('ranking_button')
+    imgPodium.mouseOver(displayRanking)
     canvas.mouseOver(noDisplayRanking)
 
+    // tutorial stuff
+    tutorialButton = p5c.createDiv('?')
+    tutorialButton.addClass('tutorial_button')
+    tutorialButton.mousePressed(displayTutorial)
 
+    // exit stuff
+    exitButton = p5c.createDiv('X')
+    exitButton.addClass('exit_button')
+
+    noPlayingAnimation();
   }
-  displayRanking = function () {
-    if (firstShow){firstShow = false}
-    rankingDisplayed = true
-    titleRanking = p5c.createDiv('ENDLESS MODE GLOBAL RANKING').size(200, 70);
-    titleRanking.position(p5c.width/2,p5c.height/2 - 250)
-    titleRanking.addClass('ranking_text')
-    for (let i = 0; i<6 ; i++){
-        if(i==0){
-            columnRanking1[i] = p5c.createDiv('Position').size(200, 70);
-            columnRanking2[i] = p5c.createDiv('Name').size(200, 70);
-            columnRanking3[i] = p5c.createDiv('Points').size(200, 70);
-        }
+
+  noPlayingAnimation = function () {
+    animationDisplayedLeft = false;
+    animationDisplayedRight = false;
+    animationXLeft = 0;
+    animationXRight = p5c.width;
+    animationY = yLineH;
+    animationRadius = 10;
+    intervalAnimationLeft = setInterval( () => {
+            animationDisplayedLeft = true;
+            animationTimeout1 = setTimeout( () => {
+                animationDisplayedLeft = false;
+                animationXLeft = 0;
+                } , 8000)
+        }, 15000);
+    animationTimeout2 = setTimeout(() => {
+            intervalAnimationRight = setInterval( () => {
+            animationDisplayedRight = true;
+            animationTimeout3 = setTimeout( () => {
+                animationDisplayedRight = false;
+                animationXRight = p5c.width;
+                } , 8000)
+        }, 15000);} , 3000);
+
+    animationTimeout4 = setTimeout( () => {
+        // FIRST GUIDES ANIMATION
+        guideR = 250;
+        guideG = 127;
+        guideB = 250;
+        animationTimeout5 = setTimeout( () => {
+            guideR = 250;
+            guideG = 127;
+            guideB = 250;
+            
+            } , 700)
+        // START GUIDES ANIMATION INTERVAL
+        intervalAnimationGuides = setInterval( () => {
+            guideR = 12;
+            guideG = 0;
+            guideB = 0;
+            animationTimeout6 = setTimeout( () => {
+                guideR = 250;
+                guideG = 127;
+                guideB = 250;
+                } , 700)
+        }, 7000);
+
+        // FIRST METRONOME ANIMATION
+        animationTimeout7 = setTimeout(() => {
+            animationVisualMetronomeDisplayed = true;
+            metroColor = 1;
+            setTimeout( () => {metroColor = 2;} , 150)
+            setTimeout( () => {metroColor = 3;} , 300)
+            setTimeout( () => {metroColor = 4;} , 450)
+            setTimeout( () => {animationVisualMetronomeDisplayed = false;} , 600)
+            },
+        1100)
+        // START METRONOME ANIMATION INTERVAL
+        animationTimeout8 = setTimeout(() => {
+            intervalAnimationVisualMetronome = setInterval( () => {
+                    animationVisualMetronomeDisplayed = true;
+                    metroColor = 1;
+                    setTimeout( () => {metroColor = 2;} , 150)
+                    setTimeout( () => {metroColor = 3;} , 300)
+                    setTimeout( () => {metroColor = 4;} , 450)
+                    setTimeout( () => {animationVisualMetronomeDisplayed = false;} , 600)
+                              },
+                        7000);
+                    },
+            1100);
+        }, 2000);
+  }
+  clearNoPlayingAnimations = function () {
+      clearInterval(intervalAnimationVisualMetronome);
+      clearInterval(intervalAnimationGuides);
+      clearInterval(intervalAnimationLeft);
+      clearInterval(intervalAnimationRight);
+      clearInterval(animationTimeout1);
+      clearInterval(animationTimeout2);
+      clearInterval(animationTimeout3);
+      clearInterval(animationTimeout4);
+      clearInterval(animationTimeout5);
+      clearInterval(animationTimeout6);
+      clearInterval(animationTimeout7);
+      clearInterval(animationTimeout8);
+      animationVisualMetronomeDisplayed = false;
+      animationDisplayedLeft = false;
+      animationDisplayedRight = false;
+    }
+  var nextButton;
+  var previousButton;
+  var imgStartingFrame;
+  var imgPlayingFrame;
+  var textFirstDisplay;
+  var textFirstDisplay2;
+  var place = 0;
+  displayTutorial = function () {
+    if(!started && !rankingDisplayed){
+            if(tutorialDisplayed){
+                nextButton.remove();
+
+                if(place == 0){
+                        textFirstDisplay.remove();
+                        textFirstDisplay2.remove();
+                        placeZeroTutorialDisplayed = false;
+                        previousButton.remove();
+                        nextButton.remove();
+                    }
+                if(place == 1){
+                    imgStartingFrame.remove();
+                    previousButton.remove();
+                    nextButton.remove();
+                    }
+                if(place == 2){
+                    imgPlayingFrame.remove();
+                    previousButton.remove();
+                    }
+                place=0;
+                tutorialDisplayed = false;
+            }
         else{
-            columnRanking1[i] = p5c.createDiv(i).size(200, 70);
-            columnRanking2[i] = p5c.createDiv(namesRanking[i-1]).size(250, 70);
-            columnRanking3[i] = p5c.createDiv(pointsRanking[i-1]).size(200, 70);
+                nextButton = p5c.createDiv('>');
+                nextButton.addClass('next_button');
+                nextButton.mousePressed(nextButtonFunction)
+
+                textFirstDisplay = p5c.createDiv(tutorialText)
+                textFirstDisplay.addClass('tutorial_text')
+
+                textFirstDisplay2 = p5c.createDiv(tutorialText2)
+                textFirstDisplay2.addClass('tutorial_text')
+                textFirstDisplay2.style("top","62%")
+
+                placeZeroTutorialDisplayed = true;
+                tutorialDisplayed = true;
+            }
+    }
+  }
+
+  nextButtonFunction = function() {
+    if(place == 0){
+        textFirstDisplay.remove();
+        textFirstDisplay2.remove();
+        placeZeroTutorialDisplayed = false;
+        previousButton = p5c.createDiv('<');
+        previousButton.addClass('previous_button');
+        previousButton.mousePressed(previousButtonFunction)
+        place += 1;
+        imgStartingFrame = p5c.createImg(
+                'assets/frame0.png',
+                'starting Frame'
+             );
+        imgStartingFrame.addClass('tutorial_image')
+    }
+    else if (place == 1) {
+        nextButton.remove()
+        place += 1;
+        imgStartingFrame.remove();
+        nextButton.style("opacity","100%")
+        imgPlayingFrame = p5c.createImg(
+                'assets/frame1.png',
+                'playing Frame'
+            );
+        imgPlayingFrame.addClass('tutorial_image')
+    }
+  }
+  previousButtonFunction = function() {
+    if (place == 1) {
+        place -= 1;
+        previousButton.remove()
+        placeZeroTutorialDisplayed = true;
+        textFirstDisplay = p5c.createDiv(tutorialText)
+        textFirstDisplay.addClass('tutorial_text')
+        textFirstDisplay2 = p5c.createDiv(tutorialText2)
+        textFirstDisplay2.addClass('tutorial_text')
+        textFirstDisplay2.style("top","65%")
+        imgStartingFrame.remove()
+    }
+    else if (place == 2) {
+        place -=1
+        nextButton = p5c.createDiv('>');
+        nextButton.addClass('next_button');
+        nextButton.mousePressed(nextButtonFunction)
+        imgPlayingFrame.remove()
+        imgStartingFrame = p5c.createImg(
+                'assets/startingFrame.png',
+                'starting Frame'
+             );
+        imgStartingFrame.addClass('tutorial_image')
+    }
+  }
+
+  displayRanking = function () {
+    if(!started && !tutorialDisplayed){
+        if (firstShowRanking){firstShowRanking = false}
+        rankingDisplayed = true
+        titleRanking = p5c.createDiv('ENDLESS MODE GLOBAL RANKING').size(200, 70);
+        titleRanking.position(p5c.width/2,p5c.height/2 - 250)
+        titleRanking.addClass('ranking_text')
+        for (let i = 0; i<6 ; i++){
+            if(i==0){
+                columnRanking1[i] = p5c.createDiv('Position').size(200, 70);
+                columnRanking2[i] = p5c.createDiv('Name').size(200, 70);
+                columnRanking3[i] = p5c.createDiv('Points').size(200, 70);
+            }
+            else{
+                columnRanking1[i] = p5c.createDiv(i).size(200, 70);
+                columnRanking2[i] = p5c.createDiv(namesRanking[i-1]).size(250, 70);
+                columnRanking3[i] = p5c.createDiv(pointsRanking[i-1]).size(200, 70);
+            }
+            columnRanking1[i].position(p5c.width/2 - 200,p5c.height/2  - 140 + i*75)
+            columnRanking1[i].addClass('ranking_text')
+
+            columnRanking2[i].position(p5c.width/2,p5c.height/2  - 140 + i*75)
+            columnRanking2[i].addClass('ranking_text')
+
+            columnRanking3[i].position(p5c.width/2 + 200,p5c.height/2  - 140 + i*75)
+            columnRanking3[i].addClass('ranking_text')
+            columnRanking3[i].style('transform', 'translate(-50%, -50%)')
         }
-        columnRanking1[i].position(p5c.width/2 - 200,p5c.height/2  - 140 + i*75)
-        columnRanking1[i].addClass('ranking_text')
-
-        columnRanking2[i].position(p5c.width/2,p5c.height/2  - 140 + i*75)
-        columnRanking2[i].addClass('ranking_text')
-
-        columnRanking3[i].position(p5c.width/2 + 200,p5c.height/2  - 140 + i*75)
-        columnRanking3[i].addClass('ranking_text')
-        columnRanking3[i].style('transform', 'translate(-50%, -50%)')
     }
   }
 
   noDisplayRanking = function () {
-      if(!firstShow){
+      if(!firstShowRanking){
         rankingDisplayed = false
         titleRanking.remove()
         for (let i = 0; i<6 ; i++){
@@ -487,13 +780,14 @@ p5_instance = function (p5c) {
   (by default 60 frames per second) 
   */
   p5c.draw = function () {
-    p5c.background(10);
+    p5c.clear();
+    p5c.background("rgba(255, 255, 255, 0)");
     //drawPodium()
-    p5c.textFont(font)
+    p5c.textFont('Aldrich')
     p5c.noStroke()
     p5c.fill(colorMenu)
     p5c.textAlign(p5c.CENTER)
-    p5c.textSize(23)
+    p5c.textSize(15)
     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
     if(!noReference){
@@ -504,48 +798,51 @@ p5_instance = function (p5c) {
     // Visual Metronome ( only outer ellipses )
     p5c.fill("black");
     p5c.strokeWeight(1);
-    p5c.stroke(240, 240, 10)
+    p5c.stroke(12)
     p5c.ellipse(xLine1 + (xLine2 - xLine1)/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*2/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*3/5 , yLineH + 100, guideRadius, guideRadius);
     p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
 
-    if(rankingDisplayed){
-        rankingBackground();
-    }
+    //diplay endless mode
+    p5c.textFont('Monoton', 30)
+    p5c.fill(250, 127, 250)
+    p5c.text('ENDLESS MODE', 220, 70)
 
     if (started) {
       // Visual Metronome ( inside ellipses )
-      p5c.fill("yellow");
+      p5c.fill(250, 127, 250);
       if (metroFlag > 0){
           metroColor = ((metroFlag - 1) % 4) + 1
       }
+
       p5c.strokeWeight(1);
-      p5c.stroke(240, 240, 10)
+      p5c.stroke(250, 127, 250)
       p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
 
-      p5c.textFont(font)
-
       //write a text in p5.js displaying "Score: " and the score
-      p5c.fill(255)
-      p5c.textSize(30)
-      p5c.noStroke()
-      p5c.text("Score: " + gameScore, 150, 60)
+      p5c.textFont('Monoton')
+      p5c.fill(250, 127, 250)
+      p5c.textSize(80)
+      p5c.stroke(12)
+      p5c.text(gameScore, p5c.width/2, 150)
 
       // Display Global Multiplier
+      p5c.textFont('Aldrich')
+      p5c.textSize(30)
       p5c.noFill()
       p5c.strokeWeight(2);
-      p5c.stroke("yellow");
-      p5c.ellipse(300,60 - 9,60,60)
+      p5c.stroke(250, 127, 250);
+      p5c.ellipse(p5c.width/2 - 2,250 - 9,60,60)
 
       p5c.fill(255)
       p5c.noStroke()
-      p5c.text("x" + multiplier,300,60)
+      p5c.text("x" + multiplier,p5c.width/2,250)
 
       // Display Left and Right Rhythms
-      p5c.fill("yellow")
+      p5c.fill(250, 127, 250)
       p5c.noStroke()
-      p5c.textSize(300)
+      p5c.textSize(200)
       p5c.text(visualLeftR, (p5c.width / 2 - p5c.width / 12)/2, 400)
       p5c.text(visualRightR,p5c.width - (p5c.width / 2 - p5c.width / 12)/2, 400)
 
@@ -557,49 +854,51 @@ p5_instance = function (p5c) {
       //p5c.text("MetroFlag : " + metroFlag, 100, 170)*/
 
       // Display available Lifes
+
       p5c.fill("white")
       p5c.noStroke()
-      p5c.textSize(30)
-      p5c.text("Lifes : " + lifes, p5c.width - 150, 60)
+      p5c.textSize(25)
+      p5c.text("Lifes : " + lifes, p5c.width - 475, p5c.height - 200)
 
 
       p5c.fill("white")
       p5c.textSize(15)
       // Consecutive Great Hits and relative Multiplier
-      p5c.text("Consecutive\nGreat", xLine2 + 1*(p5c.width - xLine2)/4, p5c.height - 125 )
-      p5c.text(greatCounter, xLine2 + 1*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      p5c.text("Consecutive\nGreat", p5c.width - 500, p5c.height - 650)
+      p5c.text(greatCounter, p5c.width - 500, p5c.height - 600 )
       if (multiplierGreat > 0){
         p5c.text(multiplierGreat, xLine2 + 1*(p5c.width - xLine2)/4 , p5c.height - 50 )
       }
 
       // Consecutive Amazing Hits and relative Multiplier
-      p5c.text("Consecutive\nAmazing", xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 125 )
-      p5c.text(amazingCounter, xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      p5c.text("Consecutive\nAmazing", p5c.width - 330, p5c.height - 650 )
+      p5c.text(amazingCounter, p5c.width - 330, p5c.height - 600 )
       if (multiplierAmazing > 0){
         p5c.text(multiplierAmazing, xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 50 )
       }
 
       // Consecutive Perfect Hits and relative Multiplier
-      p5c.text("Consecutive\nPerfect", xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 125 )
-      p5c.text(perfectCounter, xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 75 )
+      p5c.text("Consecutive\nPerfect", p5c.width - 160 , p5c.height - 650 )
+      p5c.text(perfectCounter, p5c.width -160 , p5c.height - 600 )
       if (multiplierPerfect > 0){
         p5c.text(multiplierPerfect, xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 50 )
       }
 
 
       if (rhythmTransition){
-            p5c.fill("darkred")
-            p5c.stroke('darkred');
+            p5c.fill(128, 0, 0)
+            p5c.noStroke();
             p5c.strokeWeight(4);
             p5c.textSize(75);
             p5c.text(visualNextLeftR, (p5c.width / 2 - p5c.width / 12)/2, 500);
             p5c.text(visualNextRightR, p5c.width - (p5c.width / 2 - p5c.width / 12)/2 , 500);
       }
       if (newConsecutiveHitsBonus){
+            p5c.textFont('Aldrich')
             p5c.fill("white")
             p5c.noStroke()
-            p5c.textSize(40)
-            p5c.text(consecutiveHits + " CONSECUTIVE HITS", xLine1/2, yLineH + (p5c.height - yLineH)/2 )
+            p5c.textSize(20)
+            p5c.text(consecutiveHits + " CONSECUTIVE HITS!", xLine1/2 + 50, p5c.height - 200)
       }
       //we're in the game, draw the reference and update and show the cirlces
 
@@ -610,11 +909,12 @@ p5_instance = function (p5c) {
         //The class should contain the message, the x and y coordinates, 
         //the color, the size, and eventually the time it should be displayed for
         p5c.fill(12)
-        p5c.textSize(30)
-        p5c.stroke(20,100,240)
-        p5c.strokeWeight(4);
-        p5c.text(hitMessages[0], xLine1 - 200, yLineH + 50)
-        p5c.text(hitMessages[1], xLine2 + 200, yLineH + 50)
+        p5c.textSize(20)
+        p5c.textFont('Aldrich')
+        p5c.stroke(246, 41, 202)
+        p5c.text(hitMessages[0], xLine1 - 100, yLineH + 50)
+        p5c.stroke(85, 35, 222)
+        p5c.text(hitMessages[1], xLine2 + 100, yLineH + 50)
 
         let nL = firstElemInGameL + leftElem
         let nR = firstElemInGameR + rightElem
@@ -649,6 +949,48 @@ p5_instance = function (p5c) {
         }
       } 
     }
+
+    // Ranking Stuff
+    if(badNickname){
+        p5c.textFont(font)
+        p5c.noStroke()
+        p5c.fill("red")
+        p5c.textAlign(p5c.CENTER)
+        p5c.textSize(15)
+        p5c.text(badNicknameText, p5c.width / 2, p5c.height / 2 + 120);
+    }
+
+    if(animationDisplayedLeft){
+        animationXLeft = animationXLeft + 2;
+        p5c.fill(246, 41, 202)
+        p5c.noStroke()
+        for(let i =0; i<16; i++){
+            if(animationXLeft - 15*i < xLine1){p5c.ellipse(animationXLeft - 15*i ,animationY,animationRadius,animationRadius)}
+        }
+    }
+
+    if(animationDisplayedRight){
+        animationXRight = animationXRight - 2;
+        p5c.fill(85, 35, 222)
+        p5c.noStroke()
+        for(let i =0; i<16; i++){
+            if(animationXRight + 15*i > xLine2){p5c.ellipse(animationXRight + 15*i ,animationY,animationRadius,animationRadius)}
+        }
+    }
+    if(animationVisualMetronomeDisplayed){
+        p5c.fill(250, 127, 250);
+        p5c.strokeWeight(1);
+        p5c.stroke(250, 127, 250)
+        p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
+    }
+
+    if(rankingDisplayed){
+        rankingBackground();
+    }
+
+    if(tutorialDisplayed){
+        tutorialBackground();
+    }
   }
 
     var v; //speed of circles in [pixel/frame]
@@ -681,25 +1023,23 @@ p5_instance = function (p5c) {
     drawReference(): draws the guide
     */
     drawReference = function () {
-      p5c.stroke("white");
-      p5c.strokeWeight(1);
+      p5c.stroke("black");
+      p5c.strokeWeight(3);
       p5c.line(xLine1, 0, xLine1, p5c.height);
       p5c.line(xLine2, 0, xLine2, p5c.height);
       p5c.line(0, yLineH, p5c.width, yLineH)
       p5c.fill(12);
-      p5c.strokeWeight(4);
-      p5c.stroke("yellow")
+      p5c.strokeWeight(3);
+      p5c.stroke(guideR, guideG, guideB)
       p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
       p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
       p5c.fill(12);
-      p5c.strokeWeight(4);
+      /*p5c.strokeWeight(4);
       p5c.stroke("yellow")
-      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
+      p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);*/
 
     }
     rankingBackground = function () {
-
-        // Background
         p5c.strokeWeight(1);
         p5c.stroke(255,255,255)
         p5c.fill(62,69,75,255)
@@ -712,6 +1052,31 @@ p5_instance = function (p5c) {
         p5c.translate(-335, -335);
         p5c.rect(p5c.width/2,p5c.height/2,600,600)
         p5c.translate(+335,+335)
+    }
+
+    tutorialBackground = function () {
+        p5c.strokeWeight(1);
+        p5c.stroke(255,255,255)
+        p5c.fill(62,69,75,255)
+        p5c.translate(-480, -270);
+        p5c.rect(p5c.width/2,p5c.height/2,960,540)
+        p5c.translate(480, 270);
+
+        p5c.noStroke()
+        p5c.fill(62,69,75,100)
+        p5c.translate(-500, -290);
+        p5c.rect(p5c.width/2,p5c.height/2,960,540)
+        p5c.translate(500, 290);
+
+        if(placeZeroTutorialDisplayed){
+            p5c.textFont(font)
+            p5c.noStroke()
+            p5c.fill("red")
+            p5c.textAlign(p5c.CENTER)
+            p5c.textSize(10)
+            p5c.text("Click here\nto see visual\nexamples of a\nmatch game", p5c.width / 2 + 435, p5c.height / 2 + 30);
+        }
+
     }
 
     /* 
@@ -775,6 +1140,7 @@ p5_instance = function (p5c) {
         textUpDownTransition('You Died',10)
         setTimeout(() => {
             textUpTransition('Press the spacebar\nto retry')
+            noPlayingAnimation()
             restart = true
             }, 2000)
     }
@@ -785,7 +1151,7 @@ p5_instance = function (p5c) {
             textUpDownTransition('But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!',30)
             }, 3000)
         setTimeout(() => {
-            textUpTransition('Insert your nickname!',30)
+            textUpTransition('Insert your\n nickname!', 20)
             }, 10000)
         setTimeout(() => {
             inputNickNameTransition()
@@ -799,24 +1165,35 @@ p5_instance = function (p5c) {
         nicknameInput.size(200);
 
         nicknameSubmit = p5c.createButton('SUBMIT');
-        nicknameSubmit.style('font-family' , 'Montserrat, sans-serif')
+        nicknameSubmit.style('font-family' , 'Aldirch')
         nicknameSubmit.position(p5c.width/2, p5c.height/2 + 75);
         nicknameSubmit.addClass('translateClass')
         nicknameSubmit.size(100);
 
         nicknameSubmit.mousePressed(() => {
             let name = nicknameInput.value()
-            pointsRanking[posRecord] = gameScore;
-            namesRanking[posRecord] = name;
-            nicknameInput.remove()
-            nicknameSubmit.remove()
-            gameScore = 0;
-            textUpDownTransition('Updated Ranking!',30)
-            setTimeout(() => {
-                    textUpTransition('Press the spacebar\nto retry')
-                    restart = true
-                }, 4000)
-
+            if ( name == ''){
+                badNicknameText = "The string is empty\ncannot submit the nickname!"
+                badNickname = true;
+            }
+            else if ( name.length > 10){
+                badNicknameText = "Nickname should be maximum\n10 characters long!"
+                badNickname = true;
+            }
+            else{
+                badNickname = false;
+                pointsRanking[posRecord] = gameScore;
+                namesRanking[posRecord] = name;
+                nicknameInput.remove()
+                nicknameSubmit.remove()
+                gameScore = 0;
+                textUpDownTransition('Updated Ranking!',30)
+                setTimeout(() => {
+                        textUpTransition('Press the spacebar\nto retry')
+                        noPlayingAnimation();
+                        restart = true
+                    }, 4000)
+                }
             })
     }
 
@@ -861,12 +1238,21 @@ p5_instance = function (p5c) {
       let key = p5c.key;
       //check if any of the active circles is overlapping with the
       //reference
+      if (key == "p" || key == "P"){
+            if(animationDisplayedLeft){
+                animationDisplayedLeft = false;
+                animationXLeft = 0;
+            }
+            else{
+                animationDisplayedLeft = true;
+            }
+      }
       if (key == ' '){
-          if (!started && restart) {
-            clearInterval(menuTransitionInterval)
-            textDownTransition(5)
-            p5c.userStartAudio();
-            Tone.start();
+          if (!started && restart && !rankingDisplayed && !tutorialDisplayed) {
+            clearNoPlayingAnimations();
+            clearInterval(menuTransitionInterval);
+            textDownTransition(5);
+            /*p5c.userStartAudio();*/
             Tone.Transport.start();
             toggleRhythms();
             visualLeftR = leftR;
@@ -891,7 +1277,16 @@ p5_instance = function (p5c) {
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitL = true;
                 //play sound
-                hitSoundL.play();
+                /*hitSoundL.play();*/
+                if(lastL == 1){
+                    soundtrackHitL2.start();
+                    lastL = 2;
+                }
+                else if (lastL == 2){
+                    soundtrackHitL1.start();
+                    lastL = 1;
+                }
+
 
                 /*** add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
@@ -934,7 +1329,10 @@ p5_instance = function (p5c) {
                 reSetup()
               }
               else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss +=1;
+                lastMiss = lastMiss % 3;
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -958,7 +1356,16 @@ p5_instance = function (p5c) {
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitR = true;
                 //play sound
-                hitSoundR.play();
+                /*hitSoundR.play();*/
+                if(lastR == 1){
+                    soundtrackHitR2.start();
+                    lastR = 2;
+                }
+                else if (lastR == 2){
+                    soundtrackHitR1.start();
+                    lastR = 1;
+                }
+
                 // RULES FOR CALCULATING POINTS
                 // distance*10 = [0,7]     -> perfect -> 100 points
                 // distance*10 = [7, 20]   -> amazing -> 75 points
@@ -1006,7 +1413,10 @@ p5_instance = function (p5c) {
                 reSetup()
               }
               else{
-                miss.play();
+                /*miss.play();*/
+                lastMiss +=1;
+                lastMiss = lastMiss % 3;
+                soundtrackMiss.player(lastMiss).start();
                 lastHit = "OK"
                 multiplier = 1
                 multiplierGreat = 0;
@@ -1041,13 +1451,17 @@ p5_instance = function (p5c) {
     //To play the beat in background
       if(metroFlag % 32 == 0){
         //p5c.getAudioContext().resume()
-        beat2.stop();
-        beat1.play()
+        /*beat2.stop();*/
+        // soundtrackBeat2.stop();
+        /*beat1.play()*/
+        soundtrackBeat1.start();
 
       }
       else if (metroFlag % 32 == 16) {
-        beat1.stop()
-        beat2.play()
+        /*beat1.stop()*/
+        // soundtrackBeat1.stop();
+        /*beat2.play()*/
+        soundtrackBeat2.start();
       }
       if (metroFlag % 4 == 0) {
         //met1.play()
@@ -1135,8 +1549,8 @@ p5_instance = function (p5c) {
       }
       if(msg != ""){
         p5c.fill(240);
-        p5c.textFont(font)
-        p5c.textSize(30);
+        p5c.textFont('Aldrich')
+        p5c.textSize(20);
         p5c.text(msg, x, y);
       }
         hitMessages[side] = msg;
@@ -1191,38 +1605,48 @@ p5_instance = function (p5c) {
             multiplierSound()
         }
         else if (multiplier < lastMultiplier){
-            multFail.play()
+            /*multFail.play()*/
+            soundtrackMultipliers.player("multFail").start();
         }
 
     }
     function multiplierSound() {
         switch(multiplier){
             case 2:
-                mult2.play()
+                /*mult2.play()*/
+                soundtrackMultipliers.player("mult2").start();
             break;
             case 3:
-                mult3.play()
+                /*mult3.play()*/
+                soundtrackMultipliers.player("mult3").start();
             break;
             case 4:
-                mult4.play()
+                /*mult4.play()*/
+                soundtrackMultipliers.player("mult4").start();
             break;
             case 5:
-                mult5.play()
+                /*mult5.play()*/
+                soundtrackMultipliers.player("mult5").start();
             break;
             case 6:
-                mult6.play()
+                /*mult6.play()*/
+                soundtrackMultipliers.player("mult6").start();
             break;
             case 7:
-                mult7.play()
+                /*mult7.play()*/
+                soundtrackMultipliers.player("mult7").start();
             break;
             case 8:
-                mult8.play()
+                /*mult8.play()*/
+                soundtrackMultipliers.player("mult8").start();
             break;
             case 9:
-                mult9.play()
+                /*mult9.play()*/
+                soundtrackMultipliers.player("mult9").start();
             break;
             case 10:
-                mult10.play()
+                /*mult10.play()*/
+                soundtrackMultipliers.player("mult10").start();
             break;
             default:
         }

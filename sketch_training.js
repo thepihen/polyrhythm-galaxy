@@ -55,8 +55,6 @@ var yLineH;
 //arrays containing circles ("rhythm hits / beats") for left and right side
 //it would be better to use a queue to manage these
 var circlesNumber = 50;
-//the key point of using these is to avoid using splice to manage arrays and/or
-//to have a constantly growing array. This gives us a better performance
 var leftCircles = new Array(circlesNumber);
 var rightCircles = new Array(circlesNumber);
 var leftElem = 0;
@@ -98,7 +96,7 @@ class Circle {
         this.flag = 1;
         this.speed = v
         this.side = 0 + (this.x == xLine2);
-        this.fillColor = P$.color(50 + 200 * (1 - this.side), 10, 50 + 200 * (this.side))
+        this.fillColor = P$.color((1 - this.side) * 160 + 65, 20, 220 + (this.side))
         this.id = id;
     }
     toggle() {
@@ -160,7 +158,7 @@ class Circle {
                 while (rightCircles[j].flag == 0) {
                     j++;
                     j = j % rightCircles.length;
-                    if (j == firstElemInGameR) {
+                    if(j == firstElemInGameL) {
                         break;
                     }
                 }
@@ -169,7 +167,13 @@ class Circle {
             }
         }
     }
-
+    /*
+    if (this.side == 0) {
+      leftCircles.splice(0, 1)
+    } else if (this.side == 1) {
+      rightCircles.splice(0, 1)
+    }
+    */
     /*
     show(): draws circle on the canvas
     */
@@ -193,6 +197,10 @@ needed in the sketch here; load audio files, fonts, etc, in preload() instead
 */
 function sketchSetup() {
     P$.createCanvas(P$.windowWidth, P$.windowHeight);
+    /*
+    see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
+    There's no need for the audio context to be running as soon as the page is loaded
+    */
     P$.getAudioContext().suspend();
     P$.frameRate(60) //this doesn't hope but it's like lighting a candle
     //in a church hoping for a miracle
@@ -215,6 +223,8 @@ function sketchSetup() {
     //time between notes on the L(eft) side and R(ight) side
     intervalL = 4 * 1 / leftR * 60 / bpm;
     intervalR = 4 * 1 / rightR * 60 / bpm;
+
+    
     startCircleArrays();
 }
 startCircleArrays = function () {
@@ -240,48 +250,54 @@ function sketchDraw() {
     P$.clear();
     P$.background('rgba(255,255,255, 0)');
     if(debugMode){
-    //write a text in p5.js displaying firstElemnInGameL
-    P$.text(firstElemInGameL, 100, 100)
-    //write a text in p5.js displaying firstElemInGameR
-    P$.text(firstElemInGameR, 100, 200)
-    //write a text in p5.js displaying "Left elements: " and leftElem
-    P$.text("Left elements: " + leftElem, 150, 400)
+        P$.textSize(20);
+        //write a text in p5.js displaying firstElemnInGameL
+        P$.text(firstElemInGameL, 450, 600)
+        //write a text in p5.js displaying firstElemInGameR
+        P$.text(firstElemInGameR, 450, 650)
+        //write a text in p5.js displaying "Left elements: " and leftElem
+        P$.text("Left elements: " + leftElem, 220, 500)
     }
+
     //display training mode
     P$.push()
     //use the "Maven Pro" text font
-    P$.textFont('Maven Pro', 72)
+    P$.textFont('Monoton', 30);
     //display it on the top left corner
     P$.textAlign(P$.LEFT, P$.CENTER)
-    P$.stroke(12)
-    P$.fill(240)
-    P$.text("t r a i n i n g", 50, 70)
-    P$.text("m o d e", 50, 150)
-    let tx_wdt = P$.textWidth("m o d e")
+    P$.fill(250, 127, 250)
+    P$.text("TRAINING MODE", 50, 60);
     //display the logo next to mode by resizing to be 70x70
-    P$.image(logo, 50 + tx_wdt+20, 120, 70, 70)
     P$.pop()
 
     //display the score
     P$.push()
     //we have to keep the font otherwise it gets bugged
-    P$.textFont('Maven Pro', 72)
-    P$.textSize(72);
+    P$.textFont('Monoton', 40)
+    P$.textSize(80);
     //display it on the top left corner, inside a white rectangle
     P$.textAlign(P$.CENTER, P$.CENTER)
-    P$.fill(240)
+    P$.fill(250, 127, 250)
     P$.stroke(12)
-    P$.text(score, P$.width/2, 70)
+    P$.text(score, P$.width/2, 150)
     P$.pop()
+
+    // display left and right rhythms
+    P$.fill(250, 127, 250)
+    P$.noStroke()
+    P$.textSize(200)
+    P$.text(leftR, (P$.width / 2 - P$.width / 12)/2, 400)
+    P$.text(rightR, P$.width - (P$.width/1.6 - P$.width / 12)/2 , 400)
+
     //we're in the game, draw the reference and update and show the cirlces
     drawReference2();
     if (pageFoc) {
         P$.push()
         P$.fill(12)
-        P$.stroke(240, 20, 20)
-        P$.text(hitMessages[0], xLine1 + 20, yLineH + 50)
-        P$.stroke(20, 100, 240)
-        P$.text(hitMessages[1], xLine2 - 20, yLineH + 50)
+        P$.stroke(246, 41, 202)
+        P$.text(hitMessages[0], xLine1 - 150, yLineH + 50)
+        P$.stroke(85, 35, 222)
+        P$.text(hitMessages[1], xLine2 + 30, yLineH + 50)
         P$.pop()
         let nL = firstElemInGameL + leftElem
         let nR = firstElemInGameR + rightElem
@@ -302,6 +318,8 @@ function sketchDraw() {
                 counterR++;
             }
         }
+
+        P$.textSize(20)
         nL = nL + counterL
         nR = nR + counterR
 
@@ -309,10 +327,10 @@ function sketchDraw() {
             leftCircles[i % leftCircles.length].update();
             leftCircles[i % leftCircles.length].show();
         }
-        //for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
         for (let i = firstElemInGameR; i < nR; i++) {
             rightCircles[i % rightCircles.length].update();
             rightCircles[i % rightCircles.length].show();
+
         }
     }
 }
@@ -347,14 +365,14 @@ addCircle = function (side) {
 drawReference2(): draws the guide
 */
 drawReference2 = function () {
-    P$.stroke(240);
-    P$.strokeWeight(1);
+    P$.stroke(12);
+    P$.strokeWeight(3);
     P$.line(xLine1, 0, xLine1, P$.height);
     P$.line(xLine2, 0, xLine2, P$.height);
     P$.line(0, yLineH, P$.width, yLineH)
     P$.fill(12);
-    P$.strokeWeight(4);
-    P$.stroke(240, 240, 10)
+    P$.strokeWeight(3);
+    P$.stroke(250, 127, 250)
     P$.ellipse(xLine1, yLineH, guideRadius, guideRadius);
     P$.ellipse(xLine2, yLineH, guideRadius, guideRadius);
 }
@@ -405,8 +423,6 @@ P$.keyPressed = function () {
     let key = P$.key;
     //check if any of the active circles is overlapping with the
     //reference
-
-    //if we're in debug mode then we can also choose to stop and start the loop 
     if(debugMode){
         //if the key is o stop tone
         if (key == 'o' || key == 'O') {
@@ -417,8 +433,6 @@ P$.keyPressed = function () {
             Tone.Transport.start();
         }
     }
-    
-
 
     if (key == 's' || key == 'S') {
         let hitL = false;
@@ -432,7 +446,7 @@ P$.keyPressed = function () {
                 hitL = true;
                 //play sound
                 hit.play();
-                //calculate the points
+                //TODO calculate the points
                 //add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
                 let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
@@ -453,15 +467,31 @@ P$.keyPressed = function () {
                     while (leftCircles[j].flag == 0) {
                         j++;
                         j = j % leftCircles.length;
-                        if (j == firstElemInGameL) {
-                            break;
-                        }
                     }
                     firstElemInGameL = j;
                 }
+                /*
+                if(k == firstElemInGameL){
+                //calculate the points
+                firstElemInGameL++;
+                firstElemInGameL = firstElemInGameL % leftCircles.length;
+                }*/
                 leftElem--;
             }
         }
+        /*
+        leftCircles.forEach((item, i) => {
+          let c = leftCircles[i];
+          if (Math.abs(c.y - yLineH) <= guideRadius) {
+            hitL = true;
+            //play sound
+            hit.play();
+            //delete circle(s)
+            leftCircles.splice(i, 1)
+            //calculate the points
+          }
+        });
+        */
         if (!hitL) {
             miss.play();
             //point penalty / error count
@@ -493,21 +523,37 @@ P$.keyPressed = function () {
                     while (rightCircles[j].flag == 0) {
                         j++;
                         j = j % rightCircles.length;
-                        if (j == firstElemInGameR) {
-                            break;
-                        }
                     }
                     firstElemInGameR = j;
                 }
+                /*
+                if(k == firstElemInGameL){
+                //calculate the points
+                firstElemInGameL++;
+                firstElemInGameL = firstElemInGameL % leftCircles.length;
+                }*/
                 rightElem--;
+                
             }
         }
-    
+        /*
+        rightCircles.forEach((item, i) => {
+          let c = rightCircles[i];
+          if (Math.abs(c.y - yLineH) <= guideRadius) {
+            hitR = true;
+            //play sound
+            hit.play();
+            //delete circle(s)
+            rightCircles.splice(i, 1)
+            //calculate the points
+          }
+        });*/
         if (!hitR) {
             miss.play();
             //point penalty / error count
         }
     }
+
     if(key == 'b' || key == 'B'){
         debugMode = !debugMode;
     }
@@ -527,6 +573,14 @@ startMetronome = function () {
 metroSound(): produces the correct metronome sound based on the beat
 */
 metroSound = function () {
+    /*
+    if (metroFlag == 4) {
+        addCircle('l')
+        addCircle('r')
+        setInterval(addCircle, intervalL * 1000, 'l');
+        setInterval(addCircle, intervalR * 1000, 'r');
+    }
+    */
     if (metroFlag % 4 == 0) {
         met1.play()
     } else {
@@ -567,8 +621,8 @@ displayHitQuality = function (points, side) {
     }
     if (msg != "") {
         P$.fill(240);
-        P$.textFont(font)
-        P$.textSize(30);
+        P$.textFont('Aldrich')
+        P$.textSize(20);
         P$.text(msg, x, y);
     }
     hitMessages[side] = msg;

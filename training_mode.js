@@ -11,9 +11,6 @@ window.P$ = new  p5(p =>{
         sketchPreload();
     }
     
-    /*var bpmGeneral;
-    var leftGeneral;
-    var rightGeneral;*/
     p.setup= function () {
         sketchSetup();
         
@@ -26,7 +23,7 @@ window.P$ = new  p5(p =>{
         started = false;
         div =p.createDiv("TRAINING MODE");
         div.class('div');
-        div.position(p.width/450, p.height/5.9)
+        div.position(p.width/550, p.height/5.9)
 
         div1 =p.createDiv("SELECT BPM:");
         div1.class('div1');
@@ -101,8 +98,8 @@ window.P$ = new  p5(p =>{
         p.strokeWeight(3);
         p.noFill();
         p.rectMode(p.CENTER);
-        p.rect(p.width/2.0, p.height/2.4, 380, 84);
-        p.rect(p.width/2.0, p.height/1.65, 380, 110);
+        p.rect(p.width/2.0, p.height/2.4, 480, 90);
+        p.rect(p.width/2.0, p.height/1.65, 480, 120);
 
         p.noStroke();
         p.textFont('Aldrich');

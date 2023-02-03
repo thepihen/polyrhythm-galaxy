@@ -68,44 +68,23 @@ p5_instance = function (p5c) {
   */
   p5c.preload = function () {
     font = p5c.loadFont('assets/Montserrat-Bold.ttf');
-    /*hit = p5c.loadSound('assets/hit.wav');
-    hitSoundL = p5c.loadSound('assets/hitSXwav.wav');
-    hitSoundR = p5c.loadSound('assets/hitDXwav.wav');
-    miss = p5c.loadSound('assets/miss.wav')
-    met1 = p5c.loadSound('assets/met1.wav');
-    met2 = p5c.loadSound('assets/met2.wav');
-    beat1 = p5c.loadSound('assets/BEAT1wav.wav');
-    beat2 = p5c.loadSound('assets/BEAT2wav.wav');
-    mult1 = p5c.loadSound('assets/mult1.wav');
-    mult2 = p5c.loadSound('assets/mult2.wav');
-    mult3 = p5c.loadSound('assets/mult3.wav');
-    mult4 = p5c.loadSound('assets/mult4.wav');
-    mult5 = p5c.loadSound('assets/mult5.wav');
-    mult6 = p5c.loadSound('assets/mult6.wav');
-    mult7 = p5c.loadSound('assets/mult7.wav');
-    mult8 = p5c.loadSound('assets/mult8.wav');
-    mult9 = p5c.loadSound('assets/mult9.wav');
-    mult10 = p5c.loadSound('assets/mult10.wav');
-    multFail = p5c.loadSound('assets/multFail.wav');
-    die = p5c.loadSound('assets/die.wav');
-    record = p5c.loadSound('assets/record.wav');*/
     soundtrackDieRecord = new Tone.Players({
         die: "assets/die.wav",
         record: "assets/record.wav"
     }).toDestination();
 
-    soundtrackHitL1 = new Tone.Player("assets/hitSXwav.wav").toDestination();
-    soundtrackHitL2 = new Tone.Player("assets/hitSXwav.wav").toDestination();
+    soundtrackHitL1 = new Tone.Player("assets/hitSX.wav").toDestination();
+    soundtrackHitL2 = new Tone.Player("assets/hitSX.wav").toDestination();
 
-    soundtrackHitR1 = new Tone.Player("assets/hitDXwav.wav").toDestination();
-    soundtrackHitR2 = new Tone.Player("assets/hitDXwav.wav").toDestination();
+    soundtrackHitR1 = new Tone.Player("assets/hitDX.wav").toDestination();
+    soundtrackHitR2 = new Tone.Player("assets/hitDX.wav").toDestination();
 
     soundtrackMiss = new Tone.Players({
         0: "assets/miss.wav",
         1: "assets/miss.wav",
         2: "assets/miss.wav",
         3: "assets/miss.wav",
-    }).toDestination();
+    }).toDestination()
 
     soundtrackMultipliers = new Tone.Players({
         mult2: "assets/mult2.wav",
@@ -119,16 +98,34 @@ p5_instance = function (p5c) {
         mult10: "assets/mult10.wav",
         multFail: "assets/multFail.wav",
     }).toDestination();
-    
-    soundtrackBeat1 = new Tone.Player("assets/BEAT1wav.wav").toDestination();
-    soundtrackBeat2 = new Tone.Player("assets/BEAT2wav.wav").toDestination();
+
+    soundtrackBeat1 = new Tone.Players({
+        100: "assets/BEAT1_100.wav",
+        110: "assets/BEAT1_110.wav",
+        120: "assets/BEAT1_120.wav",
+        130: "assets/BEAT1_130.wav",
+        140: "assets/BEAT1_140.wav",
+        150: "assets/BEAT1_150.wav",
+    }).toDestination();
+
+    soundtrackBeat2 = new Tone.Players({
+        100: "assets/BEAT2_100.wav",
+        110: "assets/BEAT2_110.wav",
+        120: "assets/BEAT2_120.wav",
+        130: "assets/BEAT2_130.wav",
+        140: "assets/BEAT2_140.wav",
+        150: "assets/BEAT2_150.wav",
+    }).toDestination();
 
   }
 
 
   var started; //bool: T if we're in the game, F is we're in the menù
   var restart;
+  var firstTime = true;
   var died;
+  var changingBPMVisual = false;
+  var newBPMTransition = false;
   var loaded = false;
   var colorMenu;
   var textMenu;
@@ -149,7 +146,8 @@ p5_instance = function (p5c) {
   var tripletRhythms = [3,6,12,24];
   var triplet ; // if include triplet rhythms
   var mindBlowing ; // if include other complicated rhythms
-  var rhythmLimit; // maximum integer number as rhythm ( we assume as maximum 24 )
+  var rhythmUpperLimit; // maximum integer number as rhythm ( we assume as maximum 24 )
+  var rhythmLowerLimit;
   var metroFlagChange; // how much next metronome beats to change rhythm
   var metroFlagChangeValues = [16]; // changes in only 4 measures, for now
   var metroColor; // number used for color of metronome ellipse
@@ -176,7 +174,6 @@ p5_instance = function (p5c) {
   var perfectCounter = 0;
   var consecutiveHits = 0;
   var newConsecutiveHitsBonus = false;
-  var lastHit = "OK";
   var lastMultiplier = 1;
 
   // RANKING STUFF
@@ -198,11 +195,11 @@ p5_instance = function (p5c) {
   namesRanking[2] = "Riccardo Giampic"
   namesRanking[3] = "Giovanni Rana"
   namesRanking[4] = "Ferruccio Resta"
-  pointsRanking[0] = 50
-  pointsRanking[1] = 25
-  pointsRanking[2] = 15
-  pointsRanking[3] = 10
-  pointsRanking[4] = 5
+  pointsRanking[0] = 122364
+  pointsRanking[1] = 76849
+  pointsRanking[2] = 54721
+  pointsRanking[3] = 43602
+  pointsRanking[4] = 25890
   // TUTORIAL STUFF
   var tutorialDisplayed = false;
   var placeZeroTutorialDisplayed = false;
@@ -258,9 +255,6 @@ p5_instance = function (p5c) {
       this.windowW = p5c.windowWidth;
       this.windowH = p5c.windowHeight;
       this.failFlag = true;
-      //side: 0 left,1 right
-      //this.side = 0 + (this.x == xLine2);
-      //this.fillColor = p5c.color(50+200*(1-this.side), 10, 50+200*(this.side))
     }
     //TODO: delete id field
     initialise(x, y, v, id) {
@@ -311,11 +305,10 @@ p5_instance = function (p5c) {
                 reSetup()
             }
             else{
-                /*miss.play();*/
                 lastMiss += 1;
                 lastMiss = (lastMiss % 3);
                 soundtrackMiss.player(lastMiss).start();
-                lastHit = "OK"
+
                 multiplier = 1
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
@@ -424,20 +417,23 @@ p5_instance = function (p5c) {
     firstElemInGameR = 0;
     lastElemL = 0;
     lastElemR = 0;
-    /*miss.stop();*/
     for( let i=0 ; i<3; i++){
-        if(soundtrackMiss.player(i).state == "started"){soundtrackMiss.player(i).stop();}
+        if(soundtrackMiss.player(i).state == "started"){soundtrackMiss.player(i).mute;}
     }
-    /*beat1.stop();*/
-    if(soundtrackBeat1.state == "started"){soundtrackBeat1.stop();}
-    /*beat2.stop();*/
-    if(soundtrackBeat2.state == "started"){soundtrackBeat2.stop();}
     metroFlag = 0;
-    Tone.Transport.cancel()
+    Tone.Transport.cancel();
     stopCircleArrays()
-    /*p5c.getAudioContext().resume()*/
+    startCircleArrays()
+    for (let i = 100; i< 160; i = i+10) {
+            if(soundtrackBeat1.player(i).state == "started"){soundtrackBeat1.player(i).mute = true;}
+            if(soundtrackBeat2.player(i).state == "started"){soundtrackBeat2.player(i).mute = true;}
+        }
+    Tone.Transport.stop();
+    bpm = 100;
+    Tone.Transport.bpm.value = bpm;
     lifes = 3;
-    rhythmLimit = 4;
+    rhythmUpperLimit = 4;
+    rhythmLowerLimit = 1;
     metroFlagChange = 0;
     multiplier = 1;
     multiplierGreat = 0;
@@ -452,7 +448,8 @@ p5_instance = function (p5c) {
     triplet = false;
     mindBlowing = false;
     noReference = false;
-    startCircleArrays()
+    newBPMTransition = false;
+
   }
   p5c.setup = function () {
     canvas = p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
@@ -465,6 +462,8 @@ p5_instance = function (p5c) {
     //in a church hoping for a miracle
     // Trying to solve audio distortion by using a compressor
     Tone.start();
+
+
     //initialise guide coordinates
     xLine1 = p5c.width / 2 - p5c.width / 12;
     xLine2 = p5c.width / 2 + p5c.width / 12;
@@ -478,12 +477,13 @@ p5_instance = function (p5c) {
 
     //font = p5c.textFont('Montserrat', 30)
 
-    bpm = 130;
+    bpm = 100;
     scheduleL = null;
     scheduleR = null;
     Tone.Transport.bpm.value = bpm;
 
-    rhythmLimit = 4;
+    rhythmUpperLimit = 4;
+    rhythmLowerLimit = 1;
     metroFlagChange = 0;
     triplet = false;
     mindBlowing = false;
@@ -784,7 +784,7 @@ p5_instance = function (p5c) {
   */
   p5c.draw = function () {
     p5c.background(10);
-    //drawPodium()
+
     p5c.textFont(font)
     p5c.noStroke()
     p5c.fill(colorMenu)
@@ -792,10 +792,26 @@ p5_instance = function (p5c) {
     p5c.textSize(21)
     p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
+    p5c.textFont(font)
+    p5c.noStroke()
+    p5c.fill(255)
+    p5c.textAlign(p5c.CENTER)
+    p5c.textSize(21)
+    p5c.text(metroFlag, p5c.width / 2 - 200, p5c.height / 2 - 200);
+
+
     if(!noReference){
         drawReference();
       }
 
+    if(changingBPMVisual){
+        p5c.textFont(font)
+        p5c.noStroke()
+        p5c.fill(255)
+        p5c.textAlign(p5c.CENTER)
+        p5c.textSize(21)
+        p5c.text("Next BPM will be : " + bpm, p5c.width / 2, p5c.height / 2);
+    }
 
     // Visual Metronome ( only outer ellipses )
     p5c.fill("black");
@@ -937,7 +953,7 @@ p5_instance = function (p5c) {
           leftCircles[i % leftCircles.length].update();
           leftCircles[i % leftCircles.length].show();
         }
-        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
+        for (let i = firstElemInGameR; i < nR; i++) {
           rightCircles[i % rightCircles.length].update();
           rightCircles[i % rightCircles.length].show();
         }
@@ -1217,14 +1233,24 @@ p5_instance = function (p5c) {
                 Tone.Transport.pause();
             }
       }
+      if ( key == "t" || key == "T"){
+            console.log("New BPM Transition Instantiated")
+            newBPMTransition = true;
+      }
+
       if (key == ' '){
           if (!started && restart && loaded && !rankingDisplayed && !tutorialDisplayed) {
-            Tone.start();
+            if(firstTime){Tone.start(); firstTime = false}
             Tone.Transport.start();
+            for (let i = 100; i< 160; i = i+10) {
+                soundtrackBeat1.player(i).stop();
+                soundtrackBeat2.player(i).stop();
+                soundtrackBeat1.player(i).mute = false;
+                soundtrackBeat2.player(i).mute = false;
+            }
             clearNoPlayingAnimations();
             clearInterval(menuTransitionInterval);
             mainTextTransition([textMenu,],0,['down',],5,false)
-            /*p5c.userStartAudio();*/
             guideR = 255;
             guideG = 255;
             guideB = 0;
@@ -1305,7 +1331,7 @@ p5_instance = function (p5c) {
                 lastMiss +=1;
                 lastMiss = lastMiss % 3;
                 soundtrackMiss.player(lastMiss).start();
-                lastHit = "OK"
+
                 multiplier = 1
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
@@ -1368,7 +1394,7 @@ p5_instance = function (p5c) {
                 lastMiss +=1;
                 lastMiss = lastMiss % 3;
                 soundtrackMiss.player(lastMiss).start();
-                lastHit = "OK"
+
                 multiplier = 1
                 multiplierGreat = 0;
                 multiplierAmazing = 0;
@@ -1398,42 +1424,83 @@ p5_instance = function (p5c) {
     var metroFlagX;
     var scheduleFlag;
     metroSound = function () {
+        if ( (metroFlag == metroFlagChange) && (metroFlag != 1)  && (metroFlag != 0)){
+                toggleRhythms();
+                metroFlagX = metroFlag;
+                scheduleFlag = Tone.Transport.scheduleRepeat(time => {
+                rhythmTransition = true
+                setTimeout( () => { rhythmTransition = false } , 500)
+                }, "2n");
+          }
+          if ( metroFlag == metroFlagX + 8){
+                Tone.Transport.clear(scheduleFlag);
+                visualLeftR = leftR;
+                visualRightR = rightR;
+                visualNextLeftR = nextLeftR;
+                visualNextRightR = nextRightR;
+          }
     //To play the beat in background
       if(metroFlag % 32 == 0){
-        //p5c.getAudioContext().resume()
-        /*beat2.stop();*/
-        // soundtrackBeat2.stop();
-        /*beat1.play()*/
-        soundtrackBeat1.start();
+        if(newBPMTransition){
+            newBPMTransition = false;
+            soundtrackDieRecord.player("die").start();
+
+            // RESET GAME PARTIALLY
+            started = false;
+            hitMessages[0] = ''
+            hitMessages[1] = ''
+            leftElem = 0;
+            rightElem = 0;
+            firstElemInGameL = 0;
+            firstElemInGameR = 0;
+            lastElemL = 0;
+            lastElemR = 0;
+            metroFlag = 0;
+            Tone.Transport.cancel();
+            stopCircleArrays()
+            metroFlagChange = 0;
+            startCircleArrays()
+            soundtrackBeat1.player(bpm).stop();
+            soundtrackBeat2.player(bpm).stop();
+
+            // INCREASE BPM
+            changingBPMVisual = true;
+            Tone.Transport.stop();
+            bpm = bpm + 10;
+            Tone.Transport.bpm.value = bpm;
+            restart = true;
+            metroFlag = -1;
+
+            // RESTART GAME AFTER A WHILE
+            setTimeout( () => {
+                changingBPMVisual = false;
+                Tone.Transport.start();
+                toggleRhythms();
+                visualLeftR = leftR;
+                visualRightR = rightR;
+                visualNextLeftR = nextLeftR;
+                visualNextRightR = nextRightR;
+                started = true;
+                restart = false;
+                died = false;
+            }, 4000)
+        }
+        else{
+            soundtrackBeat1.player(bpm).start();
+        }
 
       }
       else if (metroFlag % 32 == 16) {
-        /*beat1.stop()*/
-        // soundtrackBeat1.stop();
-        /*beat2.play()*/
-        soundtrackBeat2.start();
+       soundtrackBeat2.player(bpm).start();
+
       }
       if (metroFlag % 4 == 0) {
         //met1.play()
       } else {
         //met2.play();
       }
-      if ( (metroFlag == metroFlagChange) && (metroFlag != 1)  && (metroFlag != 0)){
-            toggleRhythms();
-            metroFlagX = metroFlag;
-            scheduleFlag = Tone.Transport.scheduleRepeat(time => {
-            rhythmTransition = true
-            setTimeout( () => { rhythmTransition = false } , 500)
-            }, "2n");
-      }
-      if ( metroFlag == metroFlagX + 8){
-            Tone.Transport.clear(scheduleFlag);
-            visualLeftR = leftR;
-            visualRightR = rightR;
-            visualNextLeftR = nextLeftR;
-            visualNextRightR = nextRightR;
-      }
       metroFlag += 1;
+
     }
     var hitMessages = new Array(2);
     hitMessages[0] = ""
@@ -1601,53 +1668,48 @@ p5_instance = function (p5c) {
             default:
         }
     }
-    // STEP
-    // 1) BASIC
-    // 2) TRIPLET
-    // 3) LIMIT ALZATO A 6
-    // 4) MINDBLOWING
-    // 5) LIMIT ALZATO A 7
-    // 6) NO GUIDA
-    // 7) AUMENTA IL BPM
-    // 8) TORNA A 3)
+
     function toggleRhythms() {
         var arrayNewRhythms;
 
-        // TRIPLET
-        if ( gameScore >= 1500 || metroFlag >= 25*4){
+        // 1) BMP 100 -> 110 and TRIPLET after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        if (bpm == 100 && metroFlag >= 32){
+            newBPMTransition = true;
             triplet = true;
         }
-        // RAISE LIMIT to 6
-        if ( gameScore >= 3000 || metroFlag >= 45*4){
-            rhythmLimit = 6;
+        // 2) BMP 110 -> 120 and UPPER LIMIT TO 6 after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        if (bpm == 110 && metroFlag >= 32 * 2){
+            newBPMTransition = true;
+            rhythmUpperLimit = 6;
         }
-        // MINDBLOWING
-        if ( gameScore >= 25000 || metroFlag >= 65*4){
-           mindBlowing = true;
+        // 3) BMP 120 -> 130 and MINDBLOWING after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        if (bpm == 120 && metroFlag >= 32 * 4){
+            newBPMTransition = true;
+            mindBlowing = true;
+        }
+        // 4) BMP 130 -> 140 and LOWER LIMIT TO 3 after 12 measures ( TODO: amount of score to do in order to go faster beyond )
+        if (bpm == 130 && metroFlag >= 32 * 12){
+            newBPMTransition = true;
+            rhythmLowerLimit = 3;
+        }
+        // 5) BMP 140 -> 150 and LOWER LIMIT TO 4 and UPPER LIMIT TO 8 after 12 measures ( TODO: amount of score to do in order to go faster beyond )
+        if (bpm == 140 && metroFlag >= 32 * 24){
+            newBPMTransition = true;
+            rhythmUpperLimit = 8;
+            rhythmLowerLimit = 4;
+        }
+
+        // inf) BMP 150 -> ... and LOWER LIMIT +1 and UPPER LIMIT +2 after 12 measures
+        if (bpm >= 150 && metroFlag >= 32 * 48){
+            newBPMTransition = true;
+            rhythmUpperLimit = rhythmUpperLimit+2;
+            rhythmLowerLimit = rhythmLowerLimit+1;
         }
         // NO REFERENCE
         if ( gameScore >= 50000 ){
             noReference = true;
         }
-        // RAISE LIMIT TO 7
-        if ( metroFlag >= 130*4){
-            rhythmLimit = 7
-        }
-        // RAISE LIMIT TO 9
-        if ( metroFlag >= 160*4){
-            rhythmLimit = 9
-        }
-        // RAISE LIMIT TO 11
-        if ( metroFlag >= 190*4){
-            rhythmLimit = 11
-        }
-        // RAISE LIMIT TO 13
-        if ( metroFlag >= 220*4){
-            rhythmLimit = 13
-        }// RAISE LIMIT TO 15
-        if ( metroFlag >= 250*4){
-            rhythmLimit = 15
-        }
+
 
         if(!started){
             arrayNewRhythms = calculateNewRhythms();
@@ -1674,7 +1736,7 @@ p5_instance = function (p5c) {
         var nextL;
         var nextR;
         var addInteger;
-        for (let i = 1; i <= rhythmLimit; i++){
+        for (let i = rhythmLowerLimit; i <= rhythmUpperLimit; i++){
 
                 addInteger = false;
                 if (i == 1){

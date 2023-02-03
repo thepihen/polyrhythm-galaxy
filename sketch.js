@@ -1,27 +1,4 @@
-//p5.js sketch file (with p5 in instance mode we can rename this file)
-//https://p5js.org/reference/
-//https://p5js.org/reference/#/libraries/p5.sound
 
-/*
-TODO:
-Should we implement a queue for managing circles?
-Use a non-changing array for circles, just reset them
-Add bonuses for streaks
-*/
-
-/*
-Tone stuff
-*/
-/*
-Tone.Transport.bpm.value = 80;
-// start/stop the oscillator every quarter note
-Tone.Transport.scheduleRepeat(time => {
-  osc.start(time).stop(time + 0.1);
-}, "4n");
-Tone.Transport.start();
-// ramp the bpm to 120 over 10 seconds
-Tone.Transport.bpm.rampTo(120, 10);
-*/
 var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
                 "The game will provide you two rhythms, one to the left and one to the right, " +
                 "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
@@ -30,9 +7,6 @@ var tutorialText2 = "Pay Attention!&#10;The provided rhythms will be more and mo
                 "you miss a dot or press a key at the wrong time you will lose one of the three available " +
                 "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
                 "in order to increase extra points bonus and climb the global ranking!";
-//needed until we find a better way to track document focus changes
-//(see bottom of this file)
-//this just tracks the state
 var pageFoc = true;
 var gameScore = 0;
 var lifes = 3;
@@ -358,6 +332,7 @@ p5_instance = function (p5c) {
           while (leftCircles[j].flag == 0) {
             j++;
             j = j % leftCircles.length;
+            if ( j == firstElemInGameL){break}
           }
           firstElemInGameL = j;
           leftElem--;
@@ -367,6 +342,7 @@ p5_instance = function (p5c) {
           while (rightCircles[j].flag == 0) {
             j++;
             j = j % rightCircles.length;
+            if ( j == firstElemInGameR){break}
           }
           firstElemInGameR = j;
           rightElem--;
@@ -1232,18 +1208,19 @@ p5_instance = function (p5c) {
             },ms)
     }
 
-
+    var paused = false;
     p5c.keyPressed = function () {
       let key = p5c.key;
       //check if any of the active circles is overlapping with the
       //reference
       if (key == "p" || key == "P"){
-            if(animationDisplayedLeft){
-                animationDisplayedLeft = false;
-                animationXLeft = 0;
+            if(paused){
+                paused = false;
+                Tone.Transport.start();
             }
             else{
-                animationDisplayedLeft = true;
+                paused = true;
+                Tone.Transport.pause();
             }
       }
       if (key == ' '){
@@ -1252,7 +1229,11 @@ p5_instance = function (p5c) {
             clearInterval(menuTransitionInterval);
             textDownTransition(5);
             /*p5c.userStartAudio();*/
+            guideR = 255;
+            guideG = 255;
+            guideB = 0;
             Tone.Transport.start();
+            Tone.start();
             toggleRhythms();
             visualLeftR = leftR;
             visualRightR = rightR;
@@ -1270,9 +1251,6 @@ p5_instance = function (p5c) {
             for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
               let k = i % leftCircles.length;
               let c = leftCircles[k];
-              /*if (c.flag == 1 && (c.y - rhythm_rad) > (yLineH + guideRadius) ){
-                return //no point looking for further hits
-              }*/
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitL = true;
                 //play sound
@@ -1314,6 +1292,7 @@ p5_instance = function (p5c) {
                   while (leftCircles[j].flag == 0) {
                     j++;
                     j = j % leftCircles.length;
+                    if ( j == firstElemInGameL){break}
                   }
                   firstElemInGameL = j;
                 }
@@ -1341,7 +1320,6 @@ p5_instance = function (p5c) {
                 consecutiveHits = 0;
                 lifes -= 1;
               }
-              //point penalty / error count
             }
           }
           if (key == 'k' || key == 'K') {
@@ -1349,9 +1327,6 @@ p5_instance = function (p5c) {
             for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
               let k = i % rightCircles.length;
               let c = rightCircles[k];
-              /*if (c.flag == 1 && (c.y + rhythm_rad) > (yLineH - guideRadius)){
-                return //no point looking for further hits
-              }*/
               if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitR = true;
                 //play sound
@@ -1383,30 +1358,13 @@ p5_instance = function (p5c) {
                   while (rightCircles[j].flag == 0) {
                     j++;
                     j = j % rightCircles.length;
+                    if ( j == firstElemInGameR){break}
                   }
                   firstElemInGameR = j;
                 }
-                /*
-                if(k == firstElemInGameL){
-                //calculate the points
-                firstElemInGameL++;
-                firstElemInGameL = firstElemInGameL % leftCircles.length;
-                }*/
                 rightElem--;
               }
             }
-            /*
-            rightCircles.forEach((item, i) => {
-              let c = rightCircles[i];
-              if (Math.abs(c.y - yLineH) <= guideRadius) {
-                hitR = true;
-                //play sound
-                hit.play();
-                //delete circle(s)
-                rightCircles.splice(i, 1)
-                //calculate the points
-              }
-            });*/
             if (!hitR) {
               if(lifes <= 0 && died == false){
                 reSetup()
@@ -1425,7 +1383,6 @@ p5_instance = function (p5c) {
                 consecutiveHits = 0;
                 lifes -= 1;
               }
-              //point penalty / error count
             }
           }
       }

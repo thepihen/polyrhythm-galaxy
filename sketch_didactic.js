@@ -199,7 +199,7 @@ window.P$ = new p5(p5c => {
       //REGARDLESS of the screen resolution and zoom
       
       if (!started)
-        p5c.image(this.faces[this.currFace], p5c.width - 1 * p5c.width/5, p5c.height - 2*p5c.height/5)
+        p5c.image(this.faces[this.currFace], p5c.width - 1 * p5c.width/5, p5c.height - 2*p5c.height/5, p5c.width/6,p5c.height/2)
       else {
         //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
         let h = this.faces[this.currFace].height
@@ -1034,19 +1034,34 @@ window.P$ = new p5(p5c => {
     p5c.text("(OR)", p5c.width / 2, p5c.height / 2 - 50);
     //create an arrow pointing to (width-400,height-200) with the text
     //"your helper" below it
+    
+
+    //need these to make this resolution independent
+    //these substitute the values in the parenthesis (e.g. 450,...)
+    let a = p5c.round(p5c.width/(3.5)) 
+    let b = p5c.round(p5c.width/(4.26)) //450
+    let c = p5c.round(p5c.width / (4.8))
+
+    let d = p5c.round(p5c.height / (15.4))
+    let e = p5c.round(p5c.height / (5.4))
+    let f = p5c.round(p5c.height / (4.32))
+    let g = p5c.round(p5c.height / (3.7))
+    let h = p5c.round(p5c.height / (7.2))
     p5c.textSize(20);
-    p5c.text("your helper", p5c.width - 450, p5c.height - 200 + 50);
+    p5c.text("your helper", p5c.width - b, p5c.height - h);
     p5c.stroke(255)
     p5c.noFill()
+
     p5c.bezier(
-      p5c.width - 550, p5c.height - 70,
-      p5c.width - 550, p5c.height - 200,
-      p5c.width - 450, p5c.height - 250,
-      p5c.width - 400, p5c.height - 250
+      p5c.width - a, p5c.height - d,
+      p5c.width - a, p5c.height - e,
+      p5c.width - b, p5c.height - f,
+      p5c.width - c, p5c.height - f
     )
     //we will show the face of the helper here using other functions
-    p5c.line(p5c.width - 400, p5c.height - 250, p5c.width - 425, p5c.height - 200)
-    p5c.line(p5c.width - 400, p5c.height - 250, p5c.width - 425, p5c.height - 275)
+    
+    p5c.line(p5c.width - c, p5c.height - f, p5c.width - b, p5c.height - e)
+    p5c.line(p5c.width - c, p5c.height - f, p5c.width - b, p5c.height - g)
 
     //write "POLYRHYTHM HERO" in the upper middle part of the screen.
     //Write it using p5.js functions in a geometric pattern, making it stick out

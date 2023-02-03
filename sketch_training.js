@@ -55,6 +55,8 @@ var yLineH;
 //arrays containing circles ("rhythm hits / beats") for left and right side
 //it would be better to use a queue to manage these
 var circlesNumber = 50;
+//the key point of using these is to avoid using splice to manage arrays and/or
+//to have a constantly growing array. This gives us a better performance
 var leftCircles = new Array(circlesNumber);
 var rightCircles = new Array(circlesNumber);
 var leftElem = 0;
@@ -167,13 +169,7 @@ class Circle {
             }
         }
     }
-    /*
-    if (this.side == 0) {
-      leftCircles.splice(0, 1)
-    } else if (this.side == 1) {
-      rightCircles.splice(0, 1)
-    }
-    */
+
     /*
     show(): draws circle on the canvas
     */
@@ -197,10 +193,6 @@ needed in the sketch here; load audio files, fonts, etc, in preload() instead
 */
 function sketchSetup() {
     P$.createCanvas(P$.windowWidth, P$.windowHeight);
-    /*
-    see https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend
-    There's no need for the audio context to be running as soon as the page is loaded
-    */
     P$.getAudioContext().suspend();
     P$.frameRate(60) //this doesn't hope but it's like lighting a candle
     //in a church hoping for a miracle
@@ -317,7 +309,8 @@ function sketchDraw() {
             leftCircles[i % leftCircles.length].update();
             leftCircles[i % leftCircles.length].show();
         }
-        for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
+        //for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
+        for (let i = firstElemInGameR; i < nR; i++) {
             rightCircles[i % rightCircles.length].update();
             rightCircles[i % rightCircles.length].show();
         }
@@ -412,7 +405,8 @@ P$.keyPressed = function () {
     let key = P$.key;
     //check if any of the active circles is overlapping with the
     //reference
-    
+
+    //if we're in debug mode then we can also choose to stop and start the loop 
     if(debugMode){
         //if the key is o stop tone
         if (key == 'o' || key == 'O') {
@@ -438,7 +432,7 @@ P$.keyPressed = function () {
                 hitL = true;
                 //play sound
                 hit.play();
-                //TODO calculate the points
+                //calculate the points
                 //add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
                 let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
@@ -465,28 +459,9 @@ P$.keyPressed = function () {
                     }
                     firstElemInGameL = j;
                 }
-                /*
-                if(k == firstElemInGameL){
-                //calculate the points
-                firstElemInGameL++;
-                firstElemInGameL = firstElemInGameL % leftCircles.length;
-                }*/
                 leftElem--;
             }
         }
-        /*
-        leftCircles.forEach((item, i) => {
-          let c = leftCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            leftCircles.splice(i, 1)
-            //calculate the points
-          }
-        });
-        */
         if (!hitL) {
             miss.play();
             //point penalty / error count
@@ -524,28 +499,10 @@ P$.keyPressed = function () {
                     }
                     firstElemInGameR = j;
                 }
-                /*
-                if(k == firstElemInGameL){
-                //calculate the points
-                firstElemInGameL++;
-                firstElemInGameL = firstElemInGameL % leftCircles.length;
-                }*/
                 rightElem--;
-                
             }
         }
-        /*
-        rightCircles.forEach((item, i) => {
-          let c = rightCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            rightCircles.splice(i, 1)
-            //calculate the points
-          }
-        });*/
+    
         if (!hitR) {
             miss.play();
             //point penalty / error count
@@ -570,14 +527,6 @@ startMetronome = function () {
 metroSound(): produces the correct metronome sound based on the beat
 */
 metroSound = function () {
-    /*
-    if (metroFlag == 4) {
-        addCircle('l')
-        addCircle('r')
-        setInterval(addCircle, intervalL * 1000, 'l');
-        setInterval(addCircle, intervalR * 1000, 'r');
-    }
-    */
     if (metroFlag % 4 == 0) {
         met1.play()
     } else {

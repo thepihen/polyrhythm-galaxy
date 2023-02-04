@@ -16,7 +16,7 @@ html {
 
 .ranking_button{
     right:20px;
-    bottom: 10px;
+    bottom: 0px;
     position: absolute;
     width:100px;
     height:120px;
@@ -114,7 +114,7 @@ html {
 }
 
 .ranking_text{
-    font-size: 24px;
+    font-size: 20px;
     color: white;
     transform: translate(-50%, -50%);
     font-family: 'Montserrat', sans-serif;

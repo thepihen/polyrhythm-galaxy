@@ -1067,16 +1067,18 @@ window.P$ = new p5(p5c => {
     //Write it using p5.js functions in a geometric pattern, making it stick out
     //from the background
 
-    p5c.textSize(150);
+    p5c.textSize(130);
     p5c.textAlign(p5c.CENTER, p5c.CENTER);
     p5c.fill(255);
     p5c.text("POLYRHYTHM HERO", p5c.width / 2, p5c.height / 6);
 
-    //write the authors right below the title
+    
+    //write the mode right below the title
     p5c.textSize(32);
     p5c.textAlign(p5c.CENTER, p5c.CENTER);
     p5c.fill(255);
-    p5c.text("by Francesco Colotti, Matteo Gionfriddo, Cecilia Raho and Alice Sironi", p5c.width / 2, p5c.height / 6 + 100);
+    p5c.text("D I D A C T I C   M O D E", p5c.width / 2, p5c.height / 6 + 100);
+    
   }
 
   /* 
@@ -1520,6 +1522,10 @@ window.P$ = new p5(p5c => {
         }
         if (leftChannel != null && isAnalysing == false) {
           //if we have a soundFile, we can analyse it
+          if(timeoutID!=null){
+            clearTimeout(timeoutID)
+            timeoutID = null
+          }
           analyseSoundFile()
         }
         break;
@@ -1577,6 +1583,7 @@ window.P$ = new p5(p5c => {
     uploadButton.remove()
     realUploadButton.remove()
   }
+  //original implementation using CSS-defined buttons (not porting well to different resolutions)
   /*
   createAudioControls = function () {
     recordButton = p5c.createDiv('')
@@ -1815,6 +1822,7 @@ window.P$ = new p5(p5c => {
   //--------------------RHYTHM WHEEL STUFF--------------------
   var rhythmWheelExists = true
   var showRhythmWheel = false
+  var hasSuggested = false
   /*
   createRhythmWheel: creates the rhythm wheel or updates it if it already exists
   Inputs:
@@ -1830,11 +1838,32 @@ window.P$ = new p5(p5c => {
       wheelBPM = second_bpm_estimated
       slideInner = 0
       slideOuter = 0
+      if (!hasSuggested){
+        suggestTrainingMode()
+      }
     } else {
       //create the rhythm wheel
       //rhythmWheel = new RhythmWheel(rhy_1, rhy_2)
       rhythmWheelExists = true
     }
+  }
+
+  var timeoutID = null;
+  suggestTrainingMode = function () {
+    console.log("Suggesting")
+    timeoutID = setTimeout(() => {
+    let ind = getMessageById("commonSuggestTraining")
+    if (ind == -1) {
+      loadMessages("common")
+      ind = getMessageById("commonSuggestTraining")
+    }
+    helper.removeAnswers()
+    helper.setWorking()
+    currMessage = ind
+    msg = messages[currMessage]
+    hasSuggested = true
+    timeoutID = null
+    },10000)
   }
 
   var selectedPolyrhythm = -1; 

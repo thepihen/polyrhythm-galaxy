@@ -82,6 +82,11 @@
         "msgId" : "commonWelcomeBack",
         "msg" : "Welcome back!",
         "nextMsgId" : "-1"
+    },
+    {
+        "msgId" : "commonSuggestTraining",
+        "msg" : "I hope you're having fun. If you want to get even better at polyrhythms, you can try our training mode, back at the main menu!",
+        "nextMsgId" : "-1"
     }
 ],
 "analysisFill":[

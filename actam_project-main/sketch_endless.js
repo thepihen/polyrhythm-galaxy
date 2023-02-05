@@ -47,6 +47,8 @@ p5_instance = function (p5c) {
     scheduleMetro = ID scheduled event metronome
     */
     var bpm;
+    var bpmDisplay;
+    var bpmDisplayOpacity;
     var leftR;
     var rightR;
     var nextLeftR;
@@ -68,9 +70,10 @@ p5_instance = function (p5c) {
     */
     p5c.preload = function () {
         font = 'Aldrich';
-        soundtrackDieRecord = new Tone.Players({
+        soundtrackDieRecordChangeBPM = new Tone.Players({
             die: "assets/endlessAssets/die.wav",
-            record: "assets/endlessAssets/record.wav"
+            record: "assets/endlessAssets/record.wav",
+            changingBPM :"assets/endlessAssets/changingBPM.wav",
         }).toDestination();
 
         soundtrackHitL1 = new Tone.Player("assets/endlessAssets/hitSX.wav").toDestination();
@@ -200,7 +203,7 @@ p5_instance = function (p5c) {
     namesRanking[3] = "Cospi_TheHungriest"
     namesRanking[4] = "IJalisse"
     pointsRanking[0] = 122364
-    pointsRanking[1] = 86849
+    pointsRanking[1] = 120979
     pointsRanking[2] = 54721
     pointsRanking[3] = 43602
     pointsRanking[4] = 6/*25890*/
@@ -219,6 +222,7 @@ p5_instance = function (p5c) {
     var animationDisplayedRight = false;
     var animationVisualMetronomeDisplayed = false;
     var intervalAnimationVisualMetronome;
+    var textAnimationInterval;
     var intervalAnimationGuides;
     var intervalAnimationLeft;
     var intervalAnimationRight;
@@ -388,23 +392,20 @@ p5_instance = function (p5c) {
     function reSetup(){
         resetGame();
         if (gameScore > pointsRanking[4]){
-            /*record.play()*/
-            soundtrackDieRecord.player("record").start();
+            soundtrackDieRecordChangeBPM.player("record").start();
             newPodium()
             recordIndex = 0;
             recordTexts[2] = 'But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!'
             recordTexts[3] = 'But Congratulations you are at the position ' + (posRecord + 1) + ' in the global ranking!'
-            mainTextTransition(recordTexts,recordIndex,recordDirs,12,true,() => {
+            mainTextTransition(recordTexts,recordIndex,recordDirs,15,true,() => {
                 setTimeout(() => {
                     inputNickNameTransition()
                 }, 200)
             })
         }
         else{
-            /*die.play()*/
-            soundtrackDieRecord.player("die").start();
+            soundtrackDieRecordChangeBPM.player("die").start();
             gameScore = 0;
-            /*dieMenuTransition1()*/
             dieIndex = 0;
             mainTextTransition(dieTexts,dieIndex,dieDirs,10,true,() => {noPlayingAnimation();restart = true;})
         }
@@ -435,6 +436,7 @@ p5_instance = function (p5c) {
         }
         Tone.Transport.stop();
         bpm = 100;
+        bpmDisplay = 100;
         Tone.Transport.bpm.value = bpm;
         lifes = 3;
         rhythmUpperLimit = 4;
@@ -476,6 +478,7 @@ p5_instance = function (p5c) {
 
 
         bpm = 100;
+        bpmDisplay = 100;
         scheduleL = null;
         scheduleR = null;
         Tone.Transport.bpm.value = bpm;
@@ -596,8 +599,13 @@ p5_instance = function (p5c) {
                 },
                 1100);
         }, 2000);
+
+        textAnimationInterval = setInterval( () => {
+            mainTextTransition(['Press the spacebar\nto start','Press the spacebar\nto start'],0,['down','up'],10,false)
+        }, 7500);
     }
     clearNoPlayingAnimations = function () {
+        clearInterval(textAnimationInterval);
         clearInterval(intervalAnimationVisualMetronome);
         clearInterval(intervalAnimationGuides);
         clearInterval(intervalAnimationLeft);
@@ -630,7 +638,6 @@ p5_instance = function (p5c) {
                     textFirstDisplay.remove();
                     textFirstDisplay2.remove();
                     placeZeroTutorialDisplayed = false;
-                    previousButton.remove();
                     nextButton.remove();
                 }
                 if(place == 1){
@@ -802,10 +809,10 @@ p5_instance = function (p5c) {
         if(changingBPMVisual){
             p5c.textFont(font)
             p5c.noStroke()
-            p5c.fill(255)
+            p5c.fill(255,bpmDisplayOpacity)
             p5c.textAlign(p5c.CENTER)
             p5c.textSize(15)
-            p5c.text("Next BPM will be : " + bpm, p5c.width / 2, p5c.height / 2);
+            p5c.text("BPM: " + bpmDisplay, p5c.width / 2, p5c.height / 2);
         }
 
         // Visual Metronome ( only outer ellipses )
@@ -874,23 +881,14 @@ p5_instance = function (p5c) {
             // Consecutive Great Hits and relative Multiplier
             p5c.text("Consecutive\nGreat", p5c.width/1.5, p5c.height/11)
             p5c.text(greatCounter, p5c.width/1.5, p5c.height/6)
-            if (multiplierGreat > 0){
-                p5c.text(multiplierGreat, xLine2 + 1*(p5c.width - xLine2)/4 , p5c.height - 50 )
-            }
 
             // Consecutive Amazing Hits and relative Multiplier
             p5c.text("Consecutive\nAmazing", p5c.width/1.28, p5c.height/11)
             p5c.text(amazingCounter, p5c.width/1.28, p5c.height/6)
-            if (multiplierAmazing > 0){
-                p5c.text(multiplierAmazing, xLine2 + 2*(p5c.width - xLine2)/4 , p5c.height - 50 )
-            }
 
             // Consecutive Perfect Hits and relative Multiplier
             p5c.text("Consecutive\nPerfect", p5c.width/1.12, p5c.height/11)
             p5c.text(perfectCounter, p5c.width/1.12, p5c.height/6)
-            if (multiplierPerfect > 0){
-                p5c.text(multiplierPerfect, xLine2 + 3*(p5c.width - xLine2)/4 , p5c.height - 50 )
-            }
 
 
             if (rhythmTransition){
@@ -1100,6 +1098,70 @@ p5_instance = function (p5c) {
             c.setNewCoords(xLine2, p5c.map(c.y, 0, c.windowH, 0, p5c.windowHeight), p5c.windowWidth, p5c.windowHeight)
             c.updateVelocity(v)
         });
+
+        // logo
+        logo = p5c.createImg(
+            'assets/icon_transparent.png',
+            'app logo'
+        );
+        logo.addClass('logo')
+
+        // ranking stuff
+        imgPodium = p5c.createImg(
+            'assets/endlessAssets/podium.png',
+            'podium logo'
+        );
+        imgPodium.addClass('ranking_button')
+        imgPodium.mouseOver(displayRanking)
+        canvas.mouseOver(noDisplayRanking)
+
+        // tutorial stuff
+        tutorialButton = p5c.createDiv('?')
+        tutorialButton.addClass('tutorial_button')
+        tutorialButton.mousePressed(displayTutorial)
+
+        // exit stuff
+        exitButton = p5c.createDiv('X')
+        exitButton.addClass('exit_button')
+        if(tutorialDisplayed){
+            if(place == 0){
+                textFirstDisplay = p5c.createDiv(tutorialText)
+                textFirstDisplay.addClass('tutorial_text')
+                textFirstDisplay2 = p5c.createDiv(tutorialText2)
+                textFirstDisplay2.addClass('tutorial_text')
+                textFirstDisplay2.style("top","65%")
+
+                nextButton = p5c.createDiv('>');
+                nextButton.addClass('next_button');
+                nextButton.mousePressed(nextButtonFunction)
+            }
+            else if(place == 1){
+                previousButton = p5c.createDiv('<');
+                previousButton.addClass('previous_button');
+                previousButton.mousePressed(previousButtonFunction)
+
+                nextButton = p5c.createDiv('>');
+                nextButton.addClass('next_button');
+                nextButton.mousePressed(nextButtonFunction)
+
+                imgStartingFrame = p5c.createImg(
+                    'assets/endlessAssets/frame0.png',
+                    'starting Frame'
+                );
+                imgStartingFrame.addClass('tutorial_image')
+            }
+            else if (place == 2){
+                previousButton = p5c.createDiv('<');
+                previousButton.addClass('previous_button');
+                previousButton.mousePressed(previousButtonFunction)
+
+                imgPlayingFrame = p5c.createImg(
+                    'assets/endlessAssets/frame1.png',
+                    'playing Frame'
+                );
+                imgPlayingFrame.addClass('tutorial_image')
+            }
+        }
     }
     /*
     mouseClicked(): p5js function that gets called every time the sx mouse button
@@ -1208,50 +1270,6 @@ p5_instance = function (p5c) {
     var paused = false;
     p5c.keyPressed = function () {
         let key = p5c.key;
-        //check if any of the active circles is overlapping with the
-        //reference
-        if (key == "p" || key == "P"){
-            if(paused){
-                paused = false;
-                started = true;
-                for (let i = 100; i< 160; i = i+10) {
-                    if (soundtrackBeat1.player(i).state == "paused") {
-                        soundtrackBeat1.player(i).start();
-                    }
-                    if (soundtrackBeat2.player(i).state == "paused") {
-                        soundtrackBeat2.player(i).start();
-                    }
-                }
-                if (soundtrackDieRecord.player("die").state == "paused") {
-                    soundtrackBeat2.player(i).start();
-                }
-                    if (soundtrackDieRecord.player("die").state == "paused") {
-                        soundtrackBeat2.player(i).start();
-                    }
-                Tone.Transport.start();
-            }
-            else{
-                paused = true;
-                started = false;
-                for (let i = 100; i< 160; i = i+10) {
-                    if (soundtrackBeat1.player(i).state == "started") {
-                        soundtrackBeat1.player(i).stop();
-                    }
-                    if (soundtrackBeat2.player(i).state == "started") {
-                        soundtrackBeat2.player(i).stop();
-                    }
-                }
-                if (soundtrackDieRecord.player("die").state == "started") {
-                    soundtrackBeat2.player(i).stop();
-                }
-                if (soundtrackDieRecord.player("die").state == "started") {
-                        soundtrackBeat2.player(i).stop();
-                }
-
-                Tone.Transport.pause();
-            }
-        }
-
 
         if (key == ' '){
             if (!started && restart && loaded && !rankingDisplayed && !tutorialDisplayed) {
@@ -1286,7 +1304,7 @@ p5_instance = function (p5c) {
                 for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
                     let k = i % leftCircles.length;
                     let c = leftCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius/2) {
                         hitL = true;
                         //play sound
                         /*hitSoundL.play();*/
@@ -1299,12 +1317,6 @@ p5_instance = function (p5c) {
                             lastL = 1;
                         }
 
-                        // RULES FOR CALCULATING POINTS
-                        // distance*10 = [0,7]     -> perfect -> 100 points
-                        // distance*10 = [7, 20]   -> amazing -> 75 points
-                        // distance*10 = [20, 70]  ->  great  -> 50 points
-                        // distance*10 = [70, 150] ->  good   -> 25 points
-                        // distance*10 = [150, - ] ->   ok    -> 0 points
 
                         let points = Math.round(Math.abs(c.y - yLineH)*10);
                         hitQuality(points, 0)
@@ -1357,7 +1369,7 @@ p5_instance = function (p5c) {
                 for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
                     let k = i % rightCircles.length;
                     let c = rightCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius/2) {
                         hitR = true;
                         //play sound
                         /*hitSoundR.play();*/
@@ -1370,12 +1382,6 @@ p5_instance = function (p5c) {
                             lastR = 1;
                         }
 
-                        // RULES FOR CALCULATING POINTS
-                        // distance*10 = [0,7]     -> perfect -> 100 points
-                        // distance*10 = [7, 20]   -> amazing -> 75 points
-                        // distance*10 = [20, 70]  ->  great  -> 50 points
-                        // distance*10 = [70, 150] ->  good   -> 25 points
-                        // distance*10 = [150, - ] ->   ok    -> 0 points
                         let points = Math.round(Math.abs(c.y - yLineH)*10);
                         hitQuality(points, 1)
 
@@ -1433,6 +1439,7 @@ p5_instance = function (p5c) {
     var metroFlagX;
     var scheduleFlag;
     var scheduleNoReference;
+    var bpmDisplayInterval;
     metroSound = function () {
         if ( (metroFlag == metroFlagChange) && (metroFlag != 1)  && (metroFlag != 0)){
             toggleRhythms();
@@ -1451,41 +1458,10 @@ p5_instance = function (p5c) {
         }
         //To play the beat in background
         if(metroFlag % 32 == 0){
-            if(noReference && !newBPMTransition){
-                noReference = false;
-                // START TRANSITION
-                scheduleNoReference = Tone.Transport.scheduleRepeat(time => {
-                    noReferenceFlag = true;
-                    setTimeout( () => {
-                        noReferenceFlag = false
-                    } , 500)
-                }, "2n");
-
-                // NO REFERENCE TIME
-                setTimeout( () => {
-                    noReferenceFlag = true;
-                    Tone.Transport.clear(scheduleNoReference);
-                } , 2000)
-
-                // END TRANSITION
-                setTimeout( () => {
-                    scheduleNoReference = Tone.Transport.scheduleRepeat(time => {
-                        noReferenceFlag = false;
-                        setTimeout( () => { noReferenceFlag = true; } , 500)
-                    }, "2n");
-                } , 2000 + 15000)
-
-                // RETURNING REFERENCE DISPLAYED
-                setTimeout( () => {
-                    noReferenceFlag = false;
-                    Tone.Transport.clear(scheduleNoReference);
-                } , 2000 + 15000 + 2000)
-
-            }
 
             if(newBPMTransition){
                 newBPMTransition = false;
-                soundtrackDieRecord.player("die").start();
+                soundtrackDieRecordChangeBPM.player("changingBPM").start();
 
                 // RESET GAME PARTIALLY
                 started = false;
@@ -1506,12 +1482,27 @@ p5_instance = function (p5c) {
                 soundtrackBeat2.player(bpm).stop();
 
                 // INCREASE BPM
+                bpmDisplayOpacity = 255;
                 changingBPMVisual = true;
                 Tone.Transport.stop();
                 bpm = bpm + 10;
                 Tone.Transport.bpm.value = bpm;
                 restart = true;
                 metroFlag = -1;
+                bpmDisplayInterval = setInterval( () => {
+                    bpmDisplay = bpmDisplay + 1;
+                    if(bpmDisplay == bpm){
+                        clearInterval(bpmDisplayInterval)
+                        setTimeout(() => {
+                            bpmDisplayOpacityInterval = setInterval( () => {
+                                if(bpmDisplayOpacity > 0){ bpmDisplayOpacity -=5 }
+                                else{
+                                    clearInterval(bpmDisplayOpacityInterval);
+                                }
+                            },15)
+                        }, 700)
+                    };
+                }, 250)
 
                 // RESTART GAME AFTER A WHILE
                 setTimeout( () => {
@@ -1525,7 +1516,7 @@ p5_instance = function (p5c) {
                     started = true;
                     restart = false;
                     died = false;
-                }, 4000)
+                }, 5000)
             }
             else{
                 soundtrackBeat1.player(bpm).start();
@@ -1533,6 +1524,44 @@ p5_instance = function (p5c) {
 
         }
         else if (metroFlag % 32 == 16) {
+            if(noReference && !newBPMTransition){
+                noReference = false;
+                // START TRANSITION
+                scheduleNoReference = Tone.Transport.scheduleRepeat(time => {
+                    noReferenceFlag = true;
+                    setTimeout( () => {
+                        noReferenceFlag = false
+                    } , 500)
+                }, "2n");
+
+                // NO REFERENCE TIME
+                setTimeout( () => {
+                    noReferenceFlag = true;
+                    Tone.Transport.clear(scheduleNoReference);
+                } , 2000)
+                setTimeout( () => {
+                    noReferenceFlag = true;
+                } , 2500)
+
+                // END TRANSITION
+                setTimeout( () => {
+                    scheduleNoReference = Tone.Transport.scheduleRepeat(time => {
+                        noReferenceFlag = false;
+                        setTimeout( () => { noReferenceFlag = true; } , 500)
+                    }, "2n");
+                } , 2000 + 15000)
+
+                // RETURNING REFERENCE DISPLAYED
+                setTimeout( () => {
+                    noReferenceFlag = false;
+                    Tone.Transport.clear(scheduleNoReference);
+                } , 2000 + 15000 + 2000)
+                // RETURNING REFERENCE DISPLAYED
+                setTimeout( () => {
+                    noReferenceFlag = false;
+                } , 2000 + 15000 + 2500)
+
+            }
             soundtrackBeat2.player(bpm).start();
 
         }
@@ -1552,15 +1581,15 @@ p5_instance = function (p5c) {
     hitQuality = function(points, side){
         //prints a message on the side (side can be 0 or 1, indicating left or right side)
         //of the guide circle
-        //to indicate how good a hit was ("OK", "GREAT", "AMAZING","PERFECT")
+        //to indicate how good a hit was ("OK", "GOOD","GREAT", "AMAZING","PERFECT")
         //depending on the points scored
 
         // RULES FOR CALCULATING POINTS
-        // [0,7] -> perfect
-        // [7, 20] -> amazing
-        // [20, 70]-> great
-        // [70, 150] -> good
-        // [150, - ] -> ok
+        // distance*10 = [0,5]     -> perfect -> 100 points
+        // distance*10 = [5, 15]   -> amazing -> 75 points
+        // distance*10 = [15, 55]  ->  great  -> 50 points
+        // distance*10 = [55, 100] ->  good   -> 25 points
+        // distance*10 = [100, - ] ->   ok    -> 0 points
 
         let x = 0;
         let y = 0;
@@ -1572,20 +1601,20 @@ p5_instance = function (p5c) {
             y = yLineH;
         }
         let msg = "";
-        if(points >= 0 && points < 7){
+        if(points >= 0 && points < 5){
             msg = "PERFECT";
             perfectCounter += 1;
             amazingCounter += 1;
             greatCounter += 1;
             gameScore = gameScore + 100*multiplier;
-        }else if(points >= 7 && points < 20){
+        }else if(points >= 5 && points < 15){
             msg = "AMAZING";
             amazingCounter += 1;
             greatCounter += 1;
             gameScore = gameScore + 75*multiplier;
             perfectCounter = 0;
             multiplierPerfect = 0;
-        }else if(points >= 20 && points < 70){
+        }else if(points >= 15 && points < 55){
             msg = "GREAT";
             greatCounter += 1;
             gameScore = gameScore + 50*multiplier;
@@ -1593,7 +1622,7 @@ p5_instance = function (p5c) {
             amazingCounter = 0;
             multiplierPerfect = 0;
             perfectCounter = 0;
-        }else if(points >= 70 && points < 150){
+        }else if(points >= 55 && points < 100){
             msg = "GOOD";
             gameScore = gameScore + 25*multiplier;
             multiplierGreat = 0;
@@ -1603,7 +1632,7 @@ p5_instance = function (p5c) {
             multiplierPerfect = 0;
             perfectCounter = 0;
         }
-        else if(points >= 150){
+        else if(points >= 100){
             msg = "OK";
             gameScore = gameScore + 1*multiplier;
             greatCounter = 0;
@@ -1697,7 +1726,7 @@ p5_instance = function (p5c) {
             default:
         }
     }
-    
+
     function toggleRhythms() {
         var arrayNewRhythms;
 
@@ -1730,7 +1759,8 @@ p5_instance = function (p5c) {
 
         // inf) BMP 150 -> ... and LOWER LIMIT +1 and UPPER LIMIT +2 after 12 measures
         if (bpm >= 150 && metroFlag >= 32 * 48){
-            newBPMTransition = true;
+            // newBPMTransition = true; // -> NO higher bpm than 150 for the moment (the game it's already very difficult at that bpm)
+            metroFlag = 0;
             rhythmUpperLimit = rhythmUpperLimit+2;
             rhythmLowerLimit = rhythmLowerLimit+1;
         }

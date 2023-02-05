@@ -174,6 +174,8 @@ setupWheelButtons = function (shown) {
         wheelResetButton.mousePressed(function (){
             slideOuter = 0;
             slideInner = 0;
+            dragPointOuter = 0;
+            dragPointInner = 0;
         })
 
         wheelPlayButton = P$.createDiv('')
@@ -230,33 +232,70 @@ mousePressedRhythmicWheel = function () {
     }
 
 }
+var delta = 0;
 mouseDraggedRhythmicWheel = function () {
-    if(P$.mouseX > xCenter){
-        if(P$.mouseY < P$.pmouseY ){
-            dragPointOuter = slideOuter - 0.04;
-            dragPointInner = slideInner - 0.07;
-        }
-        else if(P$.mouseY > P$.pmouseY ){
-            dragPointOuter = slideOuter + 0.04;
-            dragPointInner = slideInner + 0.07;
+    // TOP-LEFT SIDE
+    if(P$.mouseX < xCenter && P$.mouseY < yCenter){
+        // COUNTER CLOCK-WISE
+        if(P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX){
+            delta = delta - 0.1;
+        }// CLOCK-WISE
+        else if(P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX){
+            delta = delta + 0.1;
         }
     }
-    else{
-        if(P$.mouseY > P$.pmouseY ){
-            dragPointOuter = slideOuter - 0.04;
-            dragPointInner = slideInner - 0.05;
+    // BOTTOM-LEFT SIDE
+    if(P$.mouseX < xCenter && P$.mouseY > yCenter){
+        // COUNTER CLOCK-WISE
+        if(P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX){
+            delta = delta - 0.1;
+        }// CLOCK-WISE
+        else if(P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX){
+            delta = delta + 0.1;
         }
-        else if(P$.mouseY < P$.pmouseY ){
-            dragPointOuter = slideOuter + 0.04;
-            dragPointInner = slideInner + 0.05;
+    }
+    // TOP-RIGHT SIDE
+    if(P$.mouseX > xCenter && P$.mouseY < yCenter){
+        // COUNTER CLOCK-WISE
+        if(P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX){
+            delta = delta - 0.1;
+        }// CLOCK-WISE
+        else if(P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX){
+            delta = delta + 0.1;
         }
+    }
+    // BOTTOW-RIGHT SIDE
+    if(P$.mouseX > xCenter && P$.mouseY > yCenter){
+        // COUNTER CLOCK-WISE
+        if(P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX){
+            delta = delta - 0.1;
+        }// CLOCK-WISE
+        else if(P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX){
+            delta = delta + 0.1;
+        }
+    }
+
+
+    if(Math.abs(delta) >= 1){
+        if (delta < 0){
+            // COUNTER CLOCK-WISE STEP
+            dragPointOuter = slideOuter - (2*Math.PI/8);
+            dragPointInner = slideInner - (2*Math.PI/8);
+        }
+        else if (delta > 0){
+            // CLOCK-WISE STEP
+            dragPointOuter = slideOuter + (2*Math.PI/8);
+            dragPointInner = slideInner + (2*Math.PI/8);
+        }
+        delta  = 0;
     }
 }
+
 mouseReleasedRhythmicWheel = function () {
     enableSlideOuter = false
     enableSlideInner = false
+    delta = 0;
 }
-
 //updates wheel location (called when window is resized)
 updateWheelLocation = function(){
     xCenter = P$.width - P$.width / 8;

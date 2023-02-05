@@ -1,6 +1,6 @@
 var pageFoc = true;
-
 //use p5 in instance mode
+
 p5_instance = function (p5c) {
     var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
         "The game will provide you two rhythms, one to the left and one to the right, " +
@@ -197,16 +197,16 @@ p5_instance = function (p5c) {
     var posRecord = 5;
 
     // FAKE RANKING
-    namesRanking[0] = "GGnoDiMaio"
+    namesRanking[0] = "Luke"
     namesRanking[1] = "jnfrdm"
-    namesRanking[2] = "AndreBonafede"
-    namesRanking[3] = "Cospi_TheHungriest"
-    namesRanking[4] = "IJalisse"
+    namesRanking[2] = "Alison"
+    namesRanking[3] = "Jane"
+    namesRanking[4] = "Bruce"
     pointsRanking[0] = 122364
     pointsRanking[1] = 120979
     pointsRanking[2] = 54721
     pointsRanking[3] = 43602
-    pointsRanking[4] = 6/*25890*/
+    pointsRanking[4] = 5012
 
     // TUTORIAL STUFF
     var tutorialDisplayed = false;
@@ -235,9 +235,12 @@ p5_instance = function (p5c) {
     var animationTimeout7;
     var animationTimeout8;
     var animationRadius;
-    var guideR = 255;
-    var guideG = 255;
-    var guideB = 0;
+    var guideLeftR = 255;
+    var guideLeftG = 255;
+    var guideLeftB = 0;
+    var guideRightR = 255;
+    var guideRightG = 255;
+    var guideRightB = 0;
 
     // BUG MULTIPLE DOTS OR MISSES VERY CLOSE
     var lastL = 2;
@@ -555,23 +558,35 @@ p5_instance = function (p5c) {
 
         animationTimeout4 = setTimeout( () => {
             // FIRST GUIDES ANIMATION
-            guideR = 253;
-            guideG = 253;
-            guideB = 150;
+            guideLeftR = 253;
+            guideLeftG = 253;
+            guideLeftB = 150;
+            guideRightR = 253;
+            guideRightG = 253;
+            guideRightB = 150;
             animationTimeout5 = setTimeout( () => {
-                guideR = 255;
-                guideG = 255;
-                guideB = 0;
+                guideLeftR = 255;
+                guideLeftG = 253;
+                guideLeftB = 0;
+                guideRightR = 255;
+                guideRightG = 255;
+                guideRightB = 0;
             } , 700)
             // START GUIDES ANIMATION INTERVAL
             intervalAnimationGuides = setInterval( () => {
-                guideR = 253;
-                guideG = 253;
-                guideB = 150;
+                guideLeftR = 253;
+                guideLeftG = 253;
+                guideLeftB = 150;
+                guideRightR = 253;
+                guideRightG = 253;
+                guideRightB = 150;
                 animationTimeout6 = setTimeout( () => {
-                    guideR = 255;
-                    guideG = 255;
-                    guideB = 0;
+                    guideLeftR = 255;
+                    guideLeftG = 253;
+                    guideLeftB = 0;
+                    guideRightR = 255;
+                    guideRightG = 255;
+                    guideRightB = 0;
                 } , 700)
             }, 7000);
 
@@ -1030,8 +1045,9 @@ p5_instance = function (p5c) {
         p5c.line(0, yLineH, p5c.width, yLineH)
         p5c.fill(12);
         p5c.strokeWeight(3);
-        p5c.stroke(guideR,guideG,guideB)
+        p5c.stroke(guideLeftR,guideLeftG,guideLeftB)
         p5c.ellipse(xLine1, yLineH, guideRadius, guideRadius);
+        p5c.stroke(guideRightR,guideRightG,guideRightB)
         p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
         p5c.fill(12);
     }
@@ -1284,9 +1300,12 @@ p5_instance = function (p5c) {
                 clearNoPlayingAnimations();
                 clearInterval(menuTransitionInterval);
                 mainTextTransition([textMenu,],0,['down',],5,false)
-                guideR = 255;
-                guideG = 255;
-                guideB = 0;
+                guideLeftR = 255;
+                guideLeftG = 255;
+                guideLeftB = 0;
+                guideRightR = 255;
+                guideRightG = 255;
+                guideRightB = 0;
                 toggleRhythms();
                 visualLeftR = leftR;
                 visualRightR = rightR;
@@ -1298,27 +1317,38 @@ p5_instance = function (p5c) {
             }
         }
 
-        if(started){
-            if (key == 's' || key == 'S') {
+        if (key == 's' || key == 'S') {
+
+            // FEEDBACK ANIMATION
+            guideLeftR = 255;
+            guideLeftG = 255;
+            guideLeftB = 255;
+            setTimeout(() => {
+                guideLeftR = 255;
+                guideLeftG = 255;
+                guideLeftB = 0;
+            }, 250)
+
+            // HIT/MISS CODE
+            if (started) {
                 let hitL = false;
                 for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
                     let k = i % leftCircles.length;
                     let c = leftCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius/2) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius / 2) {
                         hitL = true;
                         //play sound
                         /*hitSoundL.play();*/
-                        if(lastL == 1){
+                        if (lastL == 1) {
                             soundtrackHitL2.start();
                             lastL = 2;
-                        }
-                        else if (lastL == 2){
+                        } else if (lastL == 2) {
                             soundtrackHitL1.start();
                             lastL = 1;
                         }
 
 
-                        let points = Math.round(Math.abs(c.y - yLineH)*10);
+                        let points = Math.round(Math.abs(c.y - yLineH) * 10);
                         hitQuality(points, 0)
 
                         //delete circle(s)
@@ -1334,7 +1364,9 @@ p5_instance = function (p5c) {
                             while (leftCircles[j].flag == 0) {
                                 j++;
                                 j = j % leftCircles.length;
-                                if ( j == firstElemInGameL){break}
+                                if (j == firstElemInGameL) {
+                                    break
+                                }
                             }
                             firstElemInGameL = j;
                         }
@@ -1345,12 +1377,11 @@ p5_instance = function (p5c) {
 
                 if (!hitL) {
 
-                    if(lifes <= 0 && died == false){
+                    if (lifes <= 0 && died == false) {
                         reSetup()
-                    }
-                    else{
+                    } else {
                         /*miss.play();*/
-                        lastMiss +=1;
+                        lastMiss += 1;
                         lastMiss = lastMiss % 3;
                         soundtrackMiss.player(lastMiss).start();
 
@@ -1364,25 +1395,38 @@ p5_instance = function (p5c) {
                     }
                 }
             }
-            if (key == 'k' || key == 'K') {
+        }
+        if (key == 'k' || key == 'K') {
+
+            // FEEDBACK ANIMATION
+            guideRightR = 255;
+            guideRightG = 255;
+            guideRightB = 255;
+            setTimeout(() => {
+                guideRightR = 255;
+                guideRightG = 255;
+                guideRightB = 0;
+            }, 250)
+
+            // HIT/MISS CODE
+            if (started) {
                 let hitR = false;
                 for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
                     let k = i % rightCircles.length;
                     let c = rightCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius/2) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius / 2) {
                         hitR = true;
                         //play sound
                         /*hitSoundR.play();*/
-                        if(lastR == 1){
+                        if (lastR == 1) {
                             soundtrackHitR2.start();
                             lastR = 2;
-                        }
-                        else if (lastR == 2){
+                        } else if (lastR == 2) {
                             soundtrackHitR1.start();
                             lastR = 1;
                         }
 
-                        let points = Math.round(Math.abs(c.y - yLineH)*10);
+                        let points = Math.round(Math.abs(c.y - yLineH) * 10);
                         hitQuality(points, 1)
 
                         //delete circle(s)
@@ -1394,7 +1438,9 @@ p5_instance = function (p5c) {
                             while (rightCircles[j].flag == 0) {
                                 j++;
                                 j = j % rightCircles.length;
-                                if ( j == firstElemInGameR){break}
+                                if (j == firstElemInGameR) {
+                                    break
+                                }
                             }
                             firstElemInGameR = j;
                         }
@@ -1402,11 +1448,10 @@ p5_instance = function (p5c) {
                     }
                 }
                 if (!hitR) {
-                    if(lifes <= 0 && died == false){
+                    if (lifes <= 0 && died == false) {
                         reSetup()
-                    }
-                    else{
-                        lastMiss +=1;
+                    } else {
+                        lastMiss += 1;
                         lastMiss = lastMiss % 3;
                         soundtrackMiss.player(lastMiss).start();
 

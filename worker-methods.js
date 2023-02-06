@@ -3,7 +3,10 @@ THIS FILE CONTAINS ALL THE METHODS THAT ARE USED BY THE WORKER AND THE WORKER ON
 REMEMBER THAT THE WORKER ONLY COMMUNICATES WITH THE SKETCH.JS VIA POSTMESSAGE
 NOTHING ELSE IS SHARED!
 
-INPUT: x - audio buffer
+The worker handle all the maths involved in BPM estimation for polyrhythm detection.
+This is based on a Fourier tempogram approach
+
+INPUT: [x,Fs] - x = audio buffer, Fs = sampling rate of x
 RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
 
 STATUS: The BPM detection kind of works
@@ -11,19 +14,14 @@ Multiple of the real tempo are sometimes found
 A big problem is that for some reason if the tempo is for example 90, and we're doing a 4v1,
 we're detecting 360 as bpm (4*90) BUT for some reason we're not detecting 90 (its intensity is too low)!
 If we can make this more accurate then we're done
-
-TODO: add a flag that says: "I'm detecting a polyrhythm, please don't interrupt me" <--(lo lascio perché mi ha steso)
-    -add a flag that says: "I didn't detect any polyrhythm (this happens when the tempogram values are really low)"
 */
 
 /*
-KEEP IN MIND ALL BPM DETECTION IS EXTRA WORK AS WE ASSUME THE BPM IS GIVEN!
-
 JS doesn't support multi dimensional arrays, so we have to do arrays of arrays instead
 */
 
 /*
-An alternative implementation is to look at the track while it is played.
+An alternative implementation could be to look at the track while it is played.
 This is better from a user perspective since it doesn't interrupt anything
 Like this: https://support.apple.com/it-it/guide/logicpro/lgcef24f3fd9/mac
 */
@@ -34,15 +32,7 @@ some ideas:
 -make the main function async and use await to wait for the bpm detection to finish
 -use a web worker...    https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
 
--to detect polyrhytms one could use the following approach:
-    -detect the bpm of the main rhythm
-    -extract possible other bpms
-    -delete all other bpms that are too close to the main bpm
-    -take the 2nd most likely bpm now
-
-
-    -idea 2:
-
+-to detect polyrhytms we use the following approach:
     -detect the bpm of the main rhythm
     -extract possible other bpms (longer list)
     -delete all other bpms that are too close to the main bpm
@@ -64,6 +54,7 @@ importScripts("https://cdn.jsdelivr.net/npm/mathjs@11.5.0/lib/browser/math.min.j
 
 
 function STFT_copilot(x, window, hop) {
+    //STFT written by copilot
     var X = [];
     for (var i = 0; i < x.length; i += hop) {
         var frame = x.slice(i, i + window.length);
@@ -114,7 +105,7 @@ function hann(N) {
 }
 
 
-/*
+/* //commented because we're using math.js implementation
 function FFT(x) {
     var N = x.length;
     if (N <= 1) {
@@ -144,7 +135,7 @@ function FFT(x) {
 
 var SF;
 var x
-//load the file "song2_lq.mp3"
+
 onmessage = (event) => {
     x = event.data[0];
     //Fs_main = event.data[1];

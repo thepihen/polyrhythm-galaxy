@@ -29,19 +29,19 @@ var dragPointInner = 0;
 var xCenter = 0;
 var yCenter = 0;
 
-setupRhythmicWheel = function (){
+setupRhythmicWheel = function () {
     rhythmOuter = 4;
     rhythmInner = 3;
 
     beatSpeed = 2 * Math.PI / (60 / wheelBPM * 4 * P$.frameRate());
     wheelStarted = false;
 
-    xCenter = P$.width - P$.width/8;
+    xCenter = P$.width - P$.width / 8;
     yCenter = P$.height - 150;
 
     wheel_time = 0;
-    y_hand = Math.sin(wheel_time + Math.PI/2);
-    x_hand = Math.cos(wheel_time + Math.PI/2);
+    y_hand = Math.sin(wheel_time + Math.PI / 2);
+    x_hand = Math.cos(wheel_time + Math.PI / 2);
     y_hand_start = Math.sin(wheel_time + Math.PI);
     x_hand_start = Math.cos(wheel_time + Math.PI);
     big_circle_radius = 96;
@@ -53,10 +53,10 @@ setupRhythmicWheel = function (){
 
 startCircleWheelArrays = function () {
     for (let i = 0; i < circlesNumberMax; i++) {
-        circlesOuter[i] = new WheelCircle([true,false,10,false])
+        circlesOuter[i] = new WheelCircle([true, false, 10, false])
     }
     for (let i = 0; i < circlesNumberMax; i++) {
-        circlesInner[i] = new WheelCircle([true,false,10,false])
+        circlesInner[i] = new WheelCircle([true, false, 10, false])
     }
 }
 
@@ -70,16 +70,16 @@ var wheelPlayButton;
 var wheelResetButton;
 drawRhythmicWheel = function () {
 
-    if (enableSlideOuter){
+    if (enableSlideOuter) {
         slideOuter = dragPointOuter;
     }
 
-    if (enableSlideInner){
+    if (enableSlideInner) {
         slideInner = dragPointInner;
     }
 
     // Big Circles
-    P$.fill(0,0,0,75);
+    P$.fill(0, 0, 0, 75);
     P$.strokeWeight(3)
     P$.ellipse(xCenter, yCenter, big_circle_radius * 2, big_circle_radius * 2); // Outer ellipse
     P$.ellipse(xCenter, yCenter, big_circle_radius, big_circle_radius); // Inner ellipse
@@ -87,69 +87,69 @@ drawRhythmicWheel = function () {
 
     // Circles
     for (let i = 0; i < rhythmOuter; i++) {
-        x_outer = (xCenter) - big_circle_radius*Math.cos(i * 2 *Math.PI/rhythmOuter + Math.PI/2 + slideOuter);
-        y_outer = (yCenter) - big_circle_radius*Math.sin(i * 2 *Math.PI/rhythmOuter + Math.PI/2 + slideOuter);
-        outer_time = (i * 2 *Math.PI/rhythmOuter + slideOuter)%(Math.PI*2)
-        if(outer_time < 0){
-            outer_time = outer_time + Math.PI*2;
+        x_outer = (xCenter) - big_circle_radius * Math.cos(i * 2 * Math.PI / rhythmOuter + Math.PI / 2 + slideOuter);
+        y_outer = (yCenter) - big_circle_radius * Math.sin(i * 2 * Math.PI / rhythmOuter + Math.PI / 2 + slideOuter);
+        outer_time = (i * 2 * Math.PI / rhythmOuter + slideOuter) % (Math.PI * 2)
+        if (outer_time < 0) {
+            outer_time = outer_time + Math.PI * 2;
         }
-        if ( wheel_time >= outer_time - 0.1 && wheel_time <= outer_time + 0.2 && wheelStarted ){
+        if (wheel_time >= outer_time - 0.1 && wheel_time <= outer_time + 0.2 && wheelStarted) {
             circlesOuter[i].play('outer')
         }
 
-        if(i==0){
-            circlesOuter[i].show(x_outer, y_outer, circles_radius,'black')
+        if (i == 0) {
+            circlesOuter[i].show(x_outer, y_outer, circles_radius, 'black')
         }
-        else{
-            circlesOuter[i].show(x_outer, y_outer, circles_radius,'red')
+        else {
+            circlesOuter[i].show(x_outer, y_outer, circles_radius, 'red')
         }
     }
 
     for (let i = 0; i < rhythmInner; i++) {
-        x_inner = (xCenter) - (big_circle_radius/2)*Math.cos(i * 2 *Math.PI/rhythmInner + Math.PI/2 + slideInner);
-        y_inner = (yCenter) - (big_circle_radius/2)*Math.sin(i * 2 *Math.PI/rhythmInner + Math.PI/2 + slideInner);
-        inner_time = ( i * 2 *Math.PI/rhythmInner + slideInner)%(Math.PI*2)
-        if (inner_time < 0){
-            inner_time = inner_time + Math.PI*2;
+        x_inner = (xCenter) - (big_circle_radius / 2) * Math.cos(i * 2 * Math.PI / rhythmInner + Math.PI / 2 + slideInner);
+        y_inner = (yCenter) - (big_circle_radius / 2) * Math.sin(i * 2 * Math.PI / rhythmInner + Math.PI / 2 + slideInner);
+        inner_time = (i * 2 * Math.PI / rhythmInner + slideInner) % (Math.PI * 2)
+        if (inner_time < 0) {
+            inner_time = inner_time + Math.PI * 2;
         }
-        if ( wheel_time >= inner_time - 0.1 && wheel_time <= inner_time + 0.2 && wheelStarted ){
+        if (wheel_time >= inner_time - 0.1 && wheel_time <= inner_time + 0.2 && wheelStarted) {
             circlesInner[i].play('inner')
         }
 
-        if(i==0){
-            circlesInner[i].show(x_inner , y_inner , circles_radius,'black')
+        if (i == 0) {
+            circlesInner[i].show(x_inner, y_inner, circles_radius, 'black')
         }
-        else{
-            circlesInner[i].show(x_inner , y_inner , circles_radius,'blue')
+        else {
+            circlesInner[i].show(x_inner, y_inner, circles_radius, 'blue')
         }
     }
 
     // Hand
-    P$.stroke(255,255,255)
-    P$.line((xCenter) - hand_start_radius*x_hand_start, (yCenter) - hand_start_radius*y_hand_start , (xCenter) - (big_circle_radius+15)*x_hand , (yCenter) - (big_circle_radius+15)*y_hand );
-    P$.line((xCenter) + hand_start_radius*x_hand_start, (yCenter) + hand_start_radius*y_hand_start , (xCenter) - (big_circle_radius+15)*x_hand , (yCenter)  - (big_circle_radius+15)*y_hand );
-    P$.fill(255,255,255,255);
-    P$.arc(xCenter, yCenter, hand_start_radius*2, hand_start_radius* 2, wheel_time , wheel_time + Math.PI)
+    P$.stroke(255, 255, 255)
+    P$.line((xCenter) - hand_start_radius * x_hand_start, (yCenter) - hand_start_radius * y_hand_start, (xCenter) - (big_circle_radius + 15) * x_hand, (yCenter) - (big_circle_radius + 15) * y_hand);
+    P$.line((xCenter) + hand_start_radius * x_hand_start, (yCenter) + hand_start_radius * y_hand_start, (xCenter) - (big_circle_radius + 15) * x_hand, (yCenter) - (big_circle_radius + 15) * y_hand);
+    P$.fill(255, 255, 255, 255);
+    P$.arc(xCenter, yCenter, hand_start_radius * 2, hand_start_radius * 2, wheel_time, wheel_time + Math.PI)
     for (let i = 0; i < 10; i++) {
-        P$.line((xCenter) - hand_start_radius*(i/10)*x_hand_start, (yCenter) - hand_start_radius*(i/10)*y_hand_start , (xCenter) - (big_circle_radius+15)*x_hand , (yCenter) - (big_circle_radius+15)*y_hand);
+        P$.line((xCenter) - hand_start_radius * (i / 10) * x_hand_start, (yCenter) - hand_start_radius * (i / 10) * y_hand_start, (xCenter) - (big_circle_radius + 15) * x_hand, (yCenter) - (big_circle_radius + 15) * y_hand);
     }
 
     for (let i = 0; i < 10; i++) {
-        P$.line((xCenter) + hand_start_radius*(i/10)*x_hand_start, (yCenter) + hand_start_radius*(i/10)*y_hand_start , (xCenter) - (big_circle_radius+15)*x_hand , (yCenter) - (big_circle_radius+15)*y_hand);
+        P$.line((xCenter) + hand_start_radius * (i / 10) * x_hand_start, (yCenter) + hand_start_radius * (i / 10) * y_hand_start, (xCenter) - (big_circle_radius + 15) * x_hand, (yCenter) - (big_circle_radius + 15) * y_hand);
     }
 
-    if (wheelStarted){
+    if (wheelStarted) {
         beatSpeed = 2 * Math.PI / (60 / wheelBPM * 4 * P$.frameRate());
         wheel_time = wheel_time + beatSpeed;
-        y_hand = Math.sin(wheel_time + Math.PI/2);
-        x_hand = Math.cos(wheel_time + Math.PI/2);
+        y_hand = Math.sin(wheel_time + Math.PI / 2);
+        x_hand = Math.cos(wheel_time + Math.PI / 2);
         y_hand_start = Math.sin(wheel_time + Math.PI);
         x_hand_start = Math.cos(wheel_time + Math.PI);
 
-        if (wheel_time >= 2*Math.PI){
+        if (wheel_time >= 2 * Math.PI) {
             wheel_time = 0;
         }
-    }else{
+    } else {
         wheel_time = 0;
         y_hand = Math.sin(wheel_time + Math.PI / 2);
         x_hand = Math.cos(wheel_time + Math.PI / 2);
@@ -157,7 +157,7 @@ drawRhythmicWheel = function () {
         x_hand_start = Math.cos(wheel_time + Math.PI);
     }
     //add a play button over the wheel
-    
+
 }
 
 var wheelIsShown = false
@@ -168,10 +168,10 @@ setWheelShown = function (shown) {
 }
 
 setupWheelButtons = function (shown) {
-    if(shown){
+    if (shown) {
         wheelResetButton = P$.createDiv('RESET SHIFT')
         wheelResetButton.addClass('reset_button_rw')
-        wheelResetButton.mousePressed(function (){
+        wheelResetButton.mousePressed(function () {
             slideOuter = 0;
             slideInner = 0;
             dragPointOuter = 0;
@@ -180,7 +180,7 @@ setupWheelButtons = function (shown) {
 
         wheelPlayButton = P$.createDiv('')
         wheelPlayButton.addClass('play_button_rw')
-        wheelPlayButton.mousePressed(function (){
+        wheelPlayButton.mousePressed(function () {
             if (!wheelStarted) {
                 wheelStarted = true;
             }
@@ -188,10 +188,10 @@ setupWheelButtons = function (shown) {
                 wheelStarted = false;
             }
         })
-        wheelPlayButton.position(xCenter,yCenter - big_circle_radius - 50)
-        wheelResetButton.position(xCenter,yCenter + big_circle_radius + 25)
+        wheelPlayButton.position(xCenter, yCenter - big_circle_radius - 50)
+        wheelResetButton.position(xCenter, yCenter + big_circle_radius + 25)
     }
-    else{
+    else {
         wheelStarted = false;
         wheelPlayButton.hide()
         wheelResetButton.hide()
@@ -201,8 +201,8 @@ setupWheelButtons = function (shown) {
 keyPressedRhythmicWheel = function () {
     if (!wheelIsShown)
         return
-    if ( P$.key == 'k' || P$.key == 'K'){
-        if (!wheelStarted){
+    if (P$.key == 'k' || P$.key == 'K') {
+        if (!wheelStarted) {
             wheelStarted = true;
         }
         else {
@@ -213,19 +213,19 @@ keyPressedRhythmicWheel = function () {
 mousePressedRhythmicWheel = function () {
     if (!wheelIsShown)
         return
-    for(let i = 0; i < rhythmOuter; i++) {
+    for (let i = 0; i < rhythmOuter; i++) {
         const isPressed = mouseInCircle(circlesOuter[i]);
 
-        if(isPressed) {
+        if (isPressed) {
             enableSlideOuter = true
             break;
         }
     }
 
-    for(let i = 0; i < rhythmInner; i++) {
+    for (let i = 0; i < rhythmInner; i++) {
         const isPressed = mouseInCircle(circlesInner[i]);
 
-        if(isPressed) {
+        if (isPressed) {
             enableSlideInner = true
             break;
         }
@@ -234,8 +234,7 @@ mousePressedRhythmicWheel = function () {
 }
 var delta = 0;
 mouseDraggedRhythmicWheel = function () {
-    if(enableSlideInner || enableSlideOuter)
-    {
+    if (enableSlideInner || enableSlideOuter) {
         // TOP-LEFT SIDE
         if (P$.mouseX < xCenter && P$.mouseY < yCenter) {
             // COUNTER CLOCK-WISE
@@ -281,12 +280,12 @@ mouseDraggedRhythmicWheel = function () {
         if (Math.abs(delta) >= 1) {
             if (delta < 0) {
                 // COUNTER CLOCK-WISE STEP
-                dragPointOuter = slideOuter - (2 * Math.PI / 8);
-                dragPointInner = slideInner - (2 * Math.PI / 8);
+                dragPointOuter = slideOuter - (2 * Math.PI / 16);
+                dragPointInner = slideInner - (2 * Math.PI / 16);
             } else if (delta > 0) {
                 // CLOCK-WISE STEP
-                dragPointOuter = slideOuter + (2 * Math.PI / 8);
-                dragPointInner = slideInner + (2 * Math.PI / 8);
+                dragPointOuter = slideOuter + (2 * Math.PI / 16);
+                dragPointInner = slideInner + (2 * Math.PI / 16);
             }
             clickRW.play();
             delta = 0;
@@ -300,7 +299,7 @@ mouseReleasedRhythmicWheel = function () {
     delta = 0;
 }
 //updates wheel location (called when window is resized)
-updateWheelLocation = function(){
+updateWheelLocation = function () {
     xCenter = P$.width - P$.width / 8;
     yCenter = P$.height - 150;
 }
@@ -319,26 +318,26 @@ class WheelCircle {
         this.hitted = params[5]
     }
 
-    show(x,y,radius,fillColor) {
+    show(x, y, radius, fillColor) {
         if (this.flag) {
-            if (this.hitted == true){
+            if (this.hitted == true) {
                 P$.fill('yellow');
                 radius = radius + this.i;
                 this.i = this.i - 1;
             }
-            else{
+            else {
                 P$.fill(fillColor);
             }
             this.x = x;
             this.y = y;
             P$.strokeWeight(1);
-            if(fillColor == 'black'){
-                P$.stroke(255,255,255)
+            if (fillColor == 'black') {
+                P$.stroke(255, 255, 255)
             }
-            else{
-                P$.stroke(0,0,0)
+            else {
+                P$.stroke(0, 0, 0)
             }
-            P$.ellipse(x, y,radius,radius);
+            P$.ellipse(x, y, radius, radius);
         }
     }
 
@@ -346,7 +345,7 @@ class WheelCircle {
         if (this.played == false) {
             const a = -171.7391
             const b = 1.2172 * 10000
-            const bugTimeout = a*wheelBPM + b
+            const bugTimeout = a * wheelBPM + b
             if (side == 'inner') {
                 hitInner.play()
             }
@@ -356,20 +355,20 @@ class WheelCircle {
             this.played = true;
             this.hitted = true;
 
-            setTimeout( () => {
+            setTimeout(() => {
                 this.i = 10
                 this.hitted = false
-            } , 150);
+            }, 150);
 
-            if(wheelBPM >= 70){
-                setTimeout( () => {
+            if (wheelBPM >= 70) {
+                setTimeout(() => {
                     this.played = false
-                } , 150);
+                }, 150);
             }
-            else{
-                setTimeout( () => {
+            else {
+                setTimeout(() => {
                     this.played = false
-                } , bugTimeout);
+                }, bugTimeout);
             }
         }
     }

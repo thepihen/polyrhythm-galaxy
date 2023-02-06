@@ -180,10 +180,6 @@ window.P$ = new  p5(p =>{
                 previousButton.remove();
                 nextButton.remove();
                 }
-            if(place == 2){
-                imgPlayingFrame.remove();
-                previousButton.remove();
-                }
             place=0;
             tutorialDisplayed = false;
         } else {
@@ -201,7 +197,7 @@ window.P$ = new  p5(p =>{
             nextButton = p.createDiv('>');
             nextButton.addClass('next_button');
             nextButton.mousePressed(nextButtonFunction)
-            nextButton.position(p.width/1.25, p.height/2)
+            nextButton.position(P$.width/2 + 480 - 80, P$.height/2)
 
             textFirstDisplay = p.createDiv(tutorialText)
             textFirstDisplay.addClass('tutorial_text')
@@ -220,7 +216,7 @@ window.P$ = new  p5(p =>{
             previousButton = p.createDiv('<');
             previousButton.addClass('previous_button');
             previousButton.mousePressed(previousButtonFunction)
-            previousButton.position(p.width/6, p.height/2)
+            previousButton.position(P$.width/2 - 480 + 55, P$.height/2)
             place += 1;
             nextButton.hide();
             imgStartingFrame = p.createImg(

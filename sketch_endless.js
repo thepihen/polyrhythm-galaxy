@@ -435,6 +435,7 @@ p5_instance = function (p5c) {
             if(soundtrackMiss.player(i).state == "started"){soundtrackMiss.player(i).mute;}
         }
         metroFlag = 0;
+        radiusDifficulty = 1;
         Tone.Transport.cancel();
         stopCircleArrays()
         startCircleArrays()
@@ -795,6 +796,7 @@ p5_instance = function (p5c) {
         }
     }
     var guideRadius = 30; //radius of guide circles
+    var radiusDifficulty = 1;
     var counter = 0; //not used now, might be used to count frames IN GAME
     var rhythm_rad = 20; //radius of rhythm circles
 
@@ -1306,7 +1308,7 @@ p5_instance = function (p5c) {
                 for (let i = firstElemInGameL; i < firstElemInGameL + leftElem; i++) {
                     let k = i % leftCircles.length;
                     let c = leftCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius / 2) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius / radiusDifficulty) {
                         hitL = true;
                         //play sound
                         /*hitSoundL.play();*/
@@ -1385,7 +1387,7 @@ p5_instance = function (p5c) {
                 for (let i = firstElemInGameR; i < firstElemInGameR + rightElem; i++) {
                     let k = i % rightCircles.length;
                     let c = rightCircles[k];
-                    if (Math.abs(c.y - yLineH) <= guideRadius / 2) {
+                    if (Math.abs(c.y - yLineH) <= guideRadius / radiusDifficulty) {
                         hitR = true;
                         //play sound
                         /*hitSoundR.play();*/
@@ -1760,6 +1762,7 @@ p5_instance = function (p5c) {
         if (bpm == 120 && metroFlag >= 32 * 4){
             newBPMTransition = true;
             mindBlowing = true;
+            radiusDifficulty = 2;
         }
         // 4) BMP 130 -> 140 and LOWER LIMIT TO 3 after 12 measures ( TODO: amount of score to do in order to go faster beyond )
         if (bpm == 130 && metroFlag >= 32 * 12){

@@ -73,7 +73,7 @@ var soundFile; //the file we'll load
 var maxDuration = 15; //maximum duration of the audio file in seconds
 var leftChannel, rightChannel; //we'll save the audio values in here
 
-var messages; //to save the messages we'll display
+var messages = null; //to save the messages we'll display
 
 //bpm / polyrhythm detection stuff
 var worker;
@@ -476,7 +476,7 @@ window.P$ = new p5(p5c => {
   let loading = true //is the application loading stuff?
   var started = false; //has the user started the game?
   var userGaveMicPerm = false; //has the user given microphone permission?
-
+  var face = null
   /*
   preload: function that gets automatically by p5js before loading the sketch.
   ->Everything that needs to be available when the sketch starts needs to be loaded here
@@ -541,7 +541,11 @@ window.P$ = new p5(p5c => {
 
     setupAudioStuff()
     setupWorker()
-    
+    /*
+    while(face == null && messages == null){
+      //wait for face and messages to load...
+    }
+    */
     faces = [face]//, face2]
     helper = new Helper(faces, "Polyev")
 

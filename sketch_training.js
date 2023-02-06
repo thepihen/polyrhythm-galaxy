@@ -182,7 +182,7 @@ class Circle {
         if (this.flag) {
             P$.fill(this.fillColor);
             P$.strokeWeight(1);
-            P$.noStroke()
+            P$.stroke(240)
             P$.ellipse(this.x, this.y, this.radius, this.radius);
             //show a p5.js text beside the circle with its id
             if (debugMode) {
@@ -287,6 +287,7 @@ function sketchDraw() {
 
     // display left and right rhythms
     P$.fill(250, 127, 250)
+    P$.textFont('Aldrich',32)
     P$.noStroke()
     P$.textSize(200)
     P$.text(leftR, (P$.width / 2 - P$.width / 12)/2, 400)
@@ -355,6 +356,16 @@ drawFromDidactic = function(){
     P$.fill(255)
     P$.triangle(P$.width/20 + 20, P$.height/2 - 20, P$.width/20 + 20, P$.height/2 + 20, P$.width/20 - 20, P$.height/2)
     P$.pop()
+    if (!toneLoopsStarted){
+    P$.push()
+    P$.stroke(12    )
+    P$.fill(255)
+    P$.textFont('Aldrich', 30)
+    P$.textAlign(P$.CENTER)
+    P$.textSize(30)
+    P$.text("press spacebar to start", P$.width/2, P$.height/2)
+    P$.pop()
+    }
 }
 
 var v; //speed of circles in [pixel/frame]
@@ -425,7 +436,7 @@ function sketchWindowResized() {
         c.updateVelocity(v)
     });
 }
-
+var toneLoopsStarted = false //keeps track of whether circles can spawn
 function startToneLoops(intL, intR) {
     Tone.Transport.scheduleRepeat(time => {
         addCircle('l')
@@ -577,7 +588,10 @@ P$.keyPressed = function () {
             //point penalty / error count
         }
     }
-
+    if(key==' '){
+        toneLoopsStarted = true
+        Tone.start()
+    }
     if(key == 'b' || key == 'B'){
         debugMode = !debugMode;
     }

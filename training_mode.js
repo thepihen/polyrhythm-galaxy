@@ -64,11 +64,6 @@ window.P$ = new  p5(p =>{
                 }
             })
         }
-        if (!skipChoices){
-            selBpm();
-            selLeftHand();
-            selRightHand();
-        }
         
         started = false;
 
@@ -124,6 +119,11 @@ window.P$ = new  p5(p =>{
                 startToneLoops(leftR, rightR);
                 startMetronome(bpm)
             });
+
+
+            selBpm();
+            selLeftHand();
+            selRightHand();
         }else{
             bpm = bpmFromDidactic;
             leftR = rhyLeft;

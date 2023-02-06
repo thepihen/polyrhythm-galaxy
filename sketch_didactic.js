@@ -1179,7 +1179,7 @@ window.P$ = new p5(p5c => {
   */
   p5c.mousePressed = function () {
     //if the mouse was pressed inside the waveform display, move the audio playback to that location
-    if (p5c.mouseX >= p5c.width / 2 - 3 * p5c.width / 8 && p5c.mouseX <= p5c.width / 2 + 3 * p5c.width / 8 && p5c.mouseY >= p5c.height / 4 - p5c.height / 6 && p5c.mouseY <= p5c.height / 4 + p5c.height / 6) {
+    if (mode == 2 && p5c.mouseX >= p5c.width / 2 - 3 * p5c.width / 8 && p5c.mouseX <= p5c.width / 2 + 3 * p5c.width / 8 && p5c.mouseY >= p5c.height / 4 - p5c.height / 6 && p5c.mouseY <= p5c.height / 4 + p5c.height / 6) {
       if (soundFile != null) {
         let time = p5c.map(p5c.mouseX, p5c.width / 2 - 3 * p5c.width / 8, p5c.width / 2 + 3 * p5c.width / 8, 0, soundFile.duration());
         //let pos = p5c.mouseX
@@ -1188,14 +1188,14 @@ window.P$ = new p5(p5c => {
     }
 
     //training mode
-    if (p5c.mouseX >= p5c.width / 2 - p5c.width / 12 && p5c.mouseX <= p5c.width / 2 + p5c.width / 12 && p5c.mouseY >= p5c.height / 2 - p5c.height / 16 && p5c.mouseY <= p5c.height / 2 + p5c.height / 16){
+    if (hasSuggested && p5c.mouseX >= p5c.width / 2 - p5c.width / 12 && p5c.mouseX <= p5c.width / 2 + p5c.width / 12 && p5c.mouseY >= p5c.height / 2 - p5c.height / 16 && p5c.mouseY <= p5c.height / 2 + p5c.height / 16){
       //selectedPolyrhythm is a variable containing the selected polyrhythm
       window.open("training.html?from=didactic&skipChoices=true&bpm=90&leftR="+selectedPolyrhythm[0]+"&rightR="+selectedPolyrhythm[1], "_self")
     }
 
     //if the mouse was pressed inside the text box, do something
     //p5c.rect(p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5)
-    if (p5c.mouseX >= p5c.width / 4 && p5c.mouseX <= 3 * p5c.width / 4 && p5c.mouseY >= 5 * p5c.height / 6 - p5c.height / 10 && p5c.mouseY <= 5 * p5c.height / 6 + p5c.height / 10) {
+    if (started && p5c.mouseX >= p5c.width / 4 && p5c.mouseX <= 3 * p5c.width / 4 && p5c.mouseY >= 5 * p5c.height / 6 - p5c.height / 10 && p5c.mouseY <= 5 * p5c.height / 6 + p5c.height / 10) {
         //if (!paused) {
         //if the game is not paused, 
         //check if the helper is waiting (isWaiting == true); if so,

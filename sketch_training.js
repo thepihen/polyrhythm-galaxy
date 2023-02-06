@@ -1,5 +1,19 @@
-var pageFoc = true;
+/*
+TRAINING MODE:
+The training mode lets the user pick a BPM and two concurring rhythms forming a polyrhythm and jump directly into a
+rhythm game interface. In this rhythm game, the user has to click 's' and 'k' while dots fall from the top of the screen
+in two columns, following the two rhythms. There is no penalty for errors and a score is kept.
 
+We think this is a decent way for the user to get better on a particular polyrhythm of their choice.
+This mode owes its name due to the fact that it serves as a good training for the second mode, the endless mode.
+
+
+KNOWN ISSUES:
+This is not actually an issue. Audio system could be better ( endless mode audio system is implemented with Tone.js
+instead of P5 sound) and if playing for a long time there could be distortion problems. On the other hand, this mode is
+not supposed to be played for so much time so this simpler but working setup is ok.
+*/
+var pageFoc = true;
 var score = 0;
 
 /*

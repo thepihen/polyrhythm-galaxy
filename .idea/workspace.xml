@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c3155d8e-19ae-4e82-9349-8ea177b1e78f" name="Changes" comment="removed junk files">
+    <list default="true" id="c3155d8e-19ae-4e82-9349-8ea177b1e78f" name="Changes" comment="review and comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sketch_endless.js" beforeDir="false" afterPath="$PROJECT_DIR$/sketch_endless.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sketch_training.js" beforeDir="false" afterPath="$PROJECT_DIR$/sketch_training.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/training_mode.js" beforeDir="false" afterPath="$PROJECT_DIR$/training_mode.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,7 +40,7 @@
       <updated>1675700433304</updated>
       <workItem from="1675700435491" duration="7709000" />
       <workItem from="1675708626891" duration="2852000" />
-      <workItem from="1675720759682" duration="2829000" />
+      <workItem from="1675720759682" duration="6387000" />
     </task>
     <task id="LOCAL-00001" summary="semi-fixed arrow endless tutorial">
       <created>1675703598867</created>
@@ -78,7 +77,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675710415902</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="review and comments">
+      <created>1675723951092</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1675723951092</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -100,6 +106,7 @@
     <MESSAGE value="fixed arrow training tutorial" />
     <MESSAGE value="fixed things in training" />
     <MESSAGE value="removed junk files" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed junk files" />
+    <MESSAGE value="review and comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="review and comments" />
   </component>
 </project>

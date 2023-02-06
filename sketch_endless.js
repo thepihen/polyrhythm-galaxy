@@ -1,7 +1,24 @@
+/*
+ENDLESS MODE:
+The "main" mode of this website. This game mode is pretty straightforward (and, in case of doubts, it even contains a
+tutorial) and is built over the same basic ideas as the training mode. The main difference is that the user is faced
+with progressively harder polyrhythms at increasing BPMs. A score is calculated keeping count of multiple factors,
+such as streaks, and is used to create a ranking when the user loses. We think this mode is perfect for those looking
+to challenge themselves and their friends on polyrhythms!
+
+
+KNOWN ISSUES:
+There could be audio problems if the game is started too early and the system was not able to totally load audio files.
+The game performance slightly changes with respect to the browser. In particular, system works the better with
+Microsoft Edge. With Google Chrome there could be slowdowns , while in Firefox in the first game, dots can start
+time shifted with respect to the metronome and after few seconds become correctly synchronized. In general there could be
+sometimes really closer dots, especially in the first game when the second background beat enters the game for the
+first time
+*/
 var pageFoc = true;
 //use p5 in instance mode
-
 p5_instance = function (p5c) {
+    // text inside the tutorial first facade
     var tutorialText = "Welcome to the endless mode!&#10;Test your ability in playing cross-rhythms!&#10;" +
                 "The game will provide you two rhythms, one to the left and one to the right, " +
                 "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
@@ -12,6 +29,7 @@ p5_instance = function (p5c) {
                 "Finally, remember to be more accurate possible in order to increase extra points" +
                 "bonus and climb the global ranking!";
 
+    // variables for set main text transitions
     var dieTexts = ['You Died','You Died','Press the spacebar\nto retry'];
     var dieDirs = ['up', 'down', 'up']
     var dieIndex = 0;
@@ -24,9 +42,14 @@ p5_instance = function (p5c) {
     var updateDirs = ['up', 'down', 'up']
     var updateIndex = 0;
 
+    // total game score
     var gameScore = 0;
-    var lifes = 3;
 
+    // player lifes
+    var lifes = 3;
+    var hearts = []; // used for heart images
+
+    // variables used for dynamic circle looping creation
     var bpm;
     var bpmDisplay;
     var bpmDisplayOpacity;
@@ -40,8 +63,19 @@ p5_instance = function (p5c) {
     var visualNextRightR;
     var scheduleL;
     var scheduleR;
-    var scheduleMetro
-    var hearts = [];
+    var scheduleMetro;
+
+    // audio variables. Miss and hit audio are duplicated in order to alternate them. Otherwise, there could be the risk
+    // that too much closer consecutive hits/misses can overload the buffer and create audio problems with tone.js
+    var soundtrackDieRecordChangeBPM;
+    var soundtrackHitL1;
+    var soundtrackHitL2;
+    var soundtrackHitR1;
+    var soundtrackHitR2;
+    var soundtrackMiss;
+    var soundtrackMultipliers;
+    var soundtrackBeat1;
+    var soundtrackBeat2;
     /*
     preload: function that gets automatically by p5js before loading the sketch.
     ->Everything that needs to be available when the sketch starts needs to be loaded here
@@ -105,43 +139,43 @@ p5_instance = function (p5c) {
 
     }
 
-
-    var started; //bool: T if we're in the game, F is we're in the menù
+    // system managing booleans
+    var started;
     var restart;
     var firstTime = true;
     var died;
     var changingBPMVisual = false;
     var newBPMTransition = false;
     var loaded = false;
+
+    // main text characteristics variable
     var colorMenu;
     var opacityMenu;
     var textMenu;
 
     /*
-    Variables needed to draw the visual guide; might need a better solution for this in
-    the future if we want more vertical lines (more rhythms)
+    Variables needed to draw the visual guide;
     */
     var xLine1;
     var xLine2;
     var yLineH;
 
-    //arrays containing circles ("rhythm hits / beats") for left and right side
-    //it would be better to use a queue to manage these
-    //we set their length to 200
     // Possible Rhythms 1 + [2, 4, 8, 16, 32] + [3,6,12,24] + the remainder until 24
     var basicRhythms = [2, 4, 8, 16, 32];
     var tripletRhythms = [3,6,12,24];
-    var triplet ; // if include triplet rhythms
-    var mindBlowing ; // if include other complicated rhythms
+    var triplet ; // if true triplet rhythms are included in the game
+    var mindBlowing ; // if true other complicated rhythms are included in the game
     var rhythmUpperLimit; // maximum integer number as rhythm ( we assume as maximum 24 )
-    var rhythmLowerLimit;
+    var rhythmLowerLimit; // lower integer number as rhythms
     var metroFlagChange; // how much next metronome beats to change rhythm
     var metroFlagChangeValues = [16]; // changes in only 4 measures, for now
     var metroColor; // number used for color of metronome ellipse
     var noReferenceFlag; // if true there will not be the guide
-    var noReference;
-    var noReferenceLimit;
+    var noReference; // if yes there will be a noReference transition
+    var noReferenceLimit; // how often no reference transition appear
     var rhythmTransition;// if true displays next rhythms
+
+    // variable used to manage circles array system
     var circlesNumber = 50;
     var leftCircles = new Array(circlesNumber);
     var rightCircles = new Array(circlesNumber);
@@ -179,7 +213,7 @@ p5_instance = function (p5c) {
     var pointsRanking = []
     var posRecord = 5;
 
-    // FAKE RANKING
+    // RANKING VARIABLES
     namesRanking[0] = "Paul"
     namesRanking[1] = "Helen"
     namesRanking[2] = "Richard"
@@ -762,7 +796,8 @@ p5_instance = function (p5c) {
         }
     }
     /*
-    noDisplayRanking(): function called when the
+    noDisplayRanking(): function called when the ranking logo is not hovered by the mouse( the canvas is hovered by the
+    mouse)
      */
     noDisplayRanking = function () {
         if(!firstShowRanking){
@@ -775,6 +810,9 @@ p5_instance = function (p5c) {
             }
         }
     }
+    /*
+    startCircleArrays() : function that initializes circles array
+    */
     startCircleArrays = function () {
         for (let i = 0; i < leftCircles.length; i++) {
             leftCircles[i] = new Circle([0, 0, rhythm_rad, 0])
@@ -783,7 +821,9 @@ p5_instance = function (p5c) {
             rightCircles[i] = new Circle([0, 0, rhythm_rad, 0])
         }
     }
-
+    /*
+    stopCircleArrays() : function that deletes circles array, used for reset the system for a new game
+    */
     stopCircleArrays = function () {
         for (let i = 0; i < leftCircles.length; i++) {
             leftCircles[i] = null
@@ -804,21 +844,21 @@ p5_instance = function (p5c) {
     p5c.draw = function () {
         p5c.clear();
         p5c.background("rgba(255, 255, 255, 0)");
-
         p5c.textFont(font)
-        
 
-
+        // no reference constraint
         if(!noReferenceFlag){
             drawReference();
         }
 
+        // main text
         p5c.stroke(0,opacityMenu)
         p5c.fill(colorMenu,opacityMenu)
         p5c.textAlign(p5c.CENTER)
         p5c.textSize(15)
         p5c.text(textMenu, p5c.width / 2, p5c.height / 2);
 
+        // text that appears in bpm changing transition
         if(changingBPMVisual){
             p5c.textFont(font)
             p5c.noStroke()
@@ -837,13 +877,15 @@ p5_instance = function (p5c) {
         p5c.ellipse(xLine1 + (xLine2 - xLine1)*4/5 , yLineH + 100, guideRadius, guideRadius);
 
 
-        //diplay endless mode
+        // diplay endless mode title
         p5c.textFont('Monoton', 30)
         p5c.stroke(12);
         p5c.fill(250, 127, 250)
         p5c.text('ENDLESS MODE', 220, 70)
 
+        // here we are in the game
         if (started) {
+
             // Visual Metronome ( inside ellipses )
             p5c.fill(0,0,180);
             if (metroFlag > 0){
@@ -886,24 +928,23 @@ p5_instance = function (p5c) {
                 p5c.translate(-12.5, 0)    
                 p5c.image(hearts[i],p5c.width/2 - 50 + i*50,yLineH - 50, 25,25)
                 p5c.translate(+12.5, 0)
-        }
-
+             }
 
             p5c.fill("white")
             p5c.textSize(15)
-            // Consecutive Great Hits and relative Multiplier
+            // Consecutive Great Hits
             p5c.text("Consecutive\nGreat", p5c.width/1.5, p5c.height/11)
             p5c.text(greatCounter, p5c.width/1.5, p5c.height/6)
 
-            // Consecutive Amazing Hits and relative Multiplier
+            // Consecutive Amazing Hits
             p5c.text("Consecutive\nAmazing", p5c.width/1.28, p5c.height/11)
             p5c.text(amazingCounter, p5c.width/1.28, p5c.height/6)
 
-            // Consecutive Perfect Hits and relative Multiplier
+            // Consecutive Perfect Hits
             p5c.text("Consecutive\nPerfect", p5c.width/1.12, p5c.height/11)
             p5c.text(perfectCounter, p5c.width/1.12, p5c.height/6)
 
-
+            // show next rhythms for each side
             if (rhythmTransition){
                 p5c.fill(128, 0, 0)
                 p5c.strokeWeight(4);
@@ -913,6 +954,7 @@ p5_instance = function (p5c) {
                 p5c.text(visualNextRightR, p5c.width/1.58 , 500);
             }
 
+            // show consecutive hits statistic when reached a certain number
             if (newConsecutiveHitsBonus){
                 p5c.textFont(font)
                 p5c.fill("white")
@@ -920,9 +962,7 @@ p5_instance = function (p5c) {
                 p5c.textSize(20)
                 p5c.text(consecutiveHits + " CONSECUTIVE HITS!", xLine1/2 + 50, p5c.height - 200)
             }
-            //we're in the game, draw the reference and update and show the cirlces
-
-
+            // same system as training mode
             if (pageFoc) {
 
                 p5c.textFont(font)
@@ -950,7 +990,6 @@ p5_instance = function (p5c) {
                         counterR++;
                     }
                 }
-                // Counter  number of circles for each side
                 nL = nL + counterL
                 nR = nR + counterR
 
@@ -965,7 +1004,7 @@ p5_instance = function (p5c) {
             }
         }
 
-        // Ranking Stuff
+        // Ranking Stuff ( handle bad nickname messages to the user )
         if(badNickname){
             p5c.textFont(font)
             p5c.noStroke()
@@ -974,7 +1013,7 @@ p5_instance = function (p5c) {
             p5c.textSize(15)
             p5c.text(badNicknameText, p5c.width / 2, p5c.height / 2 + 120);
         }
-
+        // left little circles no playing animation
         if(animationDisplayedLeft){
             animationXLeft = animationXLeft + 2;
             p5c.fill(246, 41, 202)
@@ -983,7 +1022,7 @@ p5_instance = function (p5c) {
                 if(animationXLeft - 15*i < xLine1){p5c.ellipse(animationXLeft - 15*i ,animationY,animationRadius,animationRadius)}
             }
         }
-
+        // right little circles no playing animation
         if(animationDisplayedRight){
             animationXRight = animationXRight - 2;
             p5c.fill(85, 35, 222)
@@ -992,17 +1031,18 @@ p5_instance = function (p5c) {
                 if(animationXRight + 15*i > xLine2){p5c.ellipse(animationXRight + 15*i ,animationY,animationRadius,animationRadius)}
             }
         }
+        // metronome animation
         if(animationVisualMetronomeDisplayed){
             p5c.fill(0,0,180);
             p5c.strokeWeight(1);
             p5c.stroke(0,0,180)
             p5c.ellipse(xLine1 + (xLine2 - xLine1)*metroColor/5 , yLineH + 100, guideRadius - 50, guideRadius - 50);
         }
-
+        // show ranking
         if(rankingDisplayed){
             rankingBackground();
         }
-
+        // show tutorial
         if(tutorialDisplayed){
             tutorialBackground();
         }
@@ -1050,6 +1090,9 @@ p5_instance = function (p5c) {
         p5c.ellipse(xLine2, yLineH, guideRadius, guideRadius);
         p5c.fill(180);
     }
+    /*
+    rankingBackground(): draws ranking background
+     */
     rankingBackground = function () {
         p5c.strokeWeight(1);
         p5c.stroke(255,255,255)
@@ -1059,7 +1102,9 @@ p5_instance = function (p5c) {
         p5c.translate(+300,+300);
 
     }
-
+    /*
+      tutorialBackground(): draws tutorial background
+     */
     tutorialBackground = function () {
         p5c.strokeWeight(1);
         p5c.stroke(255,255,255)
@@ -1094,7 +1139,7 @@ p5_instance = function (p5c) {
             c.updateVelocity(v)
         });
 
-        // ranking stuff
+        // re-draw ranking
         imgPodium = p5c.createImg(
             'assets/podium.png',
             'podium logo'
@@ -1103,7 +1148,7 @@ p5_instance = function (p5c) {
         imgPodium.mouseOver(displayRanking)
         canvas.mouseOver(noDisplayRanking)
 
-        // tutorial stuff
+        // re-draw tutorial, it depends on the facade
         tutorialButton = p5c.createDiv('?')
         tutorialButton.addClass('tutorial_button')
         tutorialButton.mousePressed(displayTutorial)
@@ -1150,14 +1195,8 @@ p5_instance = function (p5c) {
         }
     }
     /*
-    mouseClicked(): p5js function that gets called every time the sx mouse button
-    is pressed / the touchscreen is touched.
-    We start the AudioContext here with userStartAudio()
+    startToneLoops(intL, intR): starts circle creation loops for each side
     */
-    p5c.mouseClicked = function () {
-
-    }
-
     function startToneLoops(intL, intR) {
         // Eliminate previous scheduled events
         if (scheduleL != null && scheduleR != null){
@@ -1171,14 +1210,11 @@ p5_instance = function (p5c) {
             addCircle('r')
         }, intR + "n");
     }
+
+
     /*
-    keyPressed(): p5js function that gets called every time a key is pressed.
-    Use key to get the specific key.
-    We see here for now if a beat circle is overlapping with the reference;
-    points will later need to be assigned based on how much the circle
-    was overlapping with the reference.
-    The circle will also need to be deleted
-    */
+    mainTextTransition(): recursive function used to realize opacity transition of the main text.
+     */
     var menuTransitionInterval;
     function mainTextTransition(texts,i,dirs,ms,doLastFunction,lastFunction){
         clearInterval(menuTransitionInterval);
@@ -1217,7 +1253,10 @@ p5_instance = function (p5c) {
             }
         },ms)
     }
-
+    /*
+    inputNickNameTransition(): function that realizes the animations for inserting the nickname of the user after a
+    new high score record
+     */
     function inputNickNameTransition(){
         nicknameInput = p5c.createInput('');
         nicknameInput.position(p5c.width/2, p5c.height/2 + 50);
@@ -1253,6 +1292,11 @@ p5_instance = function (p5c) {
         })
     }
 
+
+    /*
+    keyPressed(): p5js function that gets called every time a key is pressed.
+    Use key to get the specific key.
+    */
     var paused = false;
     p5c.keyPressed = function () {
         let key = p5c.key;
@@ -1308,7 +1352,6 @@ p5_instance = function (p5c) {
                     if (Math.abs(c.y - yLineH) <= guideRadius / radiusDifficulty) {
                         hitL = true;
                         //play sound
-                        /*hitSoundL.play();*/
                         if (lastL == 1) {
                             soundtrackHitL2.start();
                             lastL = 2;
@@ -1350,7 +1393,6 @@ p5_instance = function (p5c) {
                     if (lifes <= 0 && died == false) {
                         reSetup()
                     } else {
-                        /*miss.play();*/
                         lastMiss += 1;
                         lastMiss = lastMiss % 3;
                         soundtrackMiss.player(lastMiss).start();
@@ -1449,7 +1491,10 @@ p5_instance = function (p5c) {
     }
 
     /*
-    metroSound(): produces the correct metronome sound based on the beat
+    metroSound(): born to produce the correct metronome sound based on the beat, now used to count the tempo and handle
+    the time events during the game. In particular is used for:
+        - Visual rhythms transition ( next rhythms needs to be calculated and showed before they are applied to the user)
+        - Dynamically scheduled transitions ( new bpm transition and no reference transition)
     */
     var metroFlagX;
     var scheduleFlag;
@@ -1580,13 +1625,8 @@ p5_instance = function (p5c) {
             soundtrackBeat2.player(bpm).start();
 
         }
-        if (metroFlag % 4 == 0) {
-            //met1.play()
-        } else {
-            //met2.play();
-        }
-        metroFlag += 1;
 
+        metroFlag += 1;
     }
     var hitMessages = new Array(2);
     hitMessages[0] = ""
@@ -1654,12 +1694,7 @@ p5_instance = function (p5c) {
             amazingCounter = 0;
             perfectCounter = 0;
         }
-        if(msg != ""){
-            p5c.fill(240);
-            p5c.textFont(font)
-            p5c.textSize(20);
-            p5c.text(msg, x, y);
-        }
+
         hitMessages[side] = msg;
 
         // CONSECUTIVE GREAT BONUS STREAK
@@ -1709,6 +1744,9 @@ p5_instance = function (p5c) {
         }
 
     }
+    /*
+    multiplierSound() : function that reproduces multiplier sound in relation to the amount of bonus
+     */
     function multiplierSound() {
         switch (multiplier) {
             case 2:
@@ -1741,32 +1779,36 @@ p5_instance = function (p5c) {
             default:
         }
     }
-
+    /*
+    toggleRhythms(): is the core of the game. Is a function that decides how the game evolves ( when bpm transitions
+    are applied, how difficulty increases and so on ). It is taken into account that it may be modified in the future.
+    This depends on how simple/difficult too much dynamic/predictable the game is in the hands of users.
+     */
     function toggleRhythms() {
         var arrayNewRhythms;
 
-        // 1) BMP 100 -> 110 and TRIPLET after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        // 1) BMP 100 -> 110 and TRIPLET after 8 measures
         if (bpm == 100 && metroFlag >= 32){
             newBPMTransition = true;
             triplet = true;
         }
-        // 2) BMP 110 -> 120 and UPPER LIMIT TO 6 after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        // 2) BMP 110 -> 120 and UPPER LIMIT TO 6 after 8 measures
         if (bpm == 110 && metroFlag >= 32 * 2){
             newBPMTransition = true;
             rhythmUpperLimit = 6;
         }
-        // 3) BMP 120 -> 130 and MINDBLOWING after 8 measures ( TODO: amount of score to do in order to go faster beyond )
+        // 3) BMP 120 -> 130 and MINDBLOWING after 8 measures
         if (bpm == 120 && metroFlag >= 32 * 4){
             newBPMTransition = true;
             mindBlowing = true;
             radiusDifficulty = 2;
         }
-        // 4) BMP 130 -> 140 and LOWER LIMIT TO 3 after 12 measures ( TODO: amount of score to do in order to go faster beyond )
+        // 4) BMP 130 -> 140 and LOWER LIMIT TO 3 after 12 measures
         if (bpm == 130 && metroFlag >= 32 * 12){
             newBPMTransition = true;
             rhythmLowerLimit = 3;
         }
-        // 5) BMP 140 -> 150 and LOWER LIMIT TO 4 and UPPER LIMIT TO 8 after 12 measures ( TODO: amount of score to do in order to go faster beyond )
+        // 5) BMP 140 -> 150 and LOWER LIMIT TO 4 and UPPER LIMIT TO 8 after 12 measures
         if (bpm == 140 && metroFlag >= 32 * 24){
             newBPMTransition = true;
             rhythmUpperLimit = 8;
@@ -1805,6 +1847,9 @@ p5_instance = function (p5c) {
         nextRightR = arrayNewRhythms[1];
         metroFlagChange += metroFlagChangeValues[Math.floor(Math.random() * metroFlagChangeValues.length)];
     }
+    /*
+    calculateNewRhythms(): function that calculates two new rhythms based on the current game constraints
+     */
     // Possible Rhythms 1 + [2, 4, 8, 16, 32] + [3,6,12,24] + the remainder
     function calculateNewRhythms(){
         var integersL = new Set();
@@ -1843,7 +1888,9 @@ p5_instance = function (p5c) {
         nextR = itemsR[Math.floor(Math.random() * itemsR.length)];
         return [nextL,nextR];
     }
-
+    /*
+    newPodium(): function that updates the ranking
+     */
     function newPodium(){
         if(gameScore > pointsRanking[0]){
             posRecord = 0;

@@ -3,6 +3,9 @@ THIS FILE CONTAINS ALL THE METHODS THAT ARE USED BY THE WORKER AND THE WORKER ON
 REMEMBER THAT THE WORKER ONLY COMMUNICATES WITH THE SKETCH.JS VIA POSTMESSAGE
 NOTHING ELSE IS SHARED!
 
+The worker handle all the maths involved in BPM estimation for polyrhythm detection.
+This is based on a Fourier tempogram approach
+
 INPUT: [x,Fs] - x = audio buffer, Fs = sampling rate of x
 RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
 
@@ -18,7 +21,7 @@ JS doesn't support multi dimensional arrays, so we have to do arrays of arrays i
 */
 
 /*
-An alternative implementation is to look at the track while it is played.
+An alternative implementation could be to look at the track while it is played.
 This is better from a user perspective since it doesn't interrupt anything
 Like this: https://support.apple.com/it-it/guide/logicpro/lgcef24f3fd9/mac
 */
@@ -132,7 +135,7 @@ function FFT(x) {
 
 var SF;
 var x
-//load the file "song2_lq.mp3"
+
 onmessage = (event) => {
     x = event.data[0];
     //Fs_main = event.data[1];

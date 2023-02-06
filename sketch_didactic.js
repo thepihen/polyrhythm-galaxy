@@ -1,22 +1,26 @@
-//p5.js sketch file (with p5 in instance mode we can rename this file)
-//https://p5js.org/reference/
-//https://p5js.org/reference/#/libraries/p5.sound
-
 /*
-TODO:
-add a background image to make everything prettier
-maybe add some stupid effects to make things even more pretty
-RECORDING MODE:
--Implement recording
-UPLOAD MODE:
--Bring debug fixes (disappearing waveform,etc)
-(note: both modes bring to common mode)
-COMMON MODE:
--Peak detection
--Polyrhythm detection
--Cut audio if longer than 30 seconds
-IF THERE'S TIME:
--Implement a createGraphics approach to manage helper text
+DIDACTIC MODE:
+ather than a rhythm game here a dialogue between a helper and 
+the user happens (though it's mostly the helper speaking). 
+The user can record themselves playing what they think is a 
+polyrhythm or upload an audio file and the system will try to 
+recognise it to the best of its capacities. Easier polyrhythms 
+are more likely to be found.
+
+The didactic mode employs a Fourier tempogram to do BPM estimation. 
+The math is handled by a web worker; for this reason, if the user's 
+browser doesn't support web workers (possible if it's very outdated), 
+the website may not work as expected and/or the analysis feature might 
+be unavailable.
+
+To read this code, it's best to start from preload, then setup, then draw
+
+KNOWN ISSUES:
+If your audio device sample rate is not set to 44100 Hz, 
+the polyrhythm analysis in the didactic mode will return 
+completely wrong results. It assumes you're providing it 
+only with audio at 44.1 kHz and that your audio device is 
+set to the same sampling rate.
 */
 
 /*
@@ -26,14 +30,6 @@ const limiter = new Tone.Limiter(-2).toMaster();
 const compressor = new p5.Compressor()
 limiter.connect(Tone.Master)
 Tone.Transport.bpm.value = 90;
-// start/stop the oscillator every quarter note
-/*
-Tone.Transport.scheduleRepeat(time => {
-  osc.start(time).stop(time + 0.1);
-}, "4n");
-*/
-//Tone.Transport.start();
-
 
 //needed until we find a better way to track document focus changes
 //(see bottom of this file)
@@ -42,11 +38,11 @@ var pageFoc = true;
 
 //we set the bpm to 100 by default; this will be the bpm
 //the user will be asked to play/upload something at
-var bpm = 100
+var bpm = 100 //not really used anymore
 
-//recording: booelan indicating if we're recording or not
+//sound recorder stuff
 var recordedAudio; //for the soundRecorder
-var recording = false;
+var recording = false; //are we recording?
 
 //MENU BUTTONS
 //used to create an upload button spanning half a page
@@ -62,12 +58,14 @@ var recordSideButton;
 var faqMenuButton; //onclick:show instructions
 
 //buttons to control the audio playback
+/* //this was used for a html+css implementation, we scrapped that
+//i'm keeping the code in case we decide to go back
 var playButton;
-var stopButton;
 var stopButton;
 var recordButton;
 var analyseButton; //analyse the audio file for matching polyrhythms
 var uploadButton_ingame;
+*/
 
 var soundFile; //the file we'll load
 var maxDuration = 15; //maximum duration of the audio file in seconds
@@ -76,23 +74,24 @@ var leftChannel, rightChannel; //we'll save the audio values in here
 var messages = null; //to save the messages we'll display
 
 //bpm / polyrhythm detection stuff
-var worker;
-var BPM_estimated
+var worker; //web worker
+var BPM_estimated //most likely bpm
 var second_bpm_estimated
 var third_bpm_estimated
-var first_polyrhythm
+var first_polyrhythm //arrays containing the two rhythms as numbers e.g. [3,4]
 var second_polyrhythm
 
 
 // Rhythmic Wheel Stuff
-var hitOuter
+var hitOuter //sounds
 var hitInner
-//answer buttons
+
+//answer buttons for text box answers (when choosing a polyrhythm)
 var answer1
 var answer2
 var answer3
 var hovered = [0, 0, 0]
-var selectedAnswer = -1 
+var selectedAnswer = -1
 
 //use p5 in instance mode
 window.P$ = new p5(p5c => {
@@ -192,15 +191,15 @@ window.P$ = new p5(p5c => {
       //p5c.imageMode(p5c.CORNERS)
       //make the face appear next to the text box in the same position
       //REGARDLESS of the screen resolution and zoom
-      
+
       if (!started)
-        p5c.image(this.faces[this.currFace], p5c.width - 1 * p5c.width/5, p5c.height - 2*p5c.height/5, p5c.width/6,p5c.height/2)
+        p5c.image(this.faces[this.currFace], p5c.width - 1 * p5c.width / 5, p5c.height - 2 * p5c.height / 5, p5c.width / 6, p5c.height / 2)
       else {
         //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
         let h = this.faces[this.currFace].height
-        p5c.image(this.faces[this.currFace], p5c.width / 14, 2 * p5c.height / 4, 37*p5c.width/192, p5c.height/2 * 8/7)
+        p5c.image(this.faces[this.currFace], p5c.width / 14, 2 * p5c.height / 4, 37 * p5c.width / 192, p5c.height / 2 * 8 / 7)
       }
-      
+
       p5c.pop()
       /*
       //this made more sense when there were multiple faces
@@ -222,7 +221,7 @@ window.P$ = new p5(p5c => {
       //the text is in the middle of the rect
       p5c.rectMode(p5c.CENTER)
       p5c.fill(12, 12, 12, 150)
-      p5c.rect(p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5)
+      p5c.rect(p5c.width / 2, 5 * p5c.height / 6, p5c.width / 2, p5c.height / 5)
       //print message using speech_font
       p5c.stroke(255)
       p5c.fill(255)
@@ -238,7 +237,7 @@ window.P$ = new p5(p5c => {
         if (!this.cursorBlink) {
           //draw a small white square on the bottom right of the text box (the cursor)
           //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
-          p5c.rect(3 / 4 * p5c.width - 30, 5 * p5c.height / 6 + p5c.height/10 - 30, 15, 15)
+          p5c.rect(3 / 4 * p5c.width - 30, 5 * p5c.height / 6 + p5c.height / 10 - 30, 15, 15)
         }
       }
 
@@ -255,7 +254,7 @@ window.P$ = new p5(p5c => {
       //TODO: this part is more of a meme, you decide if we keep it or not
       p5c.push()
       p5c.fill(255)
-      p5c.rect(p5c.width / 4, 5 * p5c.height / 6 - p5c.height / 10 - p5c.height / 20, p5c.width / 6, p5c.height/20)
+      p5c.rect(p5c.width / 4, 5 * p5c.height / 6 - p5c.height / 10 - p5c.height / 20, p5c.width / 6, p5c.height / 20)
       p5c.fill(0)
       p5c.textSize(32)
       p5c.textAlign(p5c.LEFT)
@@ -285,7 +284,7 @@ window.P$ = new p5(p5c => {
         this.wait = false
         //upgrade counter by one and play the sound corresponding to dialogue
         this.interval = setInterval(() => {
-          if(this.hasClearedInterval){
+          if (this.hasClearedInterval) {
             return
           }
           this.counter++
@@ -315,17 +314,6 @@ window.P$ = new p5(p5c => {
         this.printMsg(msg, this.counter)
       }
     }
-    /*
-    //not needed anymore, it's all done inside of say()
-    updateCounter(time,msg, intervalHandle,cnt){
-      cnt++
-      if(cnt) > msg.length){
-        clearInterval(this.interval)
-        this.wait = false
-        return
-      }
-    }
-    */
 
     /*
      printMsg: actually prints the message on the screen
@@ -340,28 +328,39 @@ window.P$ = new p5(p5c => {
       //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
       p5c.text(msg.substring(0, to),
         1 * p5c.width / 4 + 10, 5 * p5c.height / 6 - p5c.height / 10, p5c.width / 2 - 20, p5c.height / 5)
-      p5c.pop()      
+      p5c.pop()
     }
 
+    /*
+    addAnswers: adds the possible answers when a user input is required
+    --Inputs--
+    choices: array of strings containing the possible answers
+    */
     addAnswers(choices) {
       for (let i = 0; i < choices.length; i++) {
         this.answers.push(choices[i])
       }
       this.hasAnswers = true
     }
-    stopText(clearTextFlag){
+
+    /*
+    stopText: stops the text from being displayed 
+    --Inputs--
+    clearTextFlag: if true, also clear the helper's variable
+    */
+    stopText(clearTextFlag) {
       clearInterval(this.interval)
-      if (clearTextFlag){
+      if (clearTextFlag) {
         //also clear the text
         this.lastMsg = ""
         this.counter = 0
 
-        this.setIdle() 
+        this.setIdle()
       }
     }
 
-    removeAnswers(){
-      if(!this.hasAnswers) 
+    removeAnswers() {
+      if (!this.hasAnswers)
         return
       this.hasAnswers = false
       answer1.remove()
@@ -374,8 +373,7 @@ window.P$ = new p5(p5c => {
     /*
     createChoicesBox: creates the choices that the user can select
     */
-    
-    createAnswersBox(){
+    createAnswersBox() {
       selectedAnswer = -1
       p5c.push()
       //create a rectangle OVER the text box to contain the possible choices
@@ -385,18 +383,18 @@ window.P$ = new p5(p5c => {
       //The rectangle should be distinguishable from the normal text box
       p5c.rectMode(p5c.CENTER)
       p5c.fill(12, 12, 12)
-      p5c.rect(3*p5c.width / 4 - p5c.width/16, p5c.height /2 + 100, p5c.width / 8, 150)
+      p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 100, p5c.width / 8, 150)
 
       //make three sub-rectangles to make the choices more visible
-      
+
       p5c.strokeWeight(2)
-      p5c.fill(200, 200, 200, 10 + hovered[0]*200)
+      p5c.fill(200, 200, 200, 10 + hovered[0] * 200)
       p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 50, p5c.width / 8, 50)
       p5c.fill(200, 200, 200, 10 + hovered[1] * 200)
       p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 100, p5c.width / 8, 50)
       p5c.fill(200, 200, 200, 10 + hovered[2] * 200)
       p5c.rect(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 150, p5c.width / 8, 50)
-      
+
       p5c.pop()
       p5c.push()
       //print the choices
@@ -411,40 +409,7 @@ window.P$ = new p5(p5c => {
       p5c.text(this.answers[1], 3 * p5c.width / 4 - p5c.width / 8, p5c.height / 2 + 70, p5c.width / 8, 50)
       p5c.text(this.answers[2], 3 * p5c.width / 4 - p5c.width / 8, p5c.height / 2 + 120, p5c.width / 8, 50)
       p5c.pop()
-      
-
-
-      
-      /*
-      //create a rectangle to contain the choices
-      p5c.rectMode(p5c.CENTER)
-      p5c.fill(12, 12, 12, 150)
-      p5c.rect(p5c.width / 2, p5c.height - 150, p5c.width / 2, 200)
-      //print the choices
-      p5c.stroke(255)
-      p5c.fill(255)
-      p5c.textFont(speech_font)
-      p5c.textSize(30)
-      p5c.rectMode(p5c.CORNER)
-      p5c.textWrap(p5c.WORD) //alternative is CHAR 
-      
-      //if the helper is waiting for the user to click, show a blinking cursor
-      if (this.wait && !this.isIdle) {
-        if (p5c.frameCount % 30 == 0) {
-          this.cursorBlink = !this.cursorBlink
-        }
-        if (!this.cursorBlink) {
-          //draw a small white square on the bottom right of the text box (the cursor)
-          p5c.rect(3 / 4 * p5c.width - 25, p5c.height - 75, 15, 15)
-        }
-      }
-      //print the choices
-      for(let i = 0; i < this.answers.length; i++){
-        p5c.text(this.answers[i], 1 * p5c.width / 4 + 10, p5c.height - 250 + 50*i, p5c.width / 2 - 20, 200)
-      }
-      */
-     
-   }
+    }
 
 
     //------------------------------------------------
@@ -476,7 +441,7 @@ window.P$ = new p5(p5c => {
   let loading = true //is the application loading stuff?
   var started = false; //has the user started the game?
   var userGaveMicPerm = false; //has the user given microphone permission?
-  var face = null
+  var face = null //the image of the helper
   /*
   preload: function that gets automatically by p5js before loading the sketch.
   ->Everything that needs to be available when the sketch starts needs to be loaded here
@@ -497,8 +462,8 @@ window.P$ = new p5(p5c => {
     hitOuter = p5c.loadSound('assets/hit_outer.wav'); // hit Outer Circle Rhythmic Wheel
     hitInner = p5c.loadSound('assets/hit_inner.wav'); // hit Inner Circle Rhythmic Wheel
     debug_soundfile = p5c.loadSound('assets/test_5v7_174.mp3') //debug soundfile
-    clickRW = p5c.loadSound('assets/rhythmicWheelClick.mp3')
-    
+    clickRW = p5c.loadSound('assets/rhythmicWheelClick.mp3') //sound played as the rhythm wheel snaps
+
     bg = p5c.loadImage('assets/bg.jpg') //background image
     loopSound_0 = p5c.loadSound('assets/loop_1.wav') //polyrhythm sound 1
     loopSound_1 = p5c.loadSound('assets/loop_2.wav') //polyrhythm sound 2
@@ -549,60 +514,60 @@ window.P$ = new p5(p5c => {
     faces = [face]//, face2]
     helper = new Helper(faces, "Polyev")
 
+    //handle things if we're coming back from the training mode
     if (window.location.search.slice(1) != "") {
       //skipChoices=true&bpm=90&leftR="+selectedPolyrhythm[0]+"&rightR
       let a = window.location.search.slice(1).split("&").forEach(function (e) {
-        
+
         let b = e.split("=");
         if (b[0] == "from") {
-          if(b[1]=="training"){
+          if (b[1] == "training") {
             backFromTraining = true
-            
+
           }
         }
       })
     }
 
-    if(!backFromTraining){
-    msg = messages[0]
-    //setup everything regarding buttons
-    setupMenuButtons()
-    }else{
+    if (!backFromTraining) {
+      msg = messages[0]
+      //setup everything regarding buttons
+      setupMenuButtons()
+    } else {
       setupBackFromTraining()
     }
     // Setup everything about Rhythmic Wheel
     setupRhythmicWheel()
   }
-  setupBackFromTraining = function(){
-    mode = 2
-      //mode = 2;
-      p5c.userStartAudio();
-      Tone.start();
-      loadMessages("common")
-      currMessage = getMessageById("commonWelcomeBack")
-      
-      //started = true;
-      soundFile = debug_soundfile
-      //TODO: find a better implementation of this; unfortunately we can't do better for now
-      //Making this actually load is a pain in the ass, so I'll take this for now.
-      //If we try to load the right channel for some unexplained reason this breaks and doesn't load anything
-      //I think it's because the data isn't available yet when we look for it
-      setTimeout(() => {
-        //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
-        //We add slice() to effectively clone the array
-        if (soundFile.duration() > maxDuration) {
-          cutAudio()
-        } else {
-          leftChannel = soundFile.buffer.getChannelData(0).slice()
-        }
-      }, 100);
-      setTimeout(() => {
-        mode = 2;
-        requestMicrophoneAccess();
 
-        //createAudioControls();
-        started = true
-      }, 200);
+  //quick setup if coming back from training mode
+  setupBackFromTraining = function () {
+    mode = 2 //start in common mode
+    p5c.userStartAudio();
+    Tone.start();
+    loadMessages("common")
+    currMessage = getMessageById("commonWelcomeBack")
+
+    //started = true;
+    soundFile = debug_soundfile
+    //TODO: find a better implementation of this; unfortunately we can't do better for now
+    //Making this actually load is a pain in the ass, so I'll take this for now.
+    //If we try to load the right channel for some unexplained reason this breaks and doesn't load anything
+    //I think it's because the data isn't available yet when we look for it
+    setTimeout(() => {
+      //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
+      //We add slice() to effectively clone the array
+      if (soundFile.duration() > maxDuration) {
+        cutAudio()
+      } else {
+        leftChannel = soundFile.buffer.getChannelData(0).slice()
+      }
+    }, 100);
+    setTimeout(() => {
+      mode = 2;
+      requestMicrophoneAccess();
+      started = true
+    }, 200);
 
   }
   /*
@@ -615,25 +580,6 @@ window.P$ = new p5(p5c => {
       workerSupported = true
       const myWorker = new Worker("worker-methods.js");
       worker = myWorker
-      /*//TODO: move this to the part when it's actually called
-      //load the audio file
-      sound = p5c.loadSound("test_3v2_158.mp3");
-      let x;
-      setTimeout(() => {
-        x = sound.buffer.getChannelData(0).slice();
-        console.log("AUDIO LOADED")
-        console.log("Passing the audio data to the worker!")
-      }, 1000)
-      setTimeout(() => {
-        worker.postMessage(x)
-      }, 2000);
-      worker.onmessage = (event) => {
-        console.log("Main: received the result!")
-        //print the estimated BPM
-        BPM = event.data[0]
-        tempogram = event.data[1]
-      }
-      */
     } else {
       workerSupported = false
       console.log('Your browser doesn\'t support web workers.');
@@ -641,7 +587,6 @@ window.P$ = new p5(p5c => {
       console.log("See https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers for more informations")
       console.log("We will not perform audio analysis.")
     }
-
   }
 
   /* 
@@ -694,8 +639,7 @@ window.P$ = new p5(p5c => {
 
     //two cases:
     //if the user clicked on the left half of the window:
-    //ask for the BPM the user wants, ask for permission to use the microphone
-    //and start recording
+    //set mode to 0
     //if the user clicked on the right half of the window:
     //open a file selector and ask the user to select a file
     recordSideButton.mousePressed(function () {
@@ -705,9 +649,6 @@ window.P$ = new p5(p5c => {
       if (!started) {
         p5c.userStartAudio();
         Tone.start();
-        //Tone.Transport.start();
-        //startMetronome(bpm)
-        //Tone.Transport.bpm.value = bpm;
         started = true
       }
       removeUselessButtons()
@@ -719,7 +660,7 @@ window.P$ = new p5(p5c => {
       //TODO: type all FAQs, everything the user needs to know, inside a black box
       //Make it look nice and make it close when user clicks on it
       faqMenuButton.hide()
-      
+
       //make a black box in the middle of the screen and type "aaa" inside of it
       let box = p5c.createDiv(`<h2>HOW THIS WORKS</h2>
       Welcome to the didactic mode of Polyrhythm Hero!<br>
@@ -757,10 +698,6 @@ window.P$ = new p5(p5c => {
       if (!started) {
         p5c.userStartAudio();
         Tone.start();
-        //Tone.Transport.start();
-        //startMetronome(bpm)
-        //Tone.Transport.bpm.value = bpm;
-        //started = true
       }
       //click the "real" button, thus prompting file load
       uploadButton.click()
@@ -784,7 +721,6 @@ window.P$ = new p5(p5c => {
     if (loading)
       //we're still loading the messages (JSON loading is async)
       return
-
     if (started) {
       drawCurrentMode()
     }
@@ -796,7 +732,7 @@ window.P$ = new p5(p5c => {
   /*
   drawCurrentMode: draw but for the current mode (record, upload, common)
   */
- var numDots = 0
+  var numDots = 0
   drawCurrentMode = function () {
     //show bg image in the background
     p5c.image(bg, 0, 0, p5c.width, p5c.height)
@@ -814,12 +750,12 @@ window.P$ = new p5(p5c => {
       case 2:
         //COMMON MODE
         drawInterface()
-        if (showTrainingButton){
+        if (showTrainingButton) {
           drawTrainingButton()
         }
         helper.showFace()
         helper.say(msg)
-        if (isAnalysing){
+        if (isAnalysing) {
           p5c.push()
           p5c.stroke(255)
           p5c.strokeWeight(2)
@@ -835,15 +771,13 @@ window.P$ = new p5(p5c => {
           p5c.textAlign(p5c.CORNER, p5c.CENTER)
           p5c.fill(255)
           //write "Analysing" with numDots dots in the middle of the box
-          p5c.text("Analysing" + ".".repeat(numDots), p5c.width / 2 - p5c.width/32, p5c.height / 4)
-          if(p5c.frameCount % 30 == 0){
+          p5c.text("Analysing" + ".".repeat(numDots), p5c.width / 2 - p5c.width / 32, p5c.height / 4)
+          if (p5c.frameCount % 30 == 0) {
             numDots = (numDots + 1) % 4
           }
           p5c.pop()
-
-          
         }
-        if(recording){
+        if (recording) {
           p5c.push()
           p5c.stroke(255)
           p5c.strokeWeight(2)
@@ -863,25 +797,26 @@ window.P$ = new p5(p5c => {
           if (p5c.frameCount % 30 == 0) {
             numDots = (numDots + 1) % 4
           }
-          if (recording && numDots<2) {
+          if (recording && numDots < 2) {
             p5c.fill(255, 0, 0)
             p5c.noStroke()
             p5c.ellipse(p5c.width / 2 + 3 * p5c.width / 8 - 15, p5c.height / 4 - p5c.height / 6 + 15, 20, 20)
           }
           p5c.pop()
         }
-        if(showRhythmWheel)
+        if (showRhythmWheel)
           drawRhythmicWheel()
         break;
     }
   }
 
   //drawTrainingButton: draw the button that allows the user to start the training mode with the found polyrhythm
-  drawTrainingButton = function(){
+  //This gets called only after the system has found a polyrhythm and the user made a choice
+  drawTrainingButton = function () {
     let x = p5c.mouseX
     let y = p5c.mouseY
     let cond = (x >= p5c.width / 2 - p5c.width / 12 && x <= p5c.width / 2 + p5c.width / 12 && y >= p5c.height / 2 - p5c.height / 16 && y <= p5c.height / 2 + p5c.height / 16)
-    let fillColor = 200 * cond + 12 * (1-cond)
+    let fillColor = 200 * cond + 12 * (1 - cond)
     p5c.push()
     p5c.textFont('Aldrich')
     p5c.fill(fillColor)
@@ -911,7 +846,7 @@ window.P$ = new p5(p5c => {
     p5c.rectMode(p5c.CENTER)
     p5c.rect(p5c.width / 2, p5c.height / 4, 3 * p5c.width / 4, p5c.height / 3)
     //if the user is recording (recording = true) draw a small red circle top right of the rectangle
-    
+
     if (leftChannel != null) {
       //draw the waveform
       p5c.stroke(255)
@@ -943,7 +878,7 @@ window.P$ = new p5(p5c => {
         }
       }
       p5c.endShape()
-      
+
     }
 
     p5c.pop()
@@ -966,24 +901,6 @@ window.P$ = new p5(p5c => {
     p5c.line(playerCurrX, p5c.height / 4 - p5c.height / 6 + 1, playerCurrX, p5c.height / 4 + p5c.height / 6 - 1) //+1,-1 to avoid overlapping with the window
 
     p5c.pop()
-
-
-    /*
-    //This is very nice to see but quite useless since we're reading only a small sample in real time
-    //draw the waveform
-    let waveform = fft.waveform()
-    p5c.stroke(255)
-    p5c.strokeWeight(2)
-    p5c.noFill()
-    p5c.beginShape()
-    for (var i = 0; i < waveform.length; i++){
-      var x = p5c.map(i, 0, waveform.length, p5c.width/4, p5c.width/4 + p5c.width/2);
-      var y = p5c.map( waveform[i], -1, 1, p5c.height/3 + p5c.height/3, p5c.height/3);
-      p5c.vertex(x,y);
-    }
-    p5c.endShape()
-    p5c.pop()
-    */
   }
 
   /*
@@ -998,11 +915,11 @@ window.P$ = new p5(p5c => {
     p5c.strokeWeight(2)
     p5c.fill(100)
     p5c.rectMode(p5c.CENTER)
-    p5c.rect(p5c.width/8 - p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
+    p5c.rect(p5c.width / 8 - p5c.width / 44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
     //divide this rectangle in 5 equal parts
     let rectHeight = p5c.height / 3
     let rectWidth = p5c.width / 22
-    let rectX = p5c.width/8 - p5c.width/44
+    let rectX = p5c.width / 8 - p5c.width / 44
     let rectY = p5c.height / 4
     let rectStep = rectHeight / 5
     //draw 5 squares
@@ -1012,52 +929,52 @@ window.P$ = new p5(p5c => {
     p5c.rect(rectX, rectY, rectWidth, rectStep)
     p5c.rect(rectX, rectY + rectStep, rectWidth, rectStep)
     p5c.rect(rectX, rectY + rectStep * 2, rectWidth, rectStep)
-    
+
     //draw a "OK" button in the first square
     p5c.fill(12)
     p5c.stroke(12)
     p5c.textSize(24)
     p5c.textAlign(p5c.CENTER, p5c.CENTER)
     p5c.text("OK", rectX, rectY - rectStep * 2)
-    
+
     //draw a play button (rotated triangle) in the middle of the second square
 
     p5c.fill(0, 255, 76)
     p5c.stroke(12)
     p5c.strokeWeight(2)
-    let playL = p5c.width/110
-    p5c.triangle(rectX - playL, rectY - rectStep - playL, rectX - playL, rectY - rectStep +playL, rectX + playL, rectY-rectStep)
+    let playL = p5c.width / 110
+    p5c.triangle(rectX - playL, rectY - rectStep - playL, rectX - playL, rectY - rectStep + playL, rectX + playL, rectY - rectStep)
 
     //draw a stop button (rectangle) in the middle of the third square
     p5c.fill(240)
     p5c.stroke(12)
     p5c.strokeWeight(2)
-    let stopL = p5c.width/110
-    p5c.rect(rectX, rectY, 2*stopL, 2*stopL)
+    let stopL = p5c.width / 110
+    p5c.rect(rectX, rectY, 2 * stopL, 2 * stopL)
 
     //draw a record button (circle) in the middle of the fourth square
     p5c.fill(220, 20, 60)
     p5c.stroke(12)
     p5c.strokeWeight(2)
-    let recordR = p5c.width/110
-    p5c.ellipse(rectX, rectY + rectStep, 2*recordR, 2*recordR)
+    let recordR = p5c.width / 110
+    p5c.ellipse(rectX, rectY + rectStep, 2 * recordR, 2 * recordR)
 
     //draw an upload button (triangle) in the middle of the fifth square
     p5c.fill(32, 184, 255)
     p5c.stroke(12)
     p5c.strokeWeight(2)
-    let uploadL = p5c.width/110
+    let uploadL = p5c.width / 110
     p5c.push()
     //draw the play button again in this square but rotate it by 90 degress
-    p5c.translate(rectX, rectY + 2*rectStep)
-    p5c.rotate(-p5c.PI/2)
+    p5c.translate(rectX, rectY + 2 * rectStep)
+    p5c.rotate(-p5c.PI / 2)
     p5c.triangle(-uploadL, -uploadL, -uploadL, uploadL, uploadL, 0)
     p5c.pop()
 
     //draw a rectangle that will contain the audio controls RIGHT of the waveform display
     p5c.fill(150)
     p5c.stroke(255)
-    p5c.rect(3*p5c.width/4 + p5c.width/8 + p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
+    p5c.rect(3 * p5c.width / 4 + p5c.width / 8 + p5c.width / 44, p5c.height / 4, p5c.width / 22, p5c.height / 3)
     //print the audio duration and the current time inside this box
     p5c.fill(12)
     p5c.stroke(12)
@@ -1117,12 +1034,12 @@ window.P$ = new p5(p5c => {
     p5c.text("(OR)", p5c.width / 2, p5c.height / 2 - 50);
     //create an arrow pointing to (width-400,height-200) with the text
     //"your helper" below it
-    
+
 
     //need these to make this resolution independent
     //these substitute the values in the parenthesis (e.g. 450,...)
-    let a = p5c.round(p5c.width/(4)) 
-    let b = p5c.round(p5c.width/(4.30)) //450
+    let a = p5c.round(p5c.width / (4))
+    let b = p5c.round(p5c.width / (4.30)) //450
     let c = p5c.round(p5c.width / (4.8))
 
     let d = p5c.round(p5c.height / (6))
@@ -1143,7 +1060,7 @@ window.P$ = new p5(p5c => {
       p5c.width - c, p5c.height - f
     )
     //we will show the face of the helper here using other functions
-    
+
     p5c.line(p5c.width - c, p5c.height - f, p5c.width - b, p5c.height - e)
     p5c.line(p5c.width - c, p5c.height - f, p5c.width - b, p5c.height - g)
 
@@ -1152,7 +1069,7 @@ window.P$ = new p5(p5c => {
     //from the background
 
 
-    
+
     //write the mode right below the title
     p5c.textFont('Aldrich', 70)
     p5c.textAlign(p5c.CENTER, p5c.CENTER);
@@ -1161,7 +1078,7 @@ window.P$ = new p5(p5c => {
     p5c.text("D I D A C T I C   M O D E", p5c.width / 1.97, p5c.height / 3.5);
     p5c.push()
     p5c.textSize(24)
-    p5c.text("(tip: pressing 'm' will skip all unnecessary dialogue)", p5c.width / 1.97, 5*p5c.height /6);
+    p5c.text("(tip: pressing 'm' will skip all unnecessary dialogue)", p5c.width / 1.97, 5 * p5c.height / 6);
     p5c.pop()
   }
 
@@ -1189,35 +1106,36 @@ window.P$ = new p5(p5c => {
       }
     }
 
-    //training mode
-    if (hasSuggested && p5c.mouseX >= p5c.width / 2 - p5c.width / 12 && p5c.mouseX <= p5c.width / 2 + p5c.width / 12 && p5c.mouseY >= p5c.height / 2 - p5c.height / 16 && p5c.mouseY <= p5c.height / 2 + p5c.height / 16){
+    //if the training mode button exists and the user presses it...
+    if (hasSuggested && p5c.mouseX >= p5c.width / 2 - p5c.width / 12 && p5c.mouseX <= p5c.width / 2 + p5c.width / 12 && p5c.mouseY >= p5c.height / 2 - p5c.height / 16 && p5c.mouseY <= p5c.height / 2 + p5c.height / 16) {
       //selectedPolyrhythm is a variable containing the selected polyrhythm
-      window.open("training.html?from=didactic&skipChoices=true&bpm=90&leftR="+selectedPolyrhythm[0]+"&rightR="+selectedPolyrhythm[1], "_self")
+      window.open("training.html?from=didactic&skipChoices=true&bpm=90&leftR=" + selectedPolyrhythm[0] + "&rightR=" + selectedPolyrhythm[1], "_self")
     }
 
     //if the mouse was pressed inside the text box, do something
     //p5c.rect(p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5)
     if (started && p5c.mouseX >= p5c.width / 4 && p5c.mouseX <= 3 * p5c.width / 4 && p5c.mouseY >= 5 * p5c.height / 6 - p5c.height / 10 && p5c.mouseY <= 5 * p5c.height / 6 + p5c.height / 10) {
-        //if (!paused) {
-        //if the game is not paused, 
-        //check if the helper is waiting (isWaiting == true); if so,
-        //play the 'speech_end' sound and set isWaiting to false
-        if (helper.isWaiting()) {
-          speech_end.play();
-          handleMessage(msg.getId())
-          //switch msg to the next message to display
-          currMessage++
-          msg.makeEmpty()
-          if (msg.nextMsgId != -1) {
-            setTimeout(() => { msg = messages[currMessage] }, 150)
-          } else {
-            helper.setIdle()
-          }
+      //if (!paused) {
+      //if the game is not paused, 
+      //check if the helper is waiting (isWaiting == true); if so,
+      //play the 'speech_end' sound and set isWaiting to false
+      if (helper.isWaiting()) {
+        speech_end.play();
+        handleMessage(msg.getId())
+        //switch msg to the next message to display
+        currMessage++
+        msg.makeEmpty()
+        if (msg.nextMsgId != -1) {
+          setTimeout(() => { msg = messages[currMessage] }, 150)
+        } else {
+          helper.setIdle()
         }
+      }
     }
 
+    //handle audio controls clicks
     mousePressedAudioControls()
-
+    //handle rhythms wheel clicks
     mousePressedRhythmicWheel()
   }
 
@@ -1233,7 +1151,7 @@ window.P$ = new p5(p5c => {
   mouseReleased() : p5js function that gets called every time mouse button
   is released.
    */
-  p5c.mouseReleased = function() {
+  p5c.mouseReleased = function () {
     mouseReleasedRhythmicWheel()
   }
   /*
@@ -1254,21 +1172,25 @@ window.P$ = new p5(p5c => {
       }
       //}, 3000);
     })
-    if(mode != 2){
-    //now remove all useless buttons
-    removeUselessButtons()
-    setTimeout(() => {
-      mode = 1 //user chose their file
-      //show some intro messages and then move to mode 2
-      console.log("FILE MODE")
-      loadMessages("upload")
-      started = true;
-    }, 1000);
-  }
+    if (mode != 2) {
+      //now remove all useless buttons
+      removeUselessButtons()
+      setTimeout(() => {
+        mode = 1 //user chose their file
+        //show some intro messages and then move to mode 2
+        console.log("FILE MODE")
+        loadMessages("upload")
+        started = true;
+      }, 1000);
+    }
 
   }
 
-  cutAudio = function(){
+  /*
+  cutAudio: cuts the audio file to a maximum duration of maxDuration
+  for faster processing by the worker
+  */
+  cutAudio = function () {
     const ctx = p5c.getAudioContext()
     let x = soundFile.buffer.getChannelData(0);
     let y = null
@@ -1295,7 +1217,7 @@ window.P$ = new p5(p5c => {
     soundFile.buffer = buff
     leftChannel = soundFile.buffer.getChannelData(0).slice()
   }
-  
+
 
   /*
   loadMessages: loads the messages from the json file
@@ -1312,10 +1234,7 @@ window.P$ = new p5(p5c => {
       let msg = messages_json[messages_key][i]
       messages[i] = new Message(msg.msg, msg.msgId, msg.nextMsgId)
     }
-   
-
     msg = messages[0]
-
     //reset message counter
     currMessage = 0;
     loading = false
@@ -1384,10 +1303,10 @@ window.P$ = new p5(p5c => {
       //There is no way for now to insert a non skippable pause between messages
     }
 
-    //DEBUG: skip directly to mode 2
+    //skip directly to mode 2
     if (key == 'm' || key == 'M') {
       //skip directly to mode 2
-      removeUselessButtons()
+      removeUselessButtons() //remove record/upload buttons on the first page
 
       if (!started) {
         //mode = 2;
@@ -1403,9 +1322,9 @@ window.P$ = new p5(p5c => {
         setTimeout(() => {
           //careful that if you play a soundFile you empty its buffer => leftChannel becomes an empty array
           //We add slice() to effectively clone the array
-          if (soundFile.duration() > maxDuration){
+          if (soundFile.duration() > maxDuration) {
             cutAudio()
-          }else{
+          } else {
             leftChannel = soundFile.buffer.getChannelData(0).slice()
           }
         }, 100);
@@ -1456,24 +1375,24 @@ window.P$ = new p5(p5c => {
         break;
       case "commonFound":
         //show the multiple-choice dialogue box
-        let answ1 = first_polyrhythm[0] +" vs " + first_polyrhythm[1]
-        let answ2 = second_polyrhythm[0] +" vs " + second_polyrhythm[1]
+        let answ1 = first_polyrhythm[0] + " vs " + first_polyrhythm[1]
+        let answ2 = second_polyrhythm[0] + " vs " + second_polyrhythm[1]
         //if one of the two polyrhythms is a simple rhythm, show it but say specify that it's a simple rhythm
-        if (first_polyrhythm[0] == 1 && first_polyrhythm[1] == 1){
+        if (first_polyrhythm[0] == 1 && first_polyrhythm[1] == 1) {
           answ1 = answ1 + " (*)"
         }
         //do the same for second_polyrhythm
-        if (second_polyrhythm[0] == 1 && second_polyrhythm[1] == 1){
+        if (second_polyrhythm[0] == 1 && second_polyrhythm[1] == 1) {
           answ2 = answ2 + " (*)"
         }
 
-        
+
         let answ3 = "Neither..."
-        helper.addAnswers([answ1,answ2,answ3])
-        //TODO: these don't get deleted when the window is resized, the should be created and deleted only once
-        //when needed. Fix this ASAP
-        //TODO: these don't get deleted when the window is resized, the should be created and deleted only once
-        //when needed. Fix this ASAP
+
+        //add the answers to the helper, which will display them
+        //We also made it so when the user hover an answer, the corresponding 
+        //polyrhythm is played
+        helper.addAnswers([answ1, answ2, answ3])
         answer1 = p5c.createDiv("")
         answer1.position(3 * p5c.width / 4 - p5c.width / 16, p5c.height / 2 + 50)
         answer1.addClass('answer')
@@ -1483,7 +1402,7 @@ window.P$ = new p5(p5c => {
           selectedAnswer = 0
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
-          
+
         })
         answer1.mouseOver(function () {
           hovered[0] = 1
@@ -1505,11 +1424,11 @@ window.P$ = new p5(p5c => {
           selectedAnswer = 1
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
-          
+
         })
         answer2.mouseOver(function () {
           hovered[1] = 1
-          if(second_polyrhythm!=null && second_polyrhythm.length!=NaN){
+          if (second_polyrhythm != null && second_polyrhythm.length != NaN) {
             startLoop(second_polyrhythm[0], 0)
             startLoop(second_polyrhythm[1], 1)
           }
@@ -1528,7 +1447,7 @@ window.P$ = new p5(p5c => {
           selectedAnswer = 2
           helper.removeAnswers()
           userAnswered(selectedAnswer, "poly")
-          
+
         })
         answer3.mouseOver(function () {
           hovered[2] = 1
@@ -1540,7 +1459,6 @@ window.P$ = new p5(p5c => {
 
       case "commonPolyChose":
         //RTMWHEEL
-        //TODO: YOU CAN NOW CREATE AND START SHOWING THE RHYTHM WHEEL EACH TIME YOU CALL DRAW
         break;
     }
   }
@@ -1560,13 +1478,13 @@ window.P$ = new p5(p5c => {
 
     //first of all if the user didn't click inside the audio controls rectangle, return
     //p5c.width/8 - p5c.width/44, p5c.height / 4, p5c.width / 22, p5c.height / 3
-    if (p5c.mouseX < p5c.width / 8 - p5c.width / 22 || p5c.mouseX > p5c.width / 8 ) {
+    if (p5c.mouseX < p5c.width / 8 - p5c.width / 22 || p5c.mouseX > p5c.width / 8) {
       return
     }
-    if(p5c.mouseY < p5c.height / 4 - p5c.height/6 || p5c.mouseY > p5c.height / 4 + p5c.height / 6){
+    if (p5c.mouseY < p5c.height / 4 - p5c.height / 6 || p5c.mouseY > p5c.height / 4 + p5c.height / 6) {
       return
     }
-    
+
     //find out which button was pressed and call clickAudioControl with the corresponding id
     let rectHeight = p5c.height / 3
     let rectWidth = p5c.width / 22
@@ -1588,10 +1506,10 @@ window.P$ = new p5(p5c => {
 
   }
   /*
-  createAudioControls: used to create the audio controls when passing to common mode
+  clickAudioControls: manage audio control functions
   */
   var waveRefreshInterval;
-  clickAudioControl = function(id){
+  clickAudioControl = function (id) {
     //id:
     //0: analyse
     //1: play
@@ -1616,7 +1534,7 @@ window.P$ = new p5(p5c => {
         }
         if (leftChannel != null && isAnalysing == false) {
           //if we have a soundFile, we can analyse it
-          if(timeoutID!=null){
+          if (timeoutID != null) {
             clearTimeout(timeoutID)
             timeoutID = null
           }
@@ -1677,7 +1595,8 @@ window.P$ = new p5(p5c => {
     uploadButton.remove()
     realUploadButton.remove()
   }
-  //original implementation using CSS-defined buttons (not porting well to different resolutions)
+  //original implementation using CSS-defined buttons 
+  //(abandoned because it was not porting well to different resolutions)
   /*
   createAudioControls = function () {
     recordButton = p5c.createDiv('')
@@ -1767,24 +1686,24 @@ window.P$ = new p5(p5c => {
   }
   */
 
-  recordingWaveDrawer = function (waveRefreshInterval, recording){
+  recordingWaveDrawer = function (waveRefreshInterval, recording) {
     //for some reason the whole thing doesn't work at the end unless we do this bad shit
-    if(recording){
+    if (recording) {
       /*
       waveRefreshInterval = setInterval(() => {
         leftChannel = soundFile.buffer.getChannelData(0).slice();
       }, 300)
       */
-    }else{
+    } else {
       //clearInterval(waveRefreshInterval);
       //leftChannel = soundFile.buffer.getChannelData(0).slice();
-      setTimeout( ()=>{
-      if (soundFile.duration() > maxDuration) {
-        cutAudio()
-      } else {
-        leftChannel = soundFile.buffer.getChannelData(0).slice()
-      }
-     },100);
+      setTimeout(() => {
+        if (soundFile.duration() > maxDuration) {
+          cutAudio()
+        } else {
+          leftChannel = soundFile.buffer.getChannelData(0).slice()
+        }
+      }, 100);
     }
   };
 
@@ -1828,11 +1747,11 @@ window.P$ = new p5(p5c => {
   to make sound*/
   var metroFlag = 0;
   startLoop = function (n, i) {
-    if(i == 0)
+    if (i == 0)
       tone1 = Tone.Transport.scheduleRepeat(time => {
-      loopSound(i)
-    }, n+"n");
-    else{
+        loopSound(i)
+      }, n + "n");
+    else {
       tone2 = Tone.Transport.scheduleRepeat(time => {
         loopSound(i)
       }, n + "n");
@@ -1846,9 +1765,9 @@ window.P$ = new p5(p5c => {
   metroSound(): produces the correct metronome sound based on the beat
   */
   loopSound = function (i) {
-    if(i == 0)
+    if (i == 0)
       loopSound_0.play();
-    else{
+    else {
       loopSound_1.play()
     }
   }
@@ -1863,11 +1782,15 @@ window.P$ = new p5(p5c => {
     //INPUT: x - audio buffer (passed using postMessage)
     //RETURNS: return [BPM_estimated, secondary_bpm, third_bpm, polyrhythm[0], polyrhythm[1], 
     //                 polyrhythm_second_ML[0], polyrhythm_second_ML[1]]
+    if (!workerSupported) {
+      console.log("Your browser doesn't support web workers! Aborting analysis...")
+      return
+    }
     isAnalysing = true
-    helper.stopText(true)
+    helper.stopText(true) //we don't want text while the worker works
     msg = new Message("", -1, -1)
     helper.removeAnswers()
-    
+
     let audioToWorker;
     setTimeout(() => {
       audioToWorker = soundFile.buffer.getChannelData(0).slice();
@@ -1878,6 +1801,7 @@ window.P$ = new p5(p5c => {
     setTimeout(() => {
       console.log(soundFile.buffer.sampleRate)
       worker.postMessage([audioToWorker, soundFile.buffer.sampleRate])
+      //send data to worker
     }, 2000);
     worker.onmessage = (event) => {
       console.log("Main: received the result!")
@@ -1887,7 +1811,7 @@ window.P$ = new p5(p5c => {
       third_bpm_estimated = event.data[2]
       first_polyrhythm = new Array(event.data[3], event.data[4])
       second_polyrhythm = new Array(event.data[5], event.data[6])
-
+      //load the correct messages
       let ind;
       if (first_polyrhythm != null && first_polyrhythm != NaN) {
         loadMessages("common")
@@ -1930,7 +1854,7 @@ window.P$ = new p5(p5c => {
       wheelBPM = second_bpm_estimated
       slideInner = 0
       slideOuter = 0
-      if (!hasSuggested){
+      if (!hasSuggested) {
         suggestTrainingMode()
       }
     } else {
@@ -1941,22 +1865,26 @@ window.P$ = new p5(p5c => {
   }
 
   var timeoutID = null;
+  /*
+  After the user has selected a polyrhythm, wait a bit and suggest them
+  to start training with on it
+  */
   suggestTrainingMode = function () {
     console.log("Suggesting")
     timeoutID = setTimeout(() => {
-    let ind = getMessageById("commonSuggestTraining")
-    if (ind == -1) {
-      loadMessages("common")
-      ind = getMessageById("commonSuggestTraining")
-    }
-    helper.removeAnswers()
-    helper.setWorking()
-    currMessage = ind
-    msg = messages[currMessage]
-    createTrainingButton()
-    hasSuggested = true
-    timeoutID = null
-    },30000)
+      let ind = getMessageById("commonSuggestTraining")
+      if (ind == -1) {
+        loadMessages("common")
+        ind = getMessageById("commonSuggestTraining")
+      }
+      helper.removeAnswers()
+      helper.setWorking()
+      currMessage = ind
+      msg = messages[currMessage]
+      createTrainingButton()
+      hasSuggested = true
+      timeoutID = null
+    }, 30000)
   }
 
   var showTrainingButton = false;
@@ -1964,25 +1892,29 @@ window.P$ = new p5(p5c => {
     showTrainingButton = true
   }
 
-  var selectedPolyrhythm = -1; 
-  userAnswered = function(answer, question){
-    if(question=="poly"){
+  var selectedPolyrhythm = -1;
+  /*
+  userAnswered: function that manages what happens when the user
+  clicks an answer
+  */
+  userAnswered = function (answer, question) {
+    if (question == "poly") {
       let ind
-      if(answer == 0){
+      if (answer == 0) {
         selectedPolyrhythm = first_polyrhythm
         ind = getMessageById("commonPolyChose")
         if (ind == -1) {
           loadMessages("common")
           ind = getMessageById("commonPolyChose")
         }
-      }else if (answer == 1){
+      } else if (answer == 1) {
         selectedPolyrhythm = second_polyrhythm
         ind = getMessageById("commonPolyChose")
         if (ind == -1) {
           loadMessages("common")
           ind = getMessageById("commonPolyChose")
         }
-      }else{
+      } else {
         ind = getMessageById("commonPolyChoseNeither")
         if (ind == -1) {
           loadMessages("common")
@@ -1993,8 +1925,8 @@ window.P$ = new p5(p5c => {
       helper.setWorking()
       currMessage = ind
       msg = messages[currMessage]
-      if(answer!=2){
-        createRhythmWheel(selectedPolyrhythm[0],selectedPolyrhythm[1])
+      if (answer != 2) {
+        createRhythmWheel(selectedPolyrhythm[0], selectedPolyrhythm[1])
         showRhythmWheel = true
         setWheelShown(showRhythmWheel)
       }

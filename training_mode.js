@@ -244,7 +244,10 @@ window.P$ = new  p5(p =>{
     }
 
 
-
+    /*
+    draw(): p5js function that gets automatically called once per frame
+    (by default 60 frames per second)
+    */
     p.draw=function () {
         if (started){
             sketchDraw()

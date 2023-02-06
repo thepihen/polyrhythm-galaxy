@@ -25,8 +25,6 @@ var leftR;
 var rightR;
 var interval;
 
-//frameRate (need this to use it outside of )
-var frate;
 var logo
 /*
 preload: function that gets automatically by p5js before loading the sketch.
@@ -44,15 +42,15 @@ function sketchPreload() {
 
 
 /*
-Variables needed to draw the visual guide; might need a better solution for this in
-the future if we want more vertical lines (more rhythms)
+Variables needed to draw the visual guide;
 */
 var xLine1;
 var xLine2;
 var yLineH;
 
-//arrays containing circles ("rhythm hits / beats") for left and right side
-//it would be better to use a queue to manage these
+/*
+Arrays containing circles ("rhythm hits / beats") for left and right side and other related stuff
+ */
 var circlesNumber = 50;
 var leftCircles = new Array(circlesNumber);
 var rightCircles = new Array(circlesNumber);
@@ -63,6 +61,9 @@ var firstElemInGameR = 0;
 var lastElemL = 0;
 var lastElemR = 0;
 
+/*
+Boolean value used to debug, mostly to see if everything is going ok with circles array
+ */
 var debugMode = false
 
 /*
@@ -78,17 +79,11 @@ class Circle {
         this.x = params[0]
         this.y = params[1]
         this.radius = params[2]
-        //this.color = params[3]
         this.speed = params[3]
         this.flag = 0;
-
         this.windowW = P$.windowWidth;
         this.windowH = P$.windowHeight;
-        //side: 0 left,1 right
-        //this.side = 0 + (this.x == xLine2);
-        //this.fillColor = P$.color(50+200*(1-this.side), 10, 50+200*(this.side))
     }
-    //TODO: delete id field
     initialise(x, y, v, id) {
         this.x = x
         this.y = y
@@ -130,12 +125,7 @@ class Circle {
         this.y = this.y + this.speed;
         //check here if user missed it
         if (this.y - this.radius > P$.windowHeight) {
-            //delete circles from array
-            //important assumption:
-            //the circle that reaches the bottom always has position 1
-            //in the array
 
-            //TODO: move this check to the main function
 
             //update firstElemInGameL by finding the next element in leftCircles
             //which is active (its flag is 1)
@@ -167,16 +157,8 @@ class Circle {
         }
     }
     /*
-    if (this.side == 0) {
-      leftCircles.splice(0, 1)
-    } else if (this.side == 1) {
-      rightCircles.splice(0, 1)
-    }
-    */
-    /*
     show(): draws circle on the canvas
     */
-    //TODO delete id part
     show() {
         if (this.flag) {
             P$.fill(this.fillColor);
@@ -201,8 +183,7 @@ function sketchSetup() {
     There's no need for the audio context to be running as soon as the page is loaded
     */
     P$.getAudioContext().suspend();
-    P$.frameRate(60) //this doesn't hope but it's like lighting a candle
-    //in a church hoping for a miracle
+    P$.frameRate(60)
 
     //initialise guide coordinates
     xLine1 = P$.width / 2 - P$.width / 12;
@@ -211,24 +192,18 @@ function sketchSetup() {
     started = false;
     font = P$.textFont('Roboto', 30)
 
+    // default values, the actual values will be inserted by the user
     bpm = 120;
-    // 4 vs 3 polyrhythm for testing, ideally we will get input from user
     leftR = 4;
     rightR = 3;
 
     Tone.Transport.bpm.value = bpm;
 
-    interval = 60 / bpm;
-    //time between notes on the L(eft) side and R(ight) side
-    intervalL = 4 * 1 / leftR * 60 / bpm;
-    intervalR = 4 * 1 / rightR * 60 / bpm;
-
-
     startCircleArrays();
-
 }
-
-
+/*
+startCircleArrays() : function that initializes circles array
+ */
 startCircleArrays = function () {
     for (let i = 0; i < leftCircles.length; i++) {
         leftCircles[i] = new Circle([0, 0, rhythm_rad, 0])
@@ -238,15 +213,14 @@ startCircleArrays = function () {
     }
 }
 var guideRadius = 30; //radius of guide circles
-var counter = 0; //not used now, might be used to count frames IN GAME
 var rhythm_rad = 20; //radius of rhythm circles
 
-var hitMessages = new Array(2);
+
+var hitMessages = new Array(2); // hit quality messages
 hitMessages[0] = ""
 hitMessages[1] = ""
 /*
-draw(): p5js function that gets automatically called once per frame
-(by default 60 frames per second)
+sketchDraw(): main draw function called by main p5.js draw() function
 */
 function sketchDraw() {
     P$.clear();
@@ -292,10 +266,11 @@ function sketchDraw() {
     P$.text(leftR, (P$.width / 2 - P$.width / 12)/2, 400)
     P$.text(rightR, P$.width - (P$.width/1.6 - P$.width / 12)/2 , 400)
 
-    //we're in the game, draw the reference and update and show the cirlces
+
     drawReference2();
-    if(isFromDidactic)
+    if(isFromDidactic) // boolean variable, true if we are coming from didactic mode
         drawFromDidactic()
+    // Here we are in the game, update and show each circle and display hit quality messages
     if (pageFoc) {
         P$.push()
         P$.fill(12)
@@ -309,11 +284,7 @@ function sketchDraw() {
         let nR = firstElemInGameR + rightElem
         let counterL = 0;
         let counterR = 0;
-        //TODO: solve an error: deleting for example element 1 implies
-        //leftElem-- but firstElemInGameL is still 0
-        //This means we're counting one less element than we should
 
-        //TODO write a better fix
         for (let i = firstElemInGameL; i < nL; i++) {
             if (leftCircles[i % leftCircles.length].flag == 0) {
                 counterL++;
@@ -342,7 +313,9 @@ function sketchDraw() {
 
     
 }
-
+/*
+drawFromDidactic(): draw function called by main p5.js draw() function, when coming by didactic mode
+*/
 drawFromDidactic = function(){
     //draw a left arrow on the left on the middle of the screen
     P$.push()
@@ -434,6 +407,7 @@ function sketchWindowResized() {
         c.setNewCoords(xLine2, P$.map(c.y, 0, c.windowH, 0, P$.windowHeight), P$.windowWidth, P$.windowHeight)
         c.updateVelocity(v)
     });
+    // draw game tutorial
     if(tutorialDisplayed){
         if(place == 0){
             textFirstDisplay = P$.createDiv(tutorialText)
@@ -459,6 +433,9 @@ function sketchWindowResized() {
     }
 }
 var toneLoopsStarted = false //keeps track of whether circles can spawn
+/*
+startToneLoops(intL, intR): starts circle creation loops for each side
+ */
 function startToneLoops(intL, intR) {
     Tone.Transport.scheduleRepeat(time => {
         addCircle('l')
@@ -470,10 +447,6 @@ function startToneLoops(intL, intR) {
 /*
 keyPressed(): p5js function that gets called every time a key is pressed.
 Use key to get the specific key.
-We see here for now if a beat circle is overlapping with the reference;
-points will later need to be assigned based on how much the circle
-was overlapping with the reference.
-The circle will also need to be deleted
 */
 
 P$.keyPressed = function () {
@@ -527,31 +500,11 @@ P$.keyPressed = function () {
                     }
                     firstElemInGameL = j;
                 }
-                /*
-                if(k == firstElemInGameL){
-                //calculate the points
-                firstElemInGameL++;
-                firstElemInGameL = firstElemInGameL % leftCircles.length;
-                }*/
                 leftElem--;
             }
         }
-        /*
-        leftCircles.forEach((item, i) => {
-          let c = leftCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitL = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            leftCircles.splice(i, 1)
-            //calculate the points
-          }
-        });
-        */
         if (!hitL) {
             miss.play();
-            //point penalty / error count
         }
     }
     if (key == 'k' || key == 'K') {
@@ -565,7 +518,7 @@ P$.keyPressed = function () {
                 hitR = true;
                 //play sound
                 hitDX.play();
-                //calculate the poin
+                //calculate the points
                 let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
                 let points = Math.round(yy) //Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
                 score = score + points
@@ -583,31 +536,12 @@ P$.keyPressed = function () {
                     }
                     firstElemInGameR = j;
                 }
-                /*
-                if(k == firstElemInGameL){
-                //calculate the points
-                firstElemInGameL++;
-                firstElemInGameL = firstElemInGameL % leftCircles.length;
-                }*/
                 rightElem--;
                 
             }
         }
-        /*
-        rightCircles.forEach((item, i) => {
-          let c = rightCircles[i];
-          if (Math.abs(c.y - yLineH) <= guideRadius) {
-            hitR = true;
-            //play sound
-            hit.play();
-            //delete circle(s)
-            rightCircles.splice(i, 1)
-            //calculate the points
-          }
-        });*/
         if (!hitR) {
             miss.play();
-            //point penalty / error count
         }
     }
     if(key==' '){
@@ -633,14 +567,6 @@ startMetronome = function () {
 metroSound(): produces the correct metronome sound based on the beat
 */
 metroSound = function () {
-    /*
-    if (metroFlag == 4) {
-        addCircle('l')
-        addCircle('r')
-        setInterval(addCircle, intervalL * 1000, 'l');
-        setInterval(addCircle, intervalR * 1000, 'r');
-    }
-    */
     if (metroFlag % 4 == 0) {
         met1.play()
     } else {

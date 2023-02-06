@@ -26,27 +26,7 @@ p5_instance = function (p5c) {
 
     var gameScore = 0;
     var lifes = 3;
-    /*
-    Variables we will use in preload()
-    */
-    var hit; //hit.wav (sound played when you successfully hit a note)
-    var miss; //miss.wav (sound played when you miss a note)
-    var font; //font used for text
-    var met1; //higher pitched hit of metronome
-    var met2; //lower pitched hit of metronome
-    /*
-    Variables related to bpm and polyrhythms
-    bpm = track bpm
-    leftR = left side rhythm
-    rightR = right side rhythm
-    nextLeftR = next left side rhythm
-    nextRightR = next right side rhythm
-    errorL = error in seconds committed each bar, left side
-    errorR = same error but for the right side
-    scheduleL = ID scheduled event creation left circles
-    scheduleR = ID scheduled event creation left circles
-    scheduleMetro = ID scheduled event metronome
-    */
+
     var bpm;
     var bpmDisplay;
     var bpmDisplayOpacity;
@@ -61,15 +41,12 @@ p5_instance = function (p5c) {
     var scheduleL;
     var scheduleR;
     var scheduleMetro
-    var soundtrack;
-    //frameRate (need this to use it outside of )
-    var frate;
+    var hearts = [];
     /*
     preload: function that gets automatically by p5js before loading the sketch.
     ->Everything that needs to be available when the sketch starts needs to be loaded here
     (e.g. fonts, sounds,...)
     */
-   var hearts = [];
     p5c.preload = function () {
         font = 'Aldrich';
         soundtrackDieRecordChangeBPM = new Tone.Players({
@@ -122,7 +99,7 @@ p5_instance = function (p5c) {
             150: "assets/endlessAssets/BEAT2_150.wav",
         }).toDestination();
 
-        for(let i =0; i < 3; i++){    
+        for(let i =0; i < 3; i++){
             hearts[i] = p5c.loadImage('assets/endlessAssets/heart.png');
         }
 
@@ -220,7 +197,6 @@ p5_instance = function (p5c) {
     var tutorialButton;
 
     // OTHER
-    var exitButton;
     var animationY
     var animationXLeft;
     var animationXRight;
@@ -339,13 +315,6 @@ p5_instance = function (p5c) {
 
             }
             if (this.y - this.radius > p5c.windowHeight) {
-                //delete circles from array
-                //important assumption:
-                //the circle that reaches the bottom always has position 1
-                //in the array
-
-                //TODO: move this check to the main function
-
                 //update firstElemInGameL by finding the next element in leftCircles
                 //which is active (its flag is 1)
                 this.failFlag = true;
@@ -372,31 +341,22 @@ p5_instance = function (p5c) {
                 }
             }
         }
-        /*
-        if (this.side == 0) {
-          leftCircles.splice(0, 1)
-        } else if (this.side == 1) {
-          rightCircles.splice(0, 1)
-        }
-        */
+
         /*
         show(): draws circle on the canvas
         */
-        //TODO delete id part
         show() {
             if (this.flag) {
                 p5c.fill(this.fillColor);
                 p5c.noStroke()
                 p5c.ellipse(this.x, this.y, this.radius, this.radius);
-                //// show a p5.js text beside the circle with its id
-                //p5c.text(this.id, this.x + this.radius, this.y + this.radius)
             }
         }
     }
     /*
-    setup(): function that gets called by p5.js at startup. Initialise variables
-    needed in the sketch here; load audio files, fonts, etc, in preload() instead
-    */
+    reSetup(): function called to compute game setup again after a death.
+    The text animations and sound are different in relation of the two possible cases : simply death or death+record.
+     */
     function reSetup(){
         resetGame();
         if (gameScore > pointsRanking[4]){
@@ -419,7 +379,14 @@ p5_instance = function (p5c) {
         }
 
     }
-
+    /*
+    resetGame(): function that contains all general things to do in order to prepare the system for a new game
+    In particular :
+        -Previous audio needs to be muted
+        -Tone and Tone.Transport needs to be reset
+        -Circles array and all the variables related need to be reset
+        -All variables that describe a game (score, multiplier, game constraints...) need to be reset
+     */
     resetGame = function () {
         started = false;
         died = true
@@ -436,6 +403,7 @@ p5_instance = function (p5c) {
         }
         metroFlag = 0;
         radiusDifficulty = 1;
+        Tone.Transport.clear(scheduleNoReference);
         Tone.Transport.cancel();
         stopCircleArrays()
         startCircleArrays()
@@ -468,30 +436,39 @@ p5_instance = function (p5c) {
         noReferenceLimit = 25000;
         newBPMTransition = false;
     }
+    /*
+    setup(): function that gets called by p5.js at startup. Initialise variables
+    needed in the sketch here; load audio files, fonts, etc, in preload() instead
+    */
     p5c.setup = function () {
         canvas = p5c.createCanvas(p5c.windowWidth, p5c.windowHeight);
         p5c.frameRate(60)
         Tone.start();
 
-        //initialise guide coordinates
+        // initialise guide coordinates
         xLine1 = p5c.width / 2 - p5c.width / 12;
         xLine2 = p5c.width / 2 + p5c.width / 12;
         yLineH = 3 / 4 * p5c.height;
+
+        // first game settings
         started = false;
         died = false;
         restart = true;
         loaded = true;
+
+        // main text settings
         colorMenu = 255;
         opacityMenu = 0;
         textMenu = 'Press the spacebar\n to start'
 
-
+        // 'time' settings
         bpm = 100;
         bpmDisplay = 100;
         scheduleL = null;
         scheduleR = null;
         Tone.Transport.bpm.value = bpm;
 
+        // game constraints settings
         rhythmUpperLimit = 4;
         rhythmLowerLimit = 1;
         metroFlagChange = 0;
@@ -507,7 +484,10 @@ p5_instance = function (p5c) {
         nextLeftR = 1;
         nextRightR = 1;
 
+        // circle arrays initialization
         startCircleArrays();
+
+        // main text transition
         mainTextTransition(['Press the spacebar\nto start',],0,['up',],10,false)
 
         // ranking stuff
@@ -528,14 +508,19 @@ p5_instance = function (p5c) {
         // periodic animations before starting
         noPlayingAnimation();
     }
-
+    /*
+    noPlayingAnimation(): visual animations that occurs when the user is not playing
+     */
     noPlayingAnimation = function () {
+        // general settings
         animationDisplayedLeft = false;
         animationDisplayedRight = false;
         animationXLeft = 0;
         animationXRight = p5c.width;
         animationY = yLineH;
         animationRadius = 10;
+
+        // little circles animation
         intervalAnimationLeft = setInterval( () => {
             animationDisplayedLeft = true;
             animationTimeout1 = setTimeout( () => {
@@ -552,6 +537,7 @@ p5_instance = function (p5c) {
                 } , 8000)
             }, 15000);} , 3000);
 
+        // guides and metronome animation
         animationTimeout4 = setTimeout( () => {
             // FIRST GUIDES ANIMATION
             guideLeftR = 255;
@@ -586,6 +572,7 @@ p5_instance = function (p5c) {
                 } , 700)
             }, 7000);
 
+
             // FIRST METRONOME ANIMATION
             animationTimeout7 = setTimeout(() => {
                     animationVisualMetronomeDisplayed = true;
@@ -611,10 +598,14 @@ p5_instance = function (p5c) {
                 1100);
         }, 2000);
 
+        // main text animation
         textAnimationInterval = setInterval( () => {
             mainTextTransition(['Press the spacebar\nto start','Press the spacebar\nto start'],0,['down','up'],10,false)
         }, 7500);
     }
+    /*
+    clearNoPlayingAnimations(): function that clear everything related to the no-playing animations
+     */
     clearNoPlayingAnimations = function () {
         clearInterval(textAnimationInterval);
         clearInterval(intervalAnimationVisualMetronome);
@@ -639,6 +630,10 @@ p5_instance = function (p5c) {
     var imgPlayingFrame;
     var textFirstDisplay;
     var place = 0;
+    /*
+    displayTutorial(): function that displays game tutorial. Is organized in three facades, each one identified by
+    'place' variable content.
+     */
     displayTutorial = function () {
         if(!started && !rankingDisplayed){
             if(tutorialDisplayed){
@@ -666,26 +661,25 @@ p5_instance = function (p5c) {
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
                 nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
-
                 textFirstDisplay = p5c.createDiv(tutorialText)
                 textFirstDisplay.addClass('tutorial_text')
-
                 placeZeroTutorialDisplayed = true;
                 tutorialDisplayed = true;
             }
         }
     }
-
+    /*
+    nextButtonFunction(): function that is called when the tutorial 'nextButton' is pressed. In particular handles the
+    elements to add/remove passing from a facade to another.
+     */
     nextButtonFunction = function() {
         if(place == 0){
             textFirstDisplay.remove();
             placeZeroTutorialDisplayed = false;
-
             previousButton = p5c.createDiv('<');
             previousButton.addClass('previous_button');
             previousButton.mousePressed(previousButtonFunction)
             previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
-
             imgStartingFrame = p5c.createImg(
                 'assets/endlessAssets/frame0.png',
                 'starting Frame'
@@ -705,13 +699,14 @@ p5_instance = function (p5c) {
             place += 1;
         }
     }
+    /*
+    previousButtonFunction(): function that is called when the tutorial 'previousButton' is pressed. In particular
+    handles the elements to add/remove passing from a facade to another.
+     */
     previousButtonFunction = function() {
         if (place == 1) {
-
             previousButton.remove()
             placeZeroTutorialDisplayed = true;
-
-
             textFirstDisplay = p5c.createDiv(tutorialText)
             textFirstDisplay.addClass('tutorial_text')
             imgStartingFrame.remove()
@@ -723,9 +718,7 @@ p5_instance = function (p5c) {
             nextButton.addClass('next_button');
             nextButton.mousePressed(nextButtonFunction)
             nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
-
             imgPlayingFrame.remove()
-
             imgStartingFrame = p5c.createImg(
                 'assets/endlessAssets/frame0.png',
                 'starting Frame'
@@ -735,7 +728,9 @@ p5_instance = function (p5c) {
             place -=1
         }
     }
-
+    /*
+    displayRanking(): function called when ranking logo is hovered by the mouse
+     */
     displayRanking = function () {
         if(!started && !tutorialDisplayed){
             if (firstShowRanking){firstShowRanking = false}
@@ -766,7 +761,9 @@ p5_instance = function (p5c) {
             }
         }
     }
-
+    /*
+    noDisplayRanking(): function called when the
+     */
     noDisplayRanking = function () {
         if(!firstShowRanking){
             rankingDisplayed = false

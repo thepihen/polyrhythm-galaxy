@@ -51,14 +51,13 @@ html {
 }
   
 body {
-	background-size: cover; 
 	overflow: hidden;
   	letter-spacing: 4px;
   	background: radial-gradient(ellipse at center, rgba(127,0,173,0.6) 0%,
   	rgba(0,0,0,0.8) 60%, 
   	rgba(0,0,0,1) 100%), 
   	url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/31787/stars.jpg);
-  
+	background-size: cover;
 }
 
 .home input {

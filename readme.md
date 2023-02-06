@@ -31,3 +31,6 @@ p5js is used for graphics in general; its sound library, p5.sound, is used for s
 tone.js is used mainly to make timed events happen correctly with Transport. The endless mode uses tone to handle all audio-related tasks.
 
 math.js is used by the worker for operations on ("multi-dimensional") arrays and useful misc functions such as the fft.
+
+## KNOWN BUGS
+* If your audio device sample rate is not set to 44100 Hz, the polyrhythm analysis in the didactic mode will return completely wrong results. It assumes you're providing it only with audio at 44.1 kHz and that your audio device is set to the same sampling rate.

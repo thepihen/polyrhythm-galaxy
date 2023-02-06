@@ -663,7 +663,7 @@ p5_instance = function (p5c) {
                 nextButton = p5c.createDiv('>');
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
-                nextButton.position(p5c.width/1.25, p5c.height/2)
+                nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
 
                 textFirstDisplay = p5c.createDiv(tutorialText)
                 textFirstDisplay.addClass('tutorial_text')
@@ -681,7 +681,8 @@ p5_instance = function (p5c) {
             previousButton = p5c.createDiv('<');
             previousButton.addClass('previous_button');
             previousButton.mousePressed(previousButtonFunction)
-            previousButton.position(p5c.width/6, p5c.height/2)
+            previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
+
             place += 1;
             imgStartingFrame = p5c.createImg(
                 'assets/endlessAssets/frame0.png',

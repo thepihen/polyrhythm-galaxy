@@ -56,7 +56,6 @@ html {
     width:45px;
     height:45px;
     cursor: pointer;
-    transform: translate(50%, -50%);
 }
 
 .previous_button{
@@ -67,7 +66,6 @@ html {
     width:45px;
     height:45px;
     cursor: pointer;
-    transform: translate(-50%, -50%);
 }
 
 .tutorial_image{

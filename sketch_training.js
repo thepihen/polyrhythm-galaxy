@@ -34,12 +34,11 @@ preload: function that gets automatically by p5js before loading the sketch.
 (e.g. fonts, sounds,...)
 */
 function sketchPreload() {
-    hit = P$.loadSound('assets/hit.wav');
-    miss = P$.loadSound('assets/miss.wav')
+    hitSX = P$.loadSound('assets/endlessAssets/hitSX.wav');
+    hitDX = P$.loadSound('assets/endlessAssets/hitDX.wav');
+    miss = P$.loadSound('assets/endlessAssets/miss.wav')
     met1 = P$.loadSound('assets/met1.wav');
     met2 = P$.loadSound('assets/met2.wav');
-    //this isn't loading...
-    //font = P$.loadFont('assets/Roboto-Regular.ttf');
     logo = P$.loadImage('assets/icon_transparent.png');
 }
 
@@ -503,7 +502,7 @@ P$.keyPressed = function () {
             if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitL = true;
                 //play sound
-                hit.play();
+                hitSX.play();
                 //TODO calculate the points
                 //add points to the score of the player proportionally to the
                 //inverse of the distance between the circle and the reference yLineH
@@ -565,7 +564,7 @@ P$.keyPressed = function () {
             if (Math.abs(c.y - yLineH) <= guideRadius) {
                 hitR = true;
                 //play sound
-                hit.play();
+                hitDX.play();
                 //calculate the poin
                 let yy = P$.map(Math.abs(c.y - yLineH), 0, guideRadius, 100, 0)
                 let points = Math.round(yy) //Math.min(100, Math.round(1 / (Math.abs(c.y - yLineH) / guideRadius)))
@@ -680,12 +679,7 @@ displayHitQuality = function (points, side) {
     else if (points >= 0 && points < 40) {
         msg = "OK";
     }
-    if (msg != "") {
-        P$.fill(240);
-        P$.textFont('Aldrich')
-        P$.textSize(20);
-        P$.text(msg, x, y);
-    }
+
     hitMessages[side] = msg;
     //if you want disappearing messages insert a function here (we could use for example a function that
     //sets the text color to be closer and closer to transparency)

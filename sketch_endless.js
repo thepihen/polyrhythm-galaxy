@@ -512,7 +512,7 @@ p5_instance = function (p5c) {
 
         // ranking stuff
         imgPodium = p5c.createImg(
-            'assets/endlessAssets/podium.png',
+            'assets/podium.png',
             'podium logo'
         );
         imgPodium.addClass('ranking_button')
@@ -1099,7 +1099,7 @@ p5_instance = function (p5c) {
 
         // ranking stuff
         imgPodium = p5c.createImg(
-            'assets/endlessAssets/podium.png',
+            'assets/podium.png',
             'podium logo'
         );
         imgPodium.addClass('ranking_button')

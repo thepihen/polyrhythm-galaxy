@@ -160,6 +160,7 @@ window.P$ = new  p5(p =>{
     displayTutorial = function () {
         if(tutorialDisplayed){
             nextButton.remove();
+            if(!skipChoices){
             sel.show();
             sel1.show();
             sel2.show();
@@ -169,7 +170,7 @@ window.P$ = new  p5(p =>{
             div3.show();
             
             button.show();
-
+            }
             if(place == 0){
                     textFirstDisplay.remove();
                     placeZeroTutorialDisplayed = false;
@@ -183,6 +184,7 @@ window.P$ = new  p5(p =>{
             place=0;
             tutorialDisplayed = false;
         } else {
+            if(!skipChoices){
             sel.hide();
             sel1.hide();
             sel2.hide();
@@ -193,7 +195,7 @@ window.P$ = new  p5(p =>{
             div3.hide();
             
             button.hide();
-
+            }
             nextButton = p.createDiv('>');
             nextButton.addClass('next_button');
             nextButton.mousePressed(nextButtonFunction)

@@ -491,8 +491,6 @@ window.P$ = new p5(p5c => {
     font = p5c.loadFont('assets/Gruppo-Regular.ttf'); //fancy font
     //speech_font = p5c.loadFont('assets/Montserrat-Light.ttf') //font for the text box
     face = p5c.loadImage('assets/face.png') //helper's face
-    face_talking1 = p5c.loadImage('assets/face_talking1.png'); //helper's face while talking
-    face_talking2 = p5c.loadImage('assets/face_talking2.png'); //helper's face while talking
     speech = p5c.loadSound('assets/dialogue_1.wav') //sound for the dialogue
     speech_end = p5c.loadSound('assets/dialogue_end.wav') //sound that plays when user clicks to pass to next message
     messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages

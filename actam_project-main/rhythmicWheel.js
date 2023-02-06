@@ -234,60 +234,63 @@ mousePressedRhythmicWheel = function () {
 }
 var delta = 0;
 mouseDraggedRhythmicWheel = function () {
-    // TOP-LEFT SIDE
-    if(P$.mouseX < xCenter && P$.mouseY < yCenter){
-        // COUNTER CLOCK-WISE
-        if(P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX){
-            delta = delta - 0.1;
-        }// CLOCK-WISE
-        else if(P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX){
-            delta = delta + 0.1;
+    if(enableSlideInner || enableSlideOuter)
+    {
+        // TOP-LEFT SIDE
+        if (P$.mouseX < xCenter && P$.mouseY < yCenter) {
+            // COUNTER CLOCK-WISE
+            if (P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX) {
+                delta = delta - 0.3;
+            }// CLOCK-WISE
+            else if (P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX) {
+                delta = delta + 0.3;
+            }
         }
-    }
-    // BOTTOM-LEFT SIDE
-    if(P$.mouseX < xCenter && P$.mouseY > yCenter){
-        // COUNTER CLOCK-WISE
-        if(P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX){
-            delta = delta - 0.1;
-        }// CLOCK-WISE
-        else if(P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX){
-            delta = delta + 0.1;
+        // BOTTOM-LEFT SIDE
+        if (P$.mouseX < xCenter && P$.mouseY > yCenter) {
+            // COUNTER CLOCK-WISE
+            if (P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX) {
+                delta = delta - 0.3;
+            }// CLOCK-WISE
+            else if (P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX) {
+                delta = delta + 0.3;
+            }
         }
-    }
-    // TOP-RIGHT SIDE
-    if(P$.mouseX > xCenter && P$.mouseY < yCenter){
-        // COUNTER CLOCK-WISE
-        if(P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX){
-            delta = delta - 0.1;
-        }// CLOCK-WISE
-        else if(P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX){
-            delta = delta + 0.1;
+        // TOP-RIGHT SIDE
+        if (P$.mouseX > xCenter && P$.mouseY < yCenter) {
+            // COUNTER CLOCK-WISE
+            if (P$.mouseY < P$.pmouseY && P$.mouseX < P$.pmouseX) {
+                delta = delta - 0.3;
+            }// CLOCK-WISE
+            else if (P$.mouseY > P$.pmouseY && P$.mouseX > P$.pmouseX) {
+                delta = delta + 0.3;
+            }
         }
-    }
-    // BOTTOW-RIGHT SIDE
-    if(P$.mouseX > xCenter && P$.mouseY > yCenter){
-        // COUNTER CLOCK-WISE
-        if(P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX){
-            delta = delta - 0.1;
-        }// CLOCK-WISE
-        else if(P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX){
-            delta = delta + 0.1;
+        // BOTTOW-RIGHT SIDE
+        if (P$.mouseX > xCenter && P$.mouseY > yCenter) {
+            // COUNTER CLOCK-WISE
+            if (P$.mouseY < P$.pmouseY && P$.mouseX > P$.pmouseX) {
+                delta = delta - 0.3;
+            }// CLOCK-WISE
+            else if (P$.mouseY > P$.pmouseY && P$.mouseX < P$.pmouseX) {
+                delta = delta + 0.3;
+            }
         }
-    }
 
 
-    if(Math.abs(delta) >= 1){
-        if (delta < 0){
-            // COUNTER CLOCK-WISE STEP
-            dragPointOuter = slideOuter - (2*Math.PI/8);
-            dragPointInner = slideInner - (2*Math.PI/8);
+        if (Math.abs(delta) >= 1) {
+            if (delta < 0) {
+                // COUNTER CLOCK-WISE STEP
+                dragPointOuter = slideOuter - (2 * Math.PI / 8);
+                dragPointInner = slideInner - (2 * Math.PI / 8);
+            } else if (delta > 0) {
+                // CLOCK-WISE STEP
+                dragPointOuter = slideOuter + (2 * Math.PI / 8);
+                dragPointInner = slideInner + (2 * Math.PI / 8);
+            }
+            clickRW.play();
+            delta = 0;
         }
-        else if (delta > 0){
-            // CLOCK-WISE STEP
-            dragPointOuter = slideOuter + (2*Math.PI/8);
-            dragPointInner = slideInner + (2*Math.PI/8);
-        }
-        delta  = 0;
     }
 }
 

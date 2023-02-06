@@ -484,6 +484,7 @@ window.P$ = new p5(p5c => {
     messages_json = p5c.loadJSON('assets/messages.json', jsonLoaded) //json file containing the Messages
     hitOuter = P$.loadSound('assets/hit_outer.wav'); // hit Outer Circle Rhythmic Wheel
     hitInner = P$.loadSound('assets/hit_inner.wav'); // hit Inner Circle Rhythmic Wheel
+    clickRW = P$.loadSound('assets/rhythmicWheelClick.mp3'); // Rhythmic Wheel 1/8 step sound
     debug_soundfile = p5c.loadSound('assets/test_5v7_174.mp3') //debug soundfile
     
     bg = p5c.loadImage('assets/bg.jpg') //background image

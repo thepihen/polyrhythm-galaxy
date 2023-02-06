@@ -1,15 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c3155d8e-19ae-4e82-9349-8ea177b1e78f" name="Changes" comment="fixed arrow training tutorial">
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/BEAT1wav.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/BEAT1wav_140.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/BEAT2wav.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/BEAT2wav_140.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/hit.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/old audio/hit_old.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sketch_endless.js" beforeDir="false" afterPath="$PROJECT_DIR$/sketch_endless.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sketch_training.js" beforeDir="false" afterPath="$PROJECT_DIR$/sketch_training.js" afterDir="false" />
+    <list default="true" id="c3155d8e-19ae-4e82-9349-8ea177b1e78f" name="Changes" comment="fixed things in training">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/die.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/k.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/kisspng-arrow-computer-icons-clip-art-red-arrow-line-png-5ab19d05e5d413.6462635715215895099414.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/met1.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/met2.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/playingFrame.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/podium.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/podium2.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/podium3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/s.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/endlessAssets/startingFrame.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/frame0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/frame1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hit.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hitDXogg.ogg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hitDXwav.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hitSXogg.ogg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hitSXwav.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/hit_old.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/k.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/kisspng-arrow-computer-icons-clip-art-red-arrow-line-png-5ab19d05e5d413.6462635715215895099414.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/miss.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/podium2.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/podium3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/record.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/s.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,7 +63,7 @@
       <option name="presentableId" value="Default" />
       <updated>1675700433304</updated>
       <workItem from="1675700435491" duration="7709000" />
-      <workItem from="1675708626891" duration="674000" />
+      <workItem from="1675708626891" duration="1637000" />
     </task>
     <task id="LOCAL-00001" summary="semi-fixed arrow endless tutorial">
       <created>1675703598867</created>
@@ -67,7 +86,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675708276827</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="fixed things in training">
+      <created>1675709496500</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1675709496500</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -87,6 +113,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="semi-fixed arrow endless tutorial" />
     <MESSAGE value="fixed arrow training tutorial" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed arrow training tutorial" />
+    <MESSAGE value="fixed things in training" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed things in training" />
   </component>
 </project>

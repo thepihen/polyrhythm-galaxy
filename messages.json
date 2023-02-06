@@ -7,7 +7,7 @@
         },
         {
             "msgId": "recordIntro2",
-            "msg": "OK. Let's get started!\nRecord something and I'll try to identify what you're doing",
+            "msg": "OK. Let's get started!\nRecord yourself playing a polyrhythm and I'll try to identify what you're doing",
             "nextMsgId": "recordIntro3"
         },
         {
@@ -22,7 +22,7 @@
         },
         {
             "msgId": "record2",
-            "msg": "When you're satisfied with your recording press the stop button and then the 'DONE' button. The full interface will now appear",
+            "msg": "When you're satisfied with your recording press the stop button and then the 'OK' button. The full interface will now appear",
             "nextMsgId": "-1"
         }
     ],
@@ -34,7 +34,7 @@
         },
         {
             "msgId": "upload2",
-            "msg": "It seems you already have a recording. I will now try to identify what you're doing",
+            "msg": "It seems you already have a recording of a polyrhythm. I will now try to identify what you're doing",
             "nextMsgId": "upload3"
         },
         {

@@ -178,7 +178,7 @@ window.P$ = new p5(p5c => {
       this.cursorBlink = false //used to manage the blinking cursor
       this.isIdle = false //is the helper idle? (not saying anything - no new messages)
       this.state = "working" //the state of the helper (working, idle, etc)
-
+      this.hasClearedInterval = false //has this just cleared the text interval?
       //if the message requires an answer, we'll save the choices here
       this.answers = new Array()
       this.hasAnswers = false
@@ -276,6 +276,7 @@ window.P$ = new p5(p5c => {
       this.addAuthor()
 
       if (this.lastMsg != msg) {
+        this.hasClearedInterval = false
         //if the message is different from the last one in memory update it
         this.lastMsg = msg
         this.counter = 1
@@ -284,6 +285,9 @@ window.P$ = new p5(p5c => {
         this.wait = false
         //upgrade counter by one and play the sound corresponding to dialogue
         this.interval = setInterval(() => {
+          if(this.hasClearedInterval){
+            return
+          }
           this.counter++
           //play the sound corresponding to dialogue
           //(every once in a while)
@@ -299,6 +303,7 @@ window.P$ = new p5(p5c => {
           //if we've reached the end of the message stop increasing the counter
           //and making sounds
           clearInterval(this.interval)
+          this.hasClearedInterval = true
           this.printMsg(msg, msg.length)
           //wait for user input (=>show blinking cursor)
           this.wait = true
@@ -330,9 +335,12 @@ window.P$ = new p5(p5c => {
     */
     printMsg(msg, to) {
       p5c.stroke(255)
+      p5c.push()
+      p5c.textSize(24)
       //p5c.width / 2, 5*p5c.height/6 , p5c.width / 2, p5c.height/5
       p5c.text(msg.substring(0, to),
         1 * p5c.width / 4 + 10, 5 * p5c.height / 6 - p5c.height / 10, p5c.width / 2 - 20, p5c.height / 5)
+      p5c.pop()      
     }
 
     addAnswers(choices) {
@@ -555,7 +563,6 @@ window.P$ = new p5(p5c => {
 
     if(!backFromTraining){
     msg = messages[0]
-
     //setup everything regarding buttons
     setupMenuButtons()
     }else{
@@ -725,6 +732,8 @@ window.P$ = new p5(p5c => {
       COMMANDS:<br>
       z / mouse1: pass to the helper's next message<br>
       m: skip all useless dialogue and get into the action right away<br>
+      <br>
+      PLEASE NOTE: the website may behave weirdly if you record/upload a file in 48kHz 
       <br>
       We hope you enjoy your stay!<br>
       <br>
@@ -1148,7 +1157,10 @@ window.P$ = new p5(p5c => {
     p5c.fill(255);
     p5c.noStroke();
     p5c.text("D I D A C T I C   M O D E", p5c.width / 1.97, p5c.height / 3.5);
-    
+    p5c.push()
+    p5c.textSize(24)
+    p5c.text("(tip: pressing 'm' will skip all unnecessary dialogue)", p5c.width / 1.97, 5*p5c.height /6);
+    p5c.pop()
   }
 
   /* 
@@ -1942,7 +1954,7 @@ window.P$ = new p5(p5c => {
     createTrainingButton()
     hasSuggested = true
     timeoutID = null
-    },10000)
+    },30000)
   }
 
   var showTrainingButton = false;

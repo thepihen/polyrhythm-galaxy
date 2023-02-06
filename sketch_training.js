@@ -435,6 +435,29 @@ function sketchWindowResized() {
         c.setNewCoords(xLine2, P$.map(c.y, 0, c.windowH, 0, P$.windowHeight), P$.windowWidth, P$.windowHeight)
         c.updateVelocity(v)
     });
+    if(tutorialDisplayed){
+        if(place == 0){
+            textFirstDisplay = P$.createDiv(tutorialText)
+            textFirstDisplay.addClass('tutorial_text')
+
+            nextButton = P$.createDiv('>');
+            nextButton.addClass('next_button');
+            nextButton.mousePressed(nextButtonFunction)
+            nextButton.position(P$.width/2 + 480 - 80, P$.height/2)
+        }
+        else if(place == 1){
+            previousButton = P$.createDiv('<');
+            previousButton.addClass('previous_button');
+            previousButton.mousePressed(previousButtonFunction)
+            previousButton.position(P$.width/2 - 480 + 55, P$.height/2)
+
+            imgStartingFrame = P$.createImg(
+                'assets/frame2.png',
+                'starting Frame'
+            );
+            imgStartingFrame.addClass('tutorial_image')
+        }
+    }
 }
 var toneLoopsStarted = false //keeps track of whether circles can spawn
 function startToneLoops(intL, intR) {

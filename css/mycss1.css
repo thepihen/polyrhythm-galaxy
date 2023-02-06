@@ -1,0 +1,354 @@
+/*title animations*/ 
+@keyframes lights {
+	0% {
+	  color: rgb(250, 127, 250,1);
+	  text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.2),
+		0 0 0.125em hsla(320, 100%, 60%, 0.3),
+		-1em -0.125em 0.5em hsla(40, 100%, 60%, 0),
+		1em 0.125em 0.5em hsla(200, 100%, 60%, 0);
+	}
+	
+	30% { 
+	  color: rgb(250, 127, 250,1);
+	  text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 60%, 0.5),
+		-0.5em -0.125em 0.25em hsla(40, 100%, 60%, 0.2),
+		0.5em 0.125em 0.25em hsla(200, 100%, 60%, 0.4);
+	}
+	
+	40% { 
+	  color: rgb(250, 127, 250,1);
+	  text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 90%, 0.5),
+		-0.25em -0.125em 0.125em hsla(40, 100%, 60%, 0.2),
+		0.25em 0.125em 0.125em hsla(200, 100%, 60%, 0.4);
+	}
+	
+	70% {
+	  color: rgb(250, 127, 250,1);
+	  text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 60%, 0.5),
+		0.5em -0.125em 0.25em hsla(40, 100%, 60%, 0.2),
+		-0.5em 0.125em 0.25em hsla(200, 100%, 60%, 0.4);
+	}
+	
+	100% {
+	  color: rgb(250, 127, 250,1);
+	  text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.2),
+		0 0 0.125em hsla(320, 100%, 60%, 0.3),
+		1em -0.125em 0.5em hsla(40, 100%, 60%, 0),
+		-1em 0.125em 0.5em hsla(200, 100%, 60%, 0);
+	}
+	
+  }
+  
+html {
+	position: relative;
+  	min-height: 100%;
+  	background: radial-gradient(ellipse at center, rgba(127,0,173,0.6) 0%,
+ 	 rgba(0,0,0,0.8) 60%, 
+ 	 rgba(0,0,0,1) 100%), 
+  	url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/31787/stars.jpg);
+}
+
+
+body {
+  	min-height: 60vh;
+ 	background-color:rgba(255,255,255, 0);
+	background-size: cover;
+	z-index:-20;
+	overflow: hidden;
+	font-family: 'Monoton', monospace;
+}
+
+h1 {
+	animation: lights 5s 750ms linear infinite;
+	font-size:60px;
+	letter-spacing: 4px;
+	top: 1%;
+}
+
+#autori {
+	font-family:'Aldrich', sans-serif;
+    font-size: medium;
+	position: absolute;
+	right: 0;
+	left: 0;
+	width: 100%;
+	text-align: center;
+	top: 33.5%;
+	color: rgb(255,255,255);
+}
+
+#titolo {
+	position: absolute;
+	right: 0;
+	left: 0;
+	width: 100%;
+	text-align: center;
+	top: 20%;
+	
+}
+
+.start{
+	position: absolute;
+	display: flex;
+	justify-content:center;
+	align-items: center;
+	flex-wrap: wrap;
+	top: 35%;
+	right: 0;
+	left: 0;
+}
+.start a {
+  position:relative;
+  display: inline-block;
+  padding: 15px 27px;
+  border: 3px solid rgb(250, 127, 250,1);
+  margin:40px;
+  letter-spacing: 2px;
+  color:rgb(250, 127, 250,1);
+  text-align: center;
+  font-size: 20px;
+  background-color:rgb(250, 127, 250,1) 100%;
+  border-radius: 3px;
+  font-style: "color:#191919";
+  transition: 0.5s;
+  transition-delay: 0s;
+}
+
+.start a:hover {
+  transition-delay: 1.5s;
+  background-color: rgba(92,71,255,1);
+  color: rgba(92,71,255,1);
+  box-shadow: 0 0 10px #fa7ffa,
+  			  0 0 20px #fa7ffa,
+			  0 0 40px #fa7ffa,
+  			  0 0 80px #fa7ffa,
+			  0 0 160px #fa7ffa;
+}
+
+.start a span {
+	position:relative;
+	z-index:100;
+}
+
+.start a::before {
+	content: '';
+	position:absolute;
+	left:-20px;
+	top:29px;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 2px;
+	background: rgb(250, 127, 250);
+	box-shadow: 5px -8px 0  #fa7ffa,
+				5px 8px 0  #fa7ffa;
+	transition: width 0.5s, left 0.5s, height 0.5s, box-shadow 0.5s;
+	transition-delay: 1s,0.5s, 0s,0s;
+  }
+
+.start a:hover::before {
+	width: 60%;
+	height:100%;
+	left:-2px;
+	box-shadow: 5px 0 0  #fa7ffa,
+				5px 0 0  #fa7ffa;
+	transition-delay: 0s,0.5s, 1s,1s;
+}
+
+.start a::after {
+	content: '';
+	position:absolute;
+	right:-20px;
+	top:29px;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 2px;
+	background: rgb(250, 127, 250);
+	box-shadow: -5px -8px 0  #fa7ffa,
+				-5px 8px 0  #fa7ffa;
+	transition: width 0.5s, right 0.5s, height 0.5s, box-shadow 0.5s;
+	transition-delay: 1s,0.5s, 0s,0s;
+}
+
+.start a:hover::after{
+	width: 60%;
+	height:100%;
+	right:-2px;
+	box-shadow: -5px 0 0  #fa7ffa,
+				-5px 0 0  #fa7ffa;
+	transition-delay: 0s,0.5s, 1s,1s;
+}
+
+#layer-0 {
+	background: rgba(92,71,255,0);
+	background: -moz-linear-gradient(top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(255,71,255,1) 100%);
+	background: -webkit-linear-gradient(left top, left bottom, color-stop(0%, rgba(92,71,255,0)), color-stop(25%, rgba(0,0,0,1)), color-stop(100%, rgba(255,71,255,1)));
+	background: -webkit-linear-gradient(top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(255,71,255,1) 100%);
+	background: -o-linear-gradient(top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(255,71,255,1) 100%);
+	background: -ms-linear-gradient(top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(255,71,255,1) 100%);
+	background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(255,71,255,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#5c47ff', endColorstr='#ff47ff', GradientType=0 );
+	height:400px;
+	width:200vw;
+	opacity:1;
+	position:absolute;
+	bottom:0;
+	left:0;
+	right: 0;
+	margin: 0 -50%;
+	overflow: hidden;
+	transform: perspective(200px) rotateX(60deg);
+	z-index: -5;
+}
+
+#layer-1 {
+	background: rgba(92,71,255,1);
+	background: -moz-linear-gradient(45deg, rgba(92,71,255,1) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,0) 100%);
+	background: -webkit-linear-gradient(left bottom, right top, color-stop(0%, rgba(92,71,255,1)), color-stop(50%, rgba(92,71,255,0)), color-stop(100%, rgba(92,71,255,0)));
+	background: -webkit-linear-gradient(45deg, rgba(92,71,255,1) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,0) 100%);
+	background: -o-linear-gradient(45deg, rgba(92,71,255,1) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,0) 100%);
+	background: -ms-linear-gradient(45deg, rgba(92,71,255,1) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,0) 100%);
+	background: linear-gradient(45deg, rgba(92,71,255,1) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,0) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#5c47ff', endColorstr='#5c47ff', GradientType=1 );
+	height: inherit;
+	width: inherit;
+	opacity:1;
+	position:absolute;
+	top:0;
+	left:0;
+	right: 0;
+	margin: auto;
+	z-index: -5;
+}
+
+#layer-2 {
+	background: rgba(92,71,255,0);
+	background: -moz-linear-gradient(-45deg, rgba(92,71,255,0) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,1) 100%);
+	background: -webkitlinear--gradient(left top, right bottom, color-stop(0%, rgba(92,71,255,0)), color-stop(50%, rgba(92,71,255,0)), color-stop(100%, rgba(92,71,255,1)));
+	background: -webkit-linear-gradient(-45deg, rgba(92,71,255,0) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,1) 100%);
+	background: -o-linear-gradient(-45deg, rgba(92,71,255,0) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,1) 100%);
+	background: -ms-linear-gradient(-45deg, rgba(92,71,255,0) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,1) 100%);
+	background: linear-gradient(135deg, rgba(92,71,255,0) 0%, rgba(92,71,255,0) 50%, rgba(92,71,255,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#5c47ff', endColorstr='#5c47ff', GradientType=1 );
+	height: inherit;
+	width: inherit;
+	opacity:1;
+	position:absolute;
+	top:0;
+	left:0;
+	right: 0;
+	margin: auto;
+	z-index: -5;
+}
+
+#layer-corner {
+	background:rgba(46, 9, 232, 1);
+	background: -moz-linear-gradient(top, rgba(46, 9, 232, 1) 0%, rgba(96,130,223,0) 54%, rgba(117,24,240,0) 100%);
+	background: -webkit-linear-gradient(left top, left bottom, color-stop(0%, rgba(46, 9, 232, 1)), color-stop(54%, rgba(96,130,223,0)), color-stop(100%, rgba(117,24,240,0)));
+	background: -webkit-linear-gradient(top,rgba(46, 9, 232, 1) 0%, rgba(96,130,223,0) 54%, rgba(117,24,240,0) 100%);
+	background: -o-linear-gradient(top, rgba(46, 9, 232, 1) 0%, rgba(96,130,223,0) 54%, rgba(117,24,240,0) 100%);
+	background: -ms-linear-gradient(top, rgba(46, 9, 232, 1) 0%, rgba(96,130,223,0) 54%, rgba(117,24,240,0) 100%);
+	background: linear-gradient(to bottom, rgba(46, 9, 232, 1) 0%, rgba(96,130,223,0) 54%, rgba(117,24,240,0) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#47ffcb', endColorstr='#7518f0', GradientType=0 );
+	height: inherit;
+	width: inherit;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	z-index: -5;
+	animation: layercorneranim 2.5s ease-in-out infinite alternate;	
+}
+
+#hey {
+	width: 100%;
+	background-color: #011;
+	position: absolute;
+	bottom: 253px; right: 0; left: 0;
+	margin: auto;
+	z-index: -10;
+	transform: perspective(200px);
+}
+
+#layer-up {
+	background: rgba(71,255,203,0);
+	background: -moz-linear-gradient(top, rgba(71,255,203,0) 0%, rgba(71,255,203,0) 50%, rgba(46, 9, 232, 1) 100%);
+	background: -webkit-linear-gradient(left top, left bottom, color-stop(0%, rgba(71,255,203,0)), color-stop(50%, rgba(71,255,203,0)), color-stop(100%, rgba(71,255,203,1)));
+	background: -webkit-linear-gradient(top, rgba(71,255,203,0) 0%, rgba(71,255,203,0) 54%,rgba(46, 9, 232, 1) 100%);
+	background: -o-linear-gradient(top, rgba(71,255,203,0) 0%, rgba(71,255,203,0) 50%, rgba(46, 9, 232, 1) 100%);
+	background: -ms-linear-gradient(top, rgba(71,255,203,0) 0%, rgba(71,255,203,0) 50%, rgba(46, 9, 232, 1) 100%);
+	background: linear-gradient(to bottom, rgba(71,255,203,0) 0%, rgba(71,255,203,0) 50%, rgba(46, 9, 232, 1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#47ffcb', endColorstr='#47ffcb', GradientType=0 );
+	height:300px;
+	width: inherit;
+	opacity: 1;
+	position: absolute;
+	bottom:0; left:0; right: 0; margin: auto;
+	overflow: hidden;
+	z-index: -5;
+	animation: layerupanim 2.5s ease-in-out infinite alternate;	
+}
+
+#lines {
+    background-size: 40px 40px;    
+    background-image: repeating-linear-gradient(0deg, #2e09e8, #2e09e8 2px, transparent 1px, transparent 40px),repeating-linear-gradient(-90deg, #2e09e8, #2e09e8 2px, transparent 2px, transparent 40px);
+    height:400px;
+    width:100%;
+    opacity:1;
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:-4;
+}
+
+
+
+@keyframes neon1 {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #FF11A7, 0 0 70px #FF11A7, 0 0 80px #FF11A7, 0 0 100px #FF11A7, 0 0 150px #FF1177;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #FF11A7, 0 0 35px #FF11A7, 0 0 40px #FF11A7, 0 0 50px #FF11A7, 0 0 75px #FF11A7;
+  }
+}
+
+@keyframes layerupanim {
+	from {
+		height: 140px;
+	}
+	to {
+		height: 155px;
+	}
+}
+
+@keyframes layercorneranim {
+	from {
+		height: 400px;
+	}
+	to {
+		height: 540px;
+	}
+}
+
+
+
+/*
+
+@media only screen and (max-width: 480px){
+  .modal-dialog{ width: 95% !important; }
+  .modal-content .modal-body{
+      padding: 60px 20px 40px !important;
+  }
+  
+}*7
+
+
+

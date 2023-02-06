@@ -160,17 +160,18 @@ window.P$ = new  p5(p =>{
     displayTutorial = function () {
         if(tutorialDisplayed){
             nextButton.remove();
-            if(!skipChoices){
-            sel.show();
-            sel1.show();
-            sel2.show();
-            div.show();
-            div1.show();
-            div2.show();
-            div3.show();
-            
-            button.show();
+            if(!skipChoices) {
+                sel.show();
+                sel1.show();
+                sel2.show();
+                div.show();
+                div1.show();
+                div2.show();
+                div3.show();
+                
+                button.show();
             }
+
             if(place == 0){
                     textFirstDisplay.remove();
                     placeZeroTutorialDisplayed = false;
@@ -184,7 +185,7 @@ window.P$ = new  p5(p =>{
             place=0;
             tutorialDisplayed = false;
         } else {
-            if(!skipChoices){
+            if(!skipChoices) {
             sel.hide();
             sel1.hide();
             sel2.hide();
@@ -196,6 +197,7 @@ window.P$ = new  p5(p =>{
             
             button.hide();
             }
+
             nextButton = p.createDiv('>');
             nextButton.addClass('next_button');
             nextButton.mousePressed(nextButtonFunction)
@@ -281,10 +283,12 @@ window.P$ = new  p5(p =>{
         p.strokeWeight(1);
         p.stroke(255,255,255)
         p.fill(39,38,38,230)
+        p.push()
 
-        //p.translate(-480, -270);
+        p.rectMode(p.CENTER)
         p.rect(p.width/2,p.height/2,1000,540)
-        //p.translate(480, 270);
+        
+        p.pop()
 
     }
 

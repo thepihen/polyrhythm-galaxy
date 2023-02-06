@@ -6,10 +6,11 @@ p5_instance = function (p5c) {
                 "The game will provide you two rhythms, one to the left and one to the right, " +
                 "that you need to play in time by pressing respectively the key 'S' and the key 'K' " +
                 "every time a falling rhythm dot is inside the white circle of the related side.&#10;" +
-                "Pay Attention!&#10;The provided rhythms will be more and more difficult and every time " +
-                "you miss a dot or press a key at the wrong time you will lose one of the three available " +
-                "lifes that permits you to continue the game. Finally, remember to be more accurate possible " +
-                "in order to increase extra points bonus and climb the global ranking!";
+                "Pay Attention!&#10;The provided rhythms will be more and more difficult, the bpm will increase " +
+                "progressively and every time you miss a dot or press a key at the wrong time you will " +
+                "lose one of the three available lifes that permits you to continue the game. " +
+                "Finally, remember to be more accurate possible in order to increase extra points" +
+                "bonus and climb the global ranking!";
 
     var dieTexts = ['You Died','You Died','Press the spacebar\nto retry'];
     var dieDirs = ['up', 'down', 'up']
@@ -643,7 +644,7 @@ p5_instance = function (p5c) {
                 nextButton.remove();
 
                 if(place == 0){
-                    textFirstDisplay.remove();;
+                    textFirstDisplay.remove();
                     placeZeroTutorialDisplayed = false;
                     nextButton.remove();
                 }
@@ -676,47 +677,61 @@ p5_instance = function (p5c) {
 
     nextButtonFunction = function() {
         if(place == 0){
-            textFirstDisplay.hide();
+            textFirstDisplay.remove();
             placeZeroTutorialDisplayed = false;
+
             previousButton = p5c.createDiv('<');
             previousButton.addClass('previous_button');
             previousButton.mousePressed(previousButtonFunction)
             previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
 
-            place += 1;
             imgStartingFrame = p5c.createImg(
                 'assets/endlessAssets/frame0.png',
                 'starting Frame'
             );
             imgStartingFrame.addClass('tutorial_image')
+
+            place += 1;
         }
         else if (place == 1) {
-            nextButton.hide()
-            place += 1;
-            imgStartingFrame.hide();
-            nextButton.style("opacity","100%")
+            imgStartingFrame.remove();
+            nextButton.remove()
             imgPlayingFrame = p5c.createImg(
                 'assets/endlessAssets/frame1.png',
                 'playing Frame'
             );
             imgPlayingFrame.addClass('tutorial_image')
+            place += 1;
         }
     }
     previousButtonFunction = function() {
         if (place == 1) {
-            place -= 1;
-            previousButton.hide()
+
+            previousButton.remove()
             placeZeroTutorialDisplayed = true;
-            nextButton.show();
-            textFirstDisplay.show()
-            imgStartingFrame.hide()
-            nextButton.mousePressed(nextButtonFunction)
+
+
+            textFirstDisplay = p5c.createDiv(tutorialText)
+            textFirstDisplay.addClass('tutorial_text')
+            imgStartingFrame.remove()
+
+            place -= 1;
         }
         else if (place == 2) {
+            nextButton = p5c.createDiv('>');
+            nextButton.addClass('next_button');
+            nextButton.mousePressed(nextButtonFunction)
+            nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
+
+            imgPlayingFrame.remove()
+
+            imgStartingFrame = p5c.createImg(
+                'assets/endlessAssets/frame0.png',
+                'starting Frame'
+            );
+            imgStartingFrame.addClass('tutorial_image')
+
             place -=1
-            nextButton.show();
-            imgPlayingFrame.hide()
-            imgStartingFrame.show()
         }
     }
 
@@ -1098,22 +1113,22 @@ p5_instance = function (p5c) {
             if(place == 0){
                 textFirstDisplay = p5c.createDiv(tutorialText)
                 textFirstDisplay.addClass('tutorial_text')
-                textFirstDisplay2 = p5c.createDiv(tutorialText2)
-                textFirstDisplay2.addClass('tutorial_text')
-                textFirstDisplay2.style("top","65%")
 
                 nextButton = p5c.createDiv('>');
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
+                nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
             }
             else if(place == 1){
                 previousButton = p5c.createDiv('<');
                 previousButton.addClass('previous_button');
                 previousButton.mousePressed(previousButtonFunction)
+                previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
 
                 nextButton = p5c.createDiv('>');
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
+                nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
 
                 imgStartingFrame = p5c.createImg(
                     'assets/endlessAssets/frame0.png',
@@ -1125,6 +1140,7 @@ p5_instance = function (p5c) {
                 previousButton = p5c.createDiv('<');
                 previousButton.addClass('previous_button');
                 previousButton.mousePressed(previousButtonFunction)
+                previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
 
                 imgPlayingFrame = p5c.createImg(
                     'assets/endlessAssets/frame1.png',

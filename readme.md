@@ -24,6 +24,10 @@ This mode is completely different from the previous two: rather than a rhythm ga
 
 The didactic mode employs a Fourier tempogram to do BPM estimation. The math is handled by a web worker; for this reason, if the user's browser doesn't support web workers (possible if it's very outdated), the website may not work as expected and/or the analysis feature might be unavailable.
 
+## __Goals of this project__
+Our objective with this project was to make something that could help less experienced musicians when learning polyrhythms.
+We think training and endless mode provide the user with the perfect interface to learn polyrhythms by practicing them.
+Didactic mode, instead, can be used to get feedback on how good someone is doing at a certain polyrhythm (during our testing phase the algorithm was usually successful at recognizing simple polyrhythms).
 
 ## Dependencies
 The three main dependencies are p5js (and its sound library), tone.js and math.js. 
@@ -38,5 +42,5 @@ math.js is used by the worker for operations on ("multi-dimensional") arrays and
 * If your audio device sample rate is not set to 44100 Hz, the polyrhythm analysis in the didactic mode will return completely wrong results. It assumes you're providing it only with audio at 44.1 kHz and that your audio device is set to the same sampling rate.
 * In Endless Mode there could be audio problems if the game is started too early and the system was not able to totally load audio files. Moreover the game performance slightly changes with respect to the browser. In particular, system works the better with Microsoft Edge. With Google Chrome there could be slowdowns , while in Firefox in the first game, dots can start time shifted with respect to the metronome and after few seconds become correctly synchronized. In general there could be
 sometimes really closer dots, especially in the first game when the second background beat enters the game for the first time.
-* Sometimes in the didactic mode the browser fails to load the helper messages and the face image.
+* Sometimes in the didactic mode the browser fails to load the helper messages and the face image. Reloading the page might fix this.
 * On some systems p5js will use very high percentages of CPU and GPU power, causing the website to lag. We haven't found a fix on this yet but we're working on it.

@@ -3,6 +3,7 @@
 
 Try this website on [Github Pages!](https://thepihen.github.io/polyrhythm-galaxy/)
 
+## __The modes__
 Polyrhythm Galaxy is composed of 3 modes:
 * Training Mode
 * Endless Mode

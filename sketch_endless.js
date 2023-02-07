@@ -695,6 +695,7 @@ p5_instance = function (p5c) {
                 nextButton.addClass('next_button');
                 nextButton.mousePressed(nextButtonFunction)
                 nextButton.position(p5c.width/2 + 480 - 80, p5c.height/2)
+
                 textFirstDisplay = p5c.createDiv(tutorialText)
                 textFirstDisplay.addClass('tutorial_text')
                 placeZeroTutorialDisplayed = true;
@@ -710,10 +711,12 @@ p5_instance = function (p5c) {
         if(place == 0){
             textFirstDisplay.remove();
             placeZeroTutorialDisplayed = false;
+
             previousButton = p5c.createDiv('<');
             previousButton.addClass('previous_button');
             previousButton.mousePressed(previousButtonFunction)
             previousButton.position(p5c.width/2 - 480 + 55, p5c.height/2)
+
             imgStartingFrame = p5c.createImg(
                 'assets/endlessAssets/frame0.png',
                 'starting Frame'
@@ -931,7 +934,7 @@ p5_instance = function (p5c) {
              }
 
             p5c.fill("white")
-            p5c.textSize(15)
+            p5c.textSize(13)
             // Consecutive Great Hits
             p5c.text("Consecutive\nGreat", p5c.width/1.5, p5c.height/11)
             p5c.text(greatCounter, p5c.width/1.5, p5c.height/6)

@@ -85,10 +85,12 @@ html {
     color: white;
     left: 50%;
     top: 50%;
-    font-size: 17px;
+    width: 700px;
+    height: 500px;
+    font-size: 10px;
     text-align: center;
     position: absolute;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -25%);
 }
 .logo{
     left:5px;

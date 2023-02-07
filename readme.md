@@ -1,7 +1,7 @@
 # Polyrhythm Galaxy
 ## A rhythm game mixed with polyrhythm recognition software
 
-Try this website on [Github Pages](https://thepihen.github.io/polyrhythm-galaxy/)
+Try this website on [Github Pages!](https://thepihen.github.io/polyrhythm-galaxy/)
 
 Polyrhythm Galaxy is composed of 3 modes:
 * Training Mode

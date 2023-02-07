@@ -1,10 +1,16 @@
+//variables in menu of training mode
 var button;
 var div;
 var div1;
 var div2;
 var div3;
-var started; //bool: T if we're in the game, F is we're in the menu
 
+//bool: T if we're in the game, F is we're in the menu
+var started; 
+
+/*
+Variables we will use for tutorial button
+*/
 var tutorialText = "Welcome to the training mode.&#10;Improve your skills choosing BPM and two rhythms,"+
 "one for the left hand and one for the right hand.&#10;You need to press respectively the key 'S' and the key 'K' "+
 "every time a falling rhythm dot is inside the guide circle.&#10;"+
@@ -12,29 +18,33 @@ var tutorialText = "Welcome to the training mode.&#10;Improve your skills choosi
 "This mode goes on forever. To exit, just press the 'Home' button in the upper right corner.&#10;"+
 "&#10;"+
 "Have a good training session!";
-
 var tutorialDisplayed = false;
 var placeZeroTutorialDisplayed = false;
 var tutorialButton;
 
+/*
+Variables we use when we move from didactic mode to training mode
+*/
 var rhyLeft;
 var rhyRight;
 var bpmFromDidactic;
 var skipChoices = false
 var isFromDidactic = false
-window.P$ = new  p5(p =>{
 
+/*
+instance of p5.js and this script calls the sketchPreload() and sketchSetup(), the functions are in sketch_training.js
+*/
+window.P$ = new  p5(p =>{
     p.preload = function () {
         sketchPreload();
     }
-    
+    //Initialise variables needed in the sketch here
     p.setup= function () {
         sketchSetup();
         
         p.createCanvas(p.windowWidth, p.windowHeight);
-    
         
-
+        //when we move from didactic mode to training mode and store the variables
         if (window.location.search.slice(1) != "") {
             //skipChoices=true&bpm=90&leftR="+selectedPolyrhythm[0]+"&rightR
             let a = window.location.search.slice(1).split("&").forEach(function (e) {
@@ -66,7 +76,7 @@ window.P$ = new  p5(p =>{
         }
         
         started = false;
-
+        //if we start with the training mode, there must be a menù of training mode
         if(!skipChoices){
             div = p.createDiv("TRAINING MODE");
             div.class('div');
@@ -87,7 +97,8 @@ window.P$ = new  p5(p =>{
             button = p.createButton('PLAY');
             button.class('button');
             button.position(p.width/2.35, p.height/1.47)
-
+            
+            //when I press the button, the select value are stored in variables 
             button.mousePressed(() => {
                 if (!skipChoices) {
                     bpm = sel.value();
@@ -98,7 +109,8 @@ window.P$ = new  p5(p =>{
                 interval = 60 / bpm;
                 intervalL = 4 * 1 / leftR * 60 / bpm;
                 intervalR = 4 * 1 / rightR * 60 / bpm;
-    
+                
+                //cancell the menù to show the training mode
                 if(!skipChoices){
                 sel.remove();
                 sel1.remove();
@@ -124,6 +136,8 @@ window.P$ = new  p5(p =>{
             selBpm();
             selLeftHand();
             selRightHand();
+        
+        //when we move to didactic
         }else{
             bpm = bpmFromDidactic;
             leftR = rhyLeft;
@@ -140,8 +154,6 @@ window.P$ = new  p5(p =>{
             startMetronome(bpm)
         }
    
-        
-        
         // tutorial stuff
         tutorialButton = p.createDiv('?')
         tutorialButton.addClass('tutorial_button')
@@ -153,10 +165,12 @@ window.P$ = new  p5(p =>{
     var nextButton;
     var previousButton;
     var imgStartingFrame;
-    var imgPlayingFrame;
     var textFirstDisplay;
     var place = 0;
-
+    /*
+    displayTutorial(): function that displays game tutorial. Is organized in two facades, each one identified by
+    'place' variable content.
+     */
     displayTutorial = function () {
         if(tutorialDisplayed){
             nextButton.remove();
@@ -198,6 +212,7 @@ window.P$ = new  p5(p =>{
             button.hide();
             }
 
+        
             nextButton = p.createDiv('>');
             nextButton.addClass('next_button');
             nextButton.mousePressed(nextButtonFunction)
@@ -212,7 +227,10 @@ window.P$ = new  p5(p =>{
         
 
     }
-
+     /*
+    nextButtonFunction(): function that is called when the tutorial 'nextButton' is pressed. In particular handles the
+    elements to add/remove passing from a facade to another.
+     */
     nextButtonFunction = function() {
         if(place == 0){
             textFirstDisplay.hide();
@@ -231,7 +249,10 @@ window.P$ = new  p5(p =>{
         }
         
     }
-
+    /*
+    previousButtonFunction(): function that is called when the tutorial 'previousButton' is pressed. In particular
+    handles the elements to add/remove passing from a facade to another.
+     */
     previousButtonFunction = function() {
         if (place == 1) {
             place -= 1;
@@ -243,7 +264,6 @@ window.P$ = new  p5(p =>{
         }
     }
 
-
     /*
     draw(): p5js function that gets automatically called once per frame
     (by default 60 frames per second)
@@ -253,6 +273,7 @@ window.P$ = new  p5(p =>{
             sketchDraw()
         }
         else {
+            //put trasparent background
             p.clear();
             p.background('rgba(255,255,255, 0)');
             if(isFromDidactic)
@@ -267,35 +288,42 @@ window.P$ = new  p5(p =>{
         }
     }
 
+    tutorialBackground = function () {
+        p.strokeWeight(1);
+        p.stroke(255,255,255)
+        p.fill(39,38,38,230)
+        p.push()
+        p.rectMode(p.CENTER)
+        p.rect(p.width/2,p.height/2,1000,540)
+        p.pop()
+    }
+
+    /*
+    drawFromDidactic(): function that is called when the button to return on didactic mode is pressed. 
+     */
     drawFromDidactic = function () {
         //draw a left arrow on the left on the middle of the screen
-        
         p.push()
         p.stroke(255)
         p.strokeWeight(3)
         p.fill(100)
         p.rectMode(p.CENTER)
         p.rect(p.width / 20, p.height / 2, 50, 50)
-        //draw a white left arrow inside
         p.fill(255)
         p.triangle(p.width / 20 + 20, p.height / 2 - 20, p.width / 20 + 20, p.height / 2 + 20, p.width / 20 - 20, p.height / 2)
         p.pop()
     }
 
-    tutorialBackground = function () {
-        p.strokeWeight(1);
-        p.stroke(255,255,255)
-        p.fill(39,38,38,230)
-        p.push()
-
-        p.rectMode(p.CENTER)
-        p.rect(p.width/2,p.height/2,1000,540)
-        
-        p.pop()
-
+    p.mousePressed = function(){
+        if(isFromDidactic && p.mouseX > p.width / 20 - 25 && p.mouseX < p.width / 20 + 25 && p.mouseY > p.height / 2 - 25 && p.mouseY < p.height / 2 + 25){
+            window.open("didactic.html?from=training", "_self")
+        }
     }
 
 
+    /*
+    windowResized(): p5js function that gets called every time the window
+    gets resized;*/
     p.windowResized = function() {
         if (started){
             sketchWindowResized();
@@ -305,15 +333,8 @@ window.P$ = new  p5(p =>{
         }
     }
 
-    p.mousePressed = function(){
-        //P$.rect(P$.width / 20, P$.height / 2, 50, 50)
-        if(isFromDidactic && p.mouseX > p.width / 20 - 25 && p.mouseX < p.width / 20 + 25 && p.mouseY > p.height / 2 - 25 && p.mouseY < p.height / 2 + 25){
-            window.open("didactic.html?from=training", "_self")
-        }
-    }
-    
     writeText=function () {
-        
+        //to draw two rect in menu of training mode
         p.stroke(250, 127, 250);
         p.strokeWeight(3);
         p.noFill();
@@ -328,6 +349,7 @@ window.P$ = new  p5(p =>{
         p.text('/', p.width/2.01, p.height/1.54);
     }
 
+    //selBpm(): to select bpm
     let sel;
     function selBpm() {
         sel = p.createSelect();
@@ -349,13 +371,13 @@ window.P$ = new  p5(p =>{
         sel.option('120')
 
         sel.changed(bpmEvent);
-
     }
 
     function bpmEvent() {
         return sel.value()
     }
 
+    //selLeftHand(): to select left hand rhythms
     let sel1;
     function selLeftHand() {
         sel1 = p.createSelect();
@@ -383,6 +405,7 @@ window.P$ = new  p5(p =>{
         return sel1.value()
     }
 
+    //selRightHand(): to select right hand rhythms
     let sel2;
     function selRightHand() {
         sel2 = p.createSelect();
@@ -409,7 +432,6 @@ window.P$ = new  p5(p =>{
     function rightEvent() {
         return sel2.value()
     }
-
 })
 
 

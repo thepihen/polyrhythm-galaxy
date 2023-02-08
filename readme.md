@@ -3,6 +3,11 @@
 
 Try this website on [Github Pages!](https://thepihen.github.io/polyrhythm-galaxy/)
 
+Check out a quick video presentation of this project here:
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Es_a3-yu_hU
+" target="_blank"><img src="http://img.youtube.com/vi/Es_a3-yu_hU/0.jpg" 
+alt="Polyrhythm Galaxy video presentation" width="240" height="180" border="10" /></a>
+
 ## __The modes__
 Polyrhythm Galaxy is composed of 3 modes:
 * Training Mode

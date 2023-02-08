@@ -46,7 +46,7 @@ tone.js is used mainly to make timed events happen correctly with Transport. The
 math.js is used by the worker for operations on ("multi-dimensional") arrays and useful misc functions such as the fft.
 
 ## KNOWN BUGS
-* If your audio device sample rate is not set to 44100 Hz, the polyrhythm analysis in the didactic mode will return completely wrong results. It assumes you're providing it only with audio at 44.1 kHz and that your audio device is set to the same sampling rate.
+* If your audio device sample rate is not set to 44100 Hz, the polyrhythm analysis in the didactic mode will return completely wrong results. It assumes you're providing it only with audio at 44.1 kHz and __that your audio device is set to the same sampling rate.__
 * In Endless Mode there could be audio problems if the game is started too early and the system was not able to totally load audio files. Moreover the game performance slightly changes with respect to the browser. In particular, system works the better with Microsoft Edge. With Google Chrome there could be slowdowns , while in Firefox in the first game, dots can start time shifted with respect to the metronome and after few seconds become correctly synchronized. In general there could be
 sometimes really closer dots, especially in the first game when the second background beat enters the game for the first time.
 * Sometimes in the didactic mode the browser fails to load the helper messages and the face image. Reloading the page might fix this.

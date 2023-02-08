@@ -3,7 +3,7 @@
 
 Try this website on [Github Pages!](https://thepihen.github.io/polyrhythm-galaxy/)
 
-Check out a quick video presentation of this project here:
+Check out a quick video presentation of this project below (click on the image to go to YouTube):
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Es_a3-yu_hU
 " target="_blank"><img src="http://img.youtube.com/vi/Es_a3-yu_hU/0.jpg" 
